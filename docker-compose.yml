@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  ## --------------------------- NYC TRIP ASSISTANT --------------------------- ##
+  nyc_trip_assistant:
+    image: ghcr.io/ingeramirez0401/nyc-trip-assistant:latest
+    container_name: nyc_trip_assistant
+    networks:
+      - CambiosNet
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.nyc_trip_assistant.rule=Host(`travel.nodalyst.ai`)
+        - traefik.http.routers.nyc_trip_assistant.entrypoints=websecure
+        - traefik.http.routers.nyc_trip_assistant.tls.certresolver=letsencryptresolver
+        - traefik.http.services.nyc_trip_assistant.loadbalancer.server.port=80
+        - traefik.http.services.nyc_trip_assistant.loadbalancer.passHostHeader=true
+        - traefik.http.routers.nyc_trip_assistant.service=nyc_trip_assistant
+
+networks:
+  CambiosNet:
+    external: true
