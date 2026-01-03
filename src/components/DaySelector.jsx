@@ -24,10 +24,10 @@ const DaySelector = ({ days, activeDayId, onSelectDay }) => {
                             )}
 
                             <span className={`text-[9px] uppercase font-bold tracking-wider mb-0.5 z-10 transition-colors ${isActive ? 'text-slate-300' : 'text-slate-400'}`}>
-                                DÍA {day.id}
+                                {day.day_number}
                             </span>
                             <span className={`text-sm font-bold whitespace-nowrap z-10 leading-none ${isActive ? 'text-white' : 'text-slate-700'}`}>
-                                {day.title.split(' ')[0]}
+                                {day.title}
                             </span>
                             
                             {/* Dots Indicator */}

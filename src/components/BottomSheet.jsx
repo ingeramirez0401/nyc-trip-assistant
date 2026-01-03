@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 
-const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDelete, onUpdateImage, onEdit }) => {
+const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDelete, onUpdateImage, onEdit, city = "travel destination" }) => {
   const [imgSrc, setImgSrc] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (place) {
-        setImgSrc(null);
         let url;
 
         // Estrategia Híbrida:
@@ -16,22 +15,23 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
         // 2. Si solo tenemos una palabra clave (lugares nuevos), usamos IA para generar una referencia.
         if (place.img && (place.img.startsWith('http') || place.img.startsWith('data:image'))) {
             url = place.img;
+            setImgSrc(url); // Actualizar inmediatamente si es URL o base64
         } else if (place.img) {
-            const query = encodeURIComponent(place.img + " in New York City photorealistic 4k");
+            const query = encodeURIComponent(`${place.img} in ${city} photorealistic 4k`);
             url = `https://image.pollinations.ai/prompt/${query}?width=800&height=600&nologo=true&seed=${place.id}`;
+            // Cargar imagen generada con validación
+            const img = new Image();
+            img.onload = () => setImgSrc(url);
+            img.onerror = () => setImgSrc('https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80');
+            img.src = url;
         } else {
             // Fallback si no hay imagen
-            url = 'https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80';
+            setImgSrc('https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80');
         }
-        
-        const img = new Image();
-        img.onload = () => setImgSrc(url);
-        img.onerror = () => setImgSrc('https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80');
-        img.src = url;
     }
-  }, [place]);
+  }, [place, place?.img, city]); // Escuchar cambios en place.img y city
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();

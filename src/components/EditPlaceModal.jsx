@@ -16,6 +16,8 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const [imageFile, setImageFile] = useState(null);
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -24,6 +26,7 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
         setUploadedImage(event.target.result);
       };
       reader.readAsDataURL(file);
+      setImageFile(file);
     }
   };
 

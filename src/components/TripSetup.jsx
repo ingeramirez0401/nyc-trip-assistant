@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { dayService } from '../services/dayService';
+import LocationSearchInput from './LocationSearchInput';
 
 const TripSetup = ({ trip, onComplete }) => {
   const [numDays, setNumDays] = useState(3);
@@ -8,11 +9,7 @@ const TripSetup = ({ trip, onComplete }) => {
     { title: 'Día 2', color: '#3b82f6' },
     { title: 'Día 3', color: '#10b981' },
   ]);
-  const [baseLocation, setBaseLocation] = useState({
-    title: '',
-    lat: '',
-    lng: '',
-  });
+  const [baseLocation, setBaseLocation] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
@@ -39,6 +36,15 @@ const TripSetup = ({ trip, onComplete }) => {
     setDays(newDays);
   };
 
+  const handleLocationSelect = (locationData) => {
+    setBaseLocation({
+      lat: locationData.lat,
+      lng: locationData.lng,
+      title: locationData.name,
+      desc: locationData.address,
+    });
+  };
+
   const handleComplete = async () => {
     if (loading) return;
 
@@ -55,16 +61,11 @@ const TripSetup = ({ trip, onComplete }) => {
       await dayService.createMultiple(trip.id, daysData);
 
       // Si hay base location, actualizar el viaje
-      if (baseLocation.title && baseLocation.lat && baseLocation.lng) {
+      if (baseLocation) {
         const { tripService } = await import('../services/tripService');
         await tripService.update(trip.id, {
           ...trip,
-          baseLocation: {
-            lat: parseFloat(baseLocation.lat),
-            lng: parseFloat(baseLocation.lng),
-            title: baseLocation.title,
-            desc: 'Base de Operaciones',
-          },
+          baseLocation: baseLocation,
         });
       }
 
@@ -143,36 +144,34 @@ const TripSetup = ({ trip, onComplete }) => {
           {/* Base Location (Optional) */}
           <div>
             <label className="block text-sm font-bold text-slate-300 mb-3 uppercase tracking-wider">
+              <i className="fas fa-hotel mr-2"></i>
               Ubicación Base (Opcional)
             </label>
-            <p className="text-xs text-slate-400 mb-3">Hotel, Airbnb o punto de partida principal</p>
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Nombre del lugar"
-                value={baseLocation.title}
-                onChange={(e) => setBaseLocation({ ...baseLocation, title: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="number"
-                  step="any"
-                  placeholder="Latitud"
-                  value={baseLocation.lat}
-                  onChange={(e) => setBaseLocation({ ...baseLocation, lat: e.target.value })}
-                  className="px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-                <input
-                  type="number"
-                  step="any"
-                  placeholder="Longitud"
-                  value={baseLocation.lng}
-                  onChange={(e) => setBaseLocation({ ...baseLocation, lng: e.target.value })}
-                  className="px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
-                />
+            <p className="text-xs text-slate-400 mb-3">Busca tu hotel, Airbnb o punto de partida principal</p>
+            <LocationSearchInput
+              onLocationSelect={handleLocationSelect}
+              placeholder="Busca tu hotel o alojamiento..."
+            />
+            {baseLocation && (
+              <div className="mt-3 p-4 bg-green-900/20 border border-green-500/30 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <i className="fas fa-map-marker-alt text-green-400 mt-1"></i>
+                  <div className="flex-1">
+                    <p className="text-green-400 font-medium">{baseLocation.title}</p>
+                    <p className="text-green-500/70 text-sm mt-1">{baseLocation.desc}</p>
+                    <p className="text-green-500/50 text-xs mt-2">
+                      📍 {baseLocation.lat.toFixed(4)}, {baseLocation.lng.toFixed(4)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setBaseLocation(null)}
+                    className="text-green-500/50 hover:text-green-400 transition"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Actions */}

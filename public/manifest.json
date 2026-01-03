@@ -1,7 +1,7 @@
 {
-  "name": "NYC Trip Assistant",
-  "short_name": "NYC Trip",
-  "description": "Interactive NYC 5-day trip planner with maps, photos, and itinerary management",
+  "name": "TripPulse",
+  "short_name": "TripPulse",
+  "description": "Planifica, explora y vive tus viajes con TripPulse",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

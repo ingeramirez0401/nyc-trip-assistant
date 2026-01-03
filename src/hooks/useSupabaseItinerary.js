@@ -101,19 +101,14 @@ export const useSupabaseItinerary = (tripId) => {
   // Agregar parada
   const addStop = async (dayId, stopData) => {
     try {
-      // Si hay imagen base64, subirla primero
-      let imageUrl = stopData.img;
-      if (stopData.img && stopData.img.startsWith('data:image')) {
-        imageUrl = await storageService.uploadBase64Image(stopData.img, 'stops');
-      }
-
+      // Guardar imagen directamente (base64 o URL)
       const newStop = await stopService.create({
         dayId,
         title: stopData.title,
         lat: stopData.lat,
         lng: stopData.lng,
         category: stopData.cat || 'Interés',
-        img: imageUrl,
+        img: stopData.img,
         tip: stopData.tip,
         time: stopData.time,
         address: stopData.address,
@@ -152,14 +147,8 @@ export const useSupabaseItinerary = (tripId) => {
   // Actualizar imagen de parada
   const updateStopImage = async (stopId, imageData) => {
     try {
-      let imageUrl = imageData;
-      
-      // Si es base64, subir a Supabase
-      if (imageData.startsWith('data:image')) {
-        imageUrl = await storageService.uploadBase64Image(imageData, 'stops');
-      }
-
-      await stopService.updateImage(stopId, imageUrl);
+      // Guardar directamente (base64 o URL)
+      await stopService.updateImage(stopId, imageData);
       await loadTripData();
     } catch (err) {
       console.error('Error updating image:', err);
@@ -170,18 +159,13 @@ export const useSupabaseItinerary = (tripId) => {
   // Actualizar parada completa
   const updateStop = async (dayId, updatedStop) => {
     try {
-      // Si hay nueva imagen base64, subirla
-      let imageUrl = updatedStop.img;
-      if (updatedStop.img && updatedStop.img.startsWith('data:image')) {
-        imageUrl = await storageService.uploadBase64Image(updatedStop.img, 'stops');
-      }
-
+      // Guardar imagen directamente (base64 o URL)
       await stopService.update(updatedStop.id, {
         title: updatedStop.title,
         lat: updatedStop.lat,
         lng: updatedStop.lng,
         category: updatedStop.cat,
-        img: imageUrl,
+        img: updatedStop.img,
         tip: updatedStop.tip,
         time: updatedStop.time,
         address: updatedStop.address,

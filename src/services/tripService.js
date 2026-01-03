@@ -51,28 +51,42 @@ export const tripService = {
       console.log('📝 Inserting trip data:', insertData);
       console.log('🔗 Supabase URL:', supabase.supabaseUrl);
       
-      // Usar upsert en lugar de insert para evitar problemas de permisos
+      // Usar insert directo
       const response = await supabase
         .from('trips')
-        .upsert([insertData], { onConflict: 'id' })
+        .insert([insertData])
         .select()
         .single();
       
       console.log('📦 Full response:', response);
+      console.log('📦 Response data:', response.data);
+      console.log('📦 Response error:', response.error);
+      console.log('📦 Response status:', response.status);
+      console.log('📦 Response statusText:', response.statusText);
       
       if (response.error) {
-        console.error('❌ Supabase error object:', JSON.stringify(response.error, null, 2));
-        throw new Error(response.error.message || 'Error desconocido al crear el viaje');
+        console.error('❌ Supabase error details:', {
+          message: response.error.message,
+          details: response.error.details,
+          hint: response.error.hint,
+          code: response.error.code,
+          full: response.error
+        });
+        throw new Error(response.error.message || response.error.hint || 'Error al crear el viaje');
       }
       
       if (!response.data) {
-        throw new Error('No se recibieron datos del servidor');
+        console.error('❌ No data received. Full response:', JSON.stringify(response, null, 2));
+        throw new Error('No se recibieron datos del servidor. Verifica la conexión con Supabase.');
       }
       
       console.log('✅ Trip created successfully:', response.data);
       return response.data;
     } catch (err) {
       console.error('❌ Exception in create:', err);
+      console.error('❌ Error name:', err.name);
+      console.error('❌ Error message:', err.message);
+      console.error('❌ Error stack:', err.stack);
       throw err;
     }
   },

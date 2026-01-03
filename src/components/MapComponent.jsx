@@ -13,16 +13,31 @@ L.Icon.Default.mergeOptions({
 });
 
 // Component to handle map movements
-function MapController({ center, bounds }) {
+function MapController({ center, bounds, userLocation, centerOnUser }) {
   const map = useMap();
   
   useEffect(() => {
-    if (bounds) {
+    if (centerOnUser && userLocation) {
+      map.flyTo([userLocation.lat, userLocation.lng], 17, { duration: 1.5 });
+    } else if (bounds) {
       map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
     } else if (center) {
       map.flyTo(center, 15, { duration: 1.5 });
     }
-  }, [center, bounds, map]);
+  }, [center, bounds, map, userLocation, centerOnUser]);
+
+  // Listen for centerOnBase event
+  useEffect(() => {
+    const handleCenterOnBase = (event) => {
+      const baseLocation = event.detail;
+      if (baseLocation) {
+        map.flyTo([baseLocation.lat, baseLocation.lng], 16, { duration: 1.5 });
+      }
+    };
+
+    window.addEventListener('centerOnBase', handleCenterOnBase);
+    return () => window.removeEventListener('centerOnBase', handleCenterOnBase);
+  }, [map]);
 
   return null;
 }
@@ -63,15 +78,23 @@ const MapComponent = ({
   onStopClick, 
   userLocation,
   visited,
-  isDarkMode = true
+  isDarkMode = true,
+  centerOnUser = false
 }) => {
   const stops = activeDay?.stops || [];
   
-  // Calculate bounds
+  // Calculate bounds - incluir ubicación del usuario si existe
   const points = [
     [baseLocation.lat, baseLocation.lng],
     ...stops.map(s => [s.lat, s.lng])
   ];
+  
+  // Si hay ubicación del usuario y NO se está centrando en ella, incluirla en bounds
+  // para que el mapa muestre tanto el viaje como la ubicación del usuario
+  if (userLocation && !centerOnUser) {
+    points.push([userLocation.lat, userLocation.lng]);
+  }
+  
   const bounds = L.latLngBounds(points);
 
   return (
@@ -89,7 +112,7 @@ const MapComponent = ({
         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
       />
       
-      <MapController bounds={bounds} />
+      <MapController bounds={bounds} userLocation={userLocation} centerOnUser={centerOnUser} />
 
       {/* Route Line */}
       {stops.length > 0 && (
@@ -118,13 +141,24 @@ const MapComponent = ({
       {/* User Location */}
       {userLocation && (
         <Marker 
-          position={userLocation}
+          position={[userLocation.lat, userLocation.lng]}
           icon={L.divIcon({ 
-              html: `<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg relative"><div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-75"></div></div>`,
-              iconSize: [16, 16],
-              iconAnchor: [8, 8]
+              html: `
+                <div class="relative">
+                  <div class="absolute inset-0 w-16 h-16 bg-blue-500/20 rounded-full animate-pulse" style="margin-left: -32px; margin-top: -32px;"></div>
+                  <div class="w-5 h-5 bg-blue-500 rounded-full border-3 border-white shadow-[0_0_15px_rgba(59,130,246,0.8)] relative" style="margin-left: -10px; margin-top: -10px;">
+                    <div class="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-75"></div>
+                  </div>
+                </div>
+              `,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
           })}
-        />
+        >
+          <Popup className="custom-popup">
+            <div class="text-slate-900 font-bold">📍 Tu ubicación</div>
+          </Popup>
+        </Marker>
       )}
 
       {/* Stops */}

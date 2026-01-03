@@ -9,21 +9,28 @@ import ItineraryList from './components/ItineraryList';
 import WelcomeScreen from './components/WelcomeScreen';
 import TripSetup from './components/TripSetup';
 import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
+import { useGeolocation } from './hooks/useGeolocation';
 import { testConnection } from './lib/supabase';
 
 function App() {
   // App State Management
-  const [currentTrip, setCurrentTrip] = useState(null);
+  const [currentTrip, setCurrentTrip] = useState(() => {
+    const saved = localStorage.getItem('currentTrip');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [setupMode, setSetupMode] = useState(false);
   const [activeDayId, setActiveDayId] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [placeToEdit, setPlaceToEdit] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isListOpen, setIsListOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [centerOnUser, setCenterOnUser] = useState(false);
+
+  // Geolocalización en tiempo real
+  const { location: userLocation, error: geoError } = useGeolocation();
 
   // Supabase Hook (only when trip is selected)
   const { 
@@ -64,11 +71,20 @@ function App() {
 
   const handleSelectTrip = (trip) => {
     setCurrentTrip(trip);
+    localStorage.setItem('currentTrip', JSON.stringify(trip));
   };
 
   const handleCreateTrip = (trip) => {
     setCurrentTrip(trip);
+    localStorage.setItem('currentTrip', JSON.stringify(trip));
     setSetupMode(true);
+  };
+
+  const handleExitTrip = () => {
+    setCurrentTrip(null);
+    localStorage.removeItem('currentTrip');
+    setActiveDayId(null);
+    setSelectedStop(null);
   };
 
   const handleSetupComplete = async () => {
@@ -84,19 +100,25 @@ function App() {
     updateStopImage(stopId, imageUrl);
   };
 
-  // User Location Tracking
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-        (err) => console.log("GPS Error", err),
-        { enableHighAccuracy: true }
-      );
-    }
-  }, []);
 
   const handleStopClick = (stop) => {
     setSelectedStop(stop);
+  };
+
+  const handleCenterOnUser = () => {
+    if (userLocation) {
+      setCenterOnUser(true);
+      setTimeout(() => setCenterOnUser(false), 100);
+    }
+  };
+
+  const handleCenterOnBase = () => {
+    if (baseLocation) {
+      setSelectedStop(null);
+      // Trigger map to center on base location
+      const mapEvent = new CustomEvent('centerOnBase', { detail: baseLocation });
+      window.dispatchEvent(mapEvent);
+    }
   };
 
   const handleAddPlace = (placeData) => {
@@ -188,6 +210,7 @@ function App() {
         userLocation={userLocation}
         visited={visited}
         isDarkMode={isDarkMode}
+        centerOnUser={centerOnUser}
       />
 
       {/* HEADER CONTROLS */}
@@ -207,6 +230,7 @@ function App() {
         isDarkMode={isDarkMode}
         toggleTheme={() => setIsDarkMode(!isDarkMode)}
         onOpenList={() => setIsListOpen(true)}
+        onExitTrip={handleExitTrip}
       />
 
       {/* ITINERARY LIST OVERLAY */}
@@ -238,10 +262,26 @@ function App() {
             <i className="fas fa-plus text-lg"></i>
         </button>
         <button 
-          onClick={() => {
-             setSelectedStop(null);
-          }}
-          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${isDarkMode ? 'bg-slate-900/90 text-amber-400 hover:bg-slate-800' : 'bg-white text-amber-500 hover:bg-slate-50'}`}
+          onClick={handleCenterOnUser}
+          disabled={!userLocation}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
+            userLocation 
+              ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
+              : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+          }`}
+          title="Ir a mi ubicación"
+        >
+            <i className="fas fa-location-arrow text-lg"></i>
+        </button>
+        <button 
+          onClick={handleCenterOnBase}
+          disabled={!baseLocation}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
+            baseLocation
+              ? isDarkMode ? 'bg-slate-900/90 text-amber-400 hover:bg-slate-800' : 'bg-white text-amber-500 hover:bg-slate-50'
+              : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+          }`}
+          title="Ir a ubicación base"
         >
             <i className="fas fa-bed text-lg"></i>
         </button>
@@ -257,6 +297,7 @@ function App() {
         onDelete={handleDeleteStop}
         onUpdateImage={handleUpdateImage}
         onEdit={handleEditPlace}
+        city={trip?.city || currentTrip?.city}
       />
 
       {/* EDIT MODAL */}

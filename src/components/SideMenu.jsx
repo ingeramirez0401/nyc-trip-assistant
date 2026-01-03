@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList }) => {
+const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip }) => {
   return (
     <>
       {/* Overlay */}
@@ -15,12 +15,12 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList }) => {
         {/* Header */}
         <div className="p-6 pt-12 border-b border-white/10 bg-gradient-to-br from-slate-800 to-slate-900">
           <div className="flex items-center gap-3 mb-2">
-             <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg">
-                <i className="fas fa-plane-departure"></i>
+             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg ring-2 ring-white/10">
+                <i className="fas fa-heart-pulse"></i>
             </div>
             <div>
-                <h1 className="text-xl font-bold text-white tracking-tight">NYC 2026</h1>
-                <p className="text-xs text-blue-400 font-medium uppercase tracking-wider">Trip Planner</p>
+                <h1 className="text-xl font-bold text-white tracking-tight">TripPulse</h1>
+                <p className="text-xs text-blue-400 font-medium uppercase tracking-wider">Tu Ritmo, Tu Viaje</p>
             </div>
           </div>
         </div>
@@ -44,6 +44,25 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList }) => {
                 <div>
                     <span className="font-bold block">Itinerario del Día</span>
                     <span className="text-xs text-slate-400">Ver y gestionar paradas</span>
+                </div>
+                <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
+            </button>
+
+            <button 
+                onClick={() => {
+                    if (confirm('¿Salir de este viaje y volver al selector?')) {
+                        onExitTrip();
+                        onClose();
+                    }
+                }}
+                className="w-full text-left px-6 py-4 hover:bg-red-500/10 transition-colors flex items-center gap-4 text-white group"
+            >
+                <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i className="fas fa-arrow-left"></i>
+                </div>
+                <div>
+                    <span className="font-bold block">Cambiar de Viaje</span>
+                    <span className="text-xs text-slate-400">Volver al selector</span>
                 </div>
                 <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
             </button>

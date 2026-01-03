@@ -10,28 +10,39 @@ export const storageService = {
   // Subir una imagen desde un archivo File
   async uploadImage(file, folder = 'stops') {
     try {
+      console.log('📤 Uploading image:', file.name, file.type, file.size);
+      
       // Generar nombre único para el archivo
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop().toLowerCase();
       const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // Subir archivo
+      console.log('📝 File path:', fileName);
+
+      // Subir archivo con configuración simplificada
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          contentType: file.type
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Upload error:', error);
+        throw error;
+      }
+
+      console.log('✅ Upload successful:', data);
 
       // Obtener URL pública
-      const { data: { publicUrl } } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(fileName);
 
-      return publicUrl;
+      console.log('🔗 Public URL:', urlData.publicUrl);
+      return urlData.publicUrl;
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('❌ Error uploading image:', error);
       throw error;
     }
   },
