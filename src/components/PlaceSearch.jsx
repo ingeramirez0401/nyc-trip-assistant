@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { categories } from '../data/categories';
 
 const PlaceSearch = ({ onAddPlace, onClose }) => {
   const [query, setQuery] = useState('');
@@ -6,6 +7,7 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('Interés');
   const fileInputRef = useRef(null);
 
   const searchPlaces = async (e) => {
@@ -50,10 +52,12 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
     if (selectedPlace) {
         onAddPlace({
             ...selectedPlace,
-            img: uploadedImage || selectedPlace.title // Si hay imagen subida, usarla; sino usar el título como keyword
+            cat: selectedCategory,
+            img: uploadedImage || selectedPlace.title
         });
         setSelectedPlace(null);
         setUploadedImage(null);
+        setSelectedCategory('Interés');
     }
   };
 
@@ -138,6 +142,27 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                             <p className="text-sm text-gray-500">{selectedPlace.address}</p>
                         </div>
 
+                        {/* Category Selector */}
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Categoría</label>
+                            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategory(cat.name)}
+                                        className={`p-2 rounded-lg border-2 transition-all ${
+                                            selectedCategory === cat.name
+                                                ? 'border-blue-500 bg-blue-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <i className={`fas ${cat.icon} text-lg mb-1`} style={{ color: cat.color }}></i>
+                                        <p className="text-[10px] font-medium text-slate-700 truncate">{cat.name}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
                             {uploadedImage ? (
                                 <div className="relative">
@@ -162,8 +187,7 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                             <input 
                                 ref={fileInputRef}
                                 type="file" 
-                                accept="image/*" 
-                                capture="environment"
+                                accept="image/*"
                                 onChange={handleImageUpload}
                                 className="hidden"
                             />

@@ -62,5 +62,66 @@ export function useItinerary() {
     })));
   };
 
-  return { days, visited, toggleVisited, addStop, removeStop, updateStopImage, baseLocation };
+  const updateStop = (dayId, updatedStop) => {
+    setDays(prevDays => prevDays.map(day => {
+      if (day.id === dayId) {
+        return {
+          ...day,
+          stops: day.stops.map(stop => 
+            stop.id === updatedStop.id ? updatedStop : stop
+          )
+        };
+      }
+      return day;
+    }));
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const reorderStopsByDistance = (dayId) => {
+    setDays(prevDays => prevDays.map(day => {
+      if (day.id !== dayId || day.stops.length <= 1) return day;
+
+      const stops = [...day.stops];
+      const ordered = [];
+      let current = stops[0]; // Empezar con el primer lugar
+      ordered.push(current);
+      stops.splice(0, 1);
+
+      // Algoritmo greedy: siempre ir al lugar más cercano
+      while (stops.length > 0) {
+        let nearestIndex = 0;
+        let minDistance = Infinity;
+
+        stops.forEach((stop, index) => {
+          const distance = calculateDistance(
+            current.lat, current.lng,
+            stop.lat, stop.lng
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestIndex = index;
+          }
+        });
+
+        current = stops[nearestIndex];
+        ordered.push(current);
+        stops.splice(nearestIndex, 1);
+      }
+
+      return { ...day, stops: ordered };
+    }));
+  };
+
+  return { days, visited, toggleVisited, addStop, removeStop, updateStopImage, updateStop, reorderStopsByDistance, baseLocation };
 }

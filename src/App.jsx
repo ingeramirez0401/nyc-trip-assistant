@@ -3,14 +3,17 @@ import MapComponent from './components/MapComponent';
 import BottomSheet from './components/BottomSheet';
 import DaySelector from './components/DaySelector';
 import PlaceSearch from './components/PlaceSearch';
+import EditPlaceModal from './components/EditPlaceModal';
 import { useItinerary } from './hooks/useItinerary';
 
 function App() {
-  const { days, visited, toggleVisited, addStop, removeStop, updateStopImage, baseLocation } = useItinerary();
+  const { days, visited, toggleVisited, addStop, removeStop, updateStopImage, updateStop, reorderStopsByDistance, baseLocation } = useItinerary();
   
   const [activeDayId, setActiveDayId] = useState(1);
   const [selectedStop, setSelectedStop] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [placeToEdit, setPlaceToEdit] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
   const activeDay = days.find(d => d.id === activeDayId);
@@ -42,14 +45,35 @@ function App() {
     const newStop = {
       id: `custom-${Date.now()}`,
       ...placeData,
-      tip: "Agregado por ti",
-      time: "N/A"
+      tip: placeData.tip || "Agregado por ti",
+      time: placeData.time || "N/A"
     };
     addStop(activeDayId, newStop);
-    setIsSearchOpen(false);
     
-    // Auto select new place
+    // Reordenar automáticamente por distancia
+    setTimeout(() => {
+      reorderStopsByDistance(activeDayId);
+    }, 100);
+    
+    setIsSearchOpen(false);
     setTimeout(() => setSelectedStop(newStop), 500);
+  };
+
+  const handleEditPlace = (place) => {
+    setPlaceToEdit(place);
+    setIsEditOpen(true);
+  };
+
+  const handleSaveEdit = (updatedPlace) => {
+    updateStop(activeDayId, updatedPlace);
+    setIsEditOpen(false);
+    setPlaceToEdit(null);
+    setSelectedStop(updatedPlace);
+    
+    // Reordenar después de editar
+    setTimeout(() => {
+      reorderStopsByDistance(activeDayId);
+    }, 100);
   };
 
   return (
@@ -108,7 +132,20 @@ function App() {
         onToggleVisited={toggleVisited}
         onDelete={handleDeleteStop}
         onUpdateImage={handleUpdateImage}
+        onEdit={handleEditPlace}
       />
+
+      {/* EDIT MODAL */}
+      {isEditOpen && placeToEdit && (
+        <EditPlaceModal 
+          place={placeToEdit}
+          onSave={handleSaveEdit}
+          onClose={() => {
+            setIsEditOpen(false);
+            setPlaceToEdit(null);
+          }}
+        />
+      )}
 
       {/* DAY SELECTOR */}
       <DaySelector 

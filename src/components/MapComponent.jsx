@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { getCategoryIcon } from '../data/categories';
 
 // Fix Leaflet Default Icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -113,19 +114,17 @@ const MapComponent = ({
       )}
 
       {/* Stops */}
-      {stops.map((stop) => (
-        <Marker
-          key={stop.id}
+      {activeDay?.stops.map((stop) => (
+        <Marker 
+          key={stop.id} 
           position={[stop.lat, stop.lng]}
-          icon={createCustomIcon(
-            activeDay.color, 
-            selectedStop?.id === stop.id,
-            visited[stop.id]
-          )}
+          icon={createCustomIcon(stop, !!visited[stop.id])}
           eventHandlers={{
             click: () => onStopClick(stop)
           }}
-        />
+        >
+          <Popup>{stop.title}</Popup>
+        </Marker>
       ))}
     </MapContainer>
   );
