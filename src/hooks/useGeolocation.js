@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react';
 
-export const useGeolocation = (options = {}) => {
+export const useGeolocation = (enabled = false, options = {}) => {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Solo activar geolocalización si enabled es true
+    if (!enabled) {
+      setLocation(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     if (!navigator.geolocation) {
       setError('Geolocalización no soportada');
       setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const handleSuccess = (position) => {
       setLocation({
@@ -48,7 +58,7 @@ export const useGeolocation = (options = {}) => {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+  }, [enabled]);
 
   return { location, error, loading };
 };

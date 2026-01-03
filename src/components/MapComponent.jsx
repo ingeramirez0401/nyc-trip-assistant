@@ -79,19 +79,20 @@ const MapComponent = ({
   userLocation,
   visited,
   isDarkMode = true,
-  centerOnUser = false
+  centerOnUser = false,
+  gpsEnabled = false
 }) => {
   const stops = activeDay?.stops || [];
   
-  // Calculate bounds - incluir ubicación del usuario si existe
+  // Calculate bounds - solo incluir ubicación del usuario si GPS está habilitado
   const points = [
     [baseLocation.lat, baseLocation.lng],
     ...stops.map(s => [s.lat, s.lng])
   ];
   
-  // Si hay ubicación del usuario y NO se está centrando en ella, incluirla en bounds
-  // para que el mapa muestre tanto el viaje como la ubicación del usuario
-  if (userLocation && !centerOnUser) {
+  // Solo incluir ubicación del usuario en bounds si GPS está habilitado
+  // Esto evita que el mapa se aleje demasiado cuando el usuario está lejos del destino
+  if (userLocation && gpsEnabled && !centerOnUser) {
     points.push([userLocation.lat, userLocation.lng]);
   }
   

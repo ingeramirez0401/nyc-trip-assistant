@@ -28,9 +28,10 @@ function App() {
   const [isListOpen, setIsListOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [centerOnUser, setCenterOnUser] = useState(false);
+  const [gpsEnabled, setGpsEnabled] = useState(false);
 
-  // Geolocalización en tiempo real
-  const { location: userLocation, error: geoError } = useGeolocation();
+  // Geolocalización en tiempo real (solo si está habilitada)
+  const { location: userLocation, error: geoError } = useGeolocation(gpsEnabled);
 
   // Supabase Hook (only when trip is selected)
   const { 
@@ -106,10 +107,20 @@ function App() {
   };
 
   const handleCenterOnUser = () => {
-    if (userLocation) {
+    if (!gpsEnabled) {
+      setGpsEnabled(true);
+      setTimeout(() => {
+        setCenterOnUser(true);
+        setTimeout(() => setCenterOnUser(false), 100);
+      }, 500);
+    } else if (userLocation) {
       setCenterOnUser(true);
       setTimeout(() => setCenterOnUser(false), 100);
     }
+  };
+
+  const toggleGPS = () => {
+    setGpsEnabled(!gpsEnabled);
   };
 
   const handleCenterOnBase = () => {
@@ -211,6 +222,7 @@ function App() {
         visited={visited}
         isDarkMode={isDarkMode}
         centerOnUser={centerOnUser}
+        gpsEnabled={gpsEnabled}
       />
 
       {/* HEADER CONTROLS */}
@@ -262,14 +274,25 @@ function App() {
             <i className="fas fa-plus text-lg"></i>
         </button>
         <button 
-          onClick={handleCenterOnUser}
-          disabled={!userLocation}
+          onClick={toggleGPS}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
-            userLocation 
+            gpsEnabled 
+              ? 'bg-green-500 text-white hover:bg-green-600 shadow-[0_0_15px_rgba(34,197,94,0.5)]' 
+              : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+          }`}
+          title={gpsEnabled ? "GPS Activado - Click para desactivar" : "GPS Desactivado - Click para activar"}
+        >
+            <i className={`fas ${gpsEnabled ? 'fa-satellite-dish' : 'fa-satellite-dish'} text-lg`}></i>
+        </button>
+        <button 
+          onClick={handleCenterOnUser}
+          disabled={!gpsEnabled || !userLocation}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
+            gpsEnabled && userLocation 
               ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
               : 'bg-slate-700 text-slate-400 cursor-not-allowed'
           }`}
-          title="Ir a mi ubicación"
+          title={!gpsEnabled ? "Activa el GPS primero" : "Ir a mi ubicación"}
         >
             <i className="fas fa-location-arrow text-lg"></i>
         </button>

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { tripService } from '../services/tripService';
+import { dayService } from '../services/dayService';
+import { stopService } from '../services/stopService';
+import { generateItinerary } from '../services/aiService';
 import LocationSearchInput from './LocationSearchInput';
+import AIItineraryGenerator from './AIItineraryGenerator';
 
 const WelcomeScreen = ({ onSelectTrip, onCreateTrip }) => {
   const [trips, setTrips] = useState([]);
@@ -12,10 +16,26 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip }) => {
     country: '',
     baseLocation: null,
   });
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
+
+  const [openMenuTripId, setOpenMenuTripId] = useState(null);
 
   useEffect(() => {
     loadTrips();
   }, []);
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuTripId && !event.target.closest('.trip-menu-container')) {
+        setOpenMenuTripId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuTripId]);
 
   const loadTrips = async () => {
     try {
@@ -81,6 +101,9 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip }) => {
       });
       
       console.log('✅ Trip created successfully:', trip);
+      setShowCreateForm(false);
+      setNewTripData({ name: '', city: '', country: '', baseLocation: null });
+      // Flujo manual: ir a TripSetup para configurar días
       onCreateTrip(trip);
     } catch (error) {
       console.error('❌ Error creating trip:', error);
@@ -91,6 +114,78 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip }) => {
         code: error.code,
       });
       alert(`Error al crear el viaje: ${error.message}`);
+    }
+  };
+
+  const handleGenerateWithAI = async ({ numDays, interests, budget, baseLocation }) => {
+    try {
+      setGeneratingAI(true);
+      console.log('🤖 Generando itinerario con IA...');
+
+      // Usar la ubicación base específica si se seleccionó, o la genérica de la ciudad
+      const tripBaseLocation = baseLocation || newTripData.baseLocation;
+
+      // Generar itinerario con IA
+      const itinerary = await generateItinerary({
+        city: newTripData.city,
+        country: newTripData.country,
+        numDays,
+        interests,
+        budget
+      });
+
+      console.log('✅ Itinerario generado:', itinerary);
+
+      // Crear el viaje
+      const tripName = newTripData.name.trim() || `Viaje a ${newTripData.city}`;
+      const trip = await tripService.create({
+        name: tripName,
+        city: newTripData.city,
+        country: newTripData.country || null,
+        baseLocation: tripBaseLocation,
+      });
+
+      console.log('✅ Trip created:', trip.id);
+
+      // Crear días y lugares
+      for (const day of itinerary.days) {
+        const createdDay = await dayService.create({
+          tripId: trip.id,
+          dayNumber: day.dayNumber,
+          title: day.title,
+          color: day.color
+        });
+
+        console.log(`✅ Day ${day.dayNumber} created:`, createdDay.id);
+
+        // Crear lugares para este día
+        for (const stop of day.stops) {
+          await stopService.create({
+            dayId: createdDay.id,
+            title: stop.title,
+            lat: stop.lat,
+            lng: stop.lng,
+            category: stop.category,
+            img: stop.title, // Usará generación de IA de imágenes
+            tip: stop.tip,
+            time: stop.time,
+            address: stop.address
+          });
+        }
+      }
+
+      console.log('✅ Itinerario completo creado');
+      setShowAIGenerator(false);
+      setShowCreateForm(false);
+      setNewTripData({ name: '', city: '', country: '', baseLocation: null });
+      // Llamar onSelectTrip en lugar de onCreateTrip para ir directo al mapa
+      onSelectTrip(trip);
+
+    } catch (error) {
+      console.error('❌ Error generando itinerario:', error);
+      alert(`Error al generar itinerario: ${error.message}`);
+    } finally {
+      setGeneratingAI(false);
     }
   };
 
@@ -138,32 +233,54 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip }) => {
                   key={trip.id}
                   className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group relative"
                 >
-                  <button
-                    onClick={() => onSelectTrip(trip)}
-                    className="flex items-center gap-4 w-full text-left"
-                  >
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <i className="fas fa-map-pin text-2xl text-white"></i>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => onSelectTrip(trip)}
+                      className="flex items-center gap-4 flex-1 text-left"
+                    >
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <i className="fas fa-map-pin text-2xl text-white"></i>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-bold text-white truncate mb-1">{trip.name}</h3>
+                        <p className="text-blue-300 text-sm">
+                          <i className="fas fa-location-dot mr-2"></i>
+                          {trip.city}{trip.country ? `, ${trip.country}` : ''}
+                        </p>
+                      </div>
+                      <i className="fas fa-chevron-right text-slate-500 group-hover:text-blue-400 transition-colors"></i>
+                    </button>
+                    <div className="relative trip-menu-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuTripId(openMenuTripId === trip.id ? null : trip.id);
+                        }}
+                        className={`w-8 h-8 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center ${openMenuTripId === trip.id ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        <i className="fas fa-ellipsis-v"></i>
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {openMenuTripId === trip.id && (
+                        <div className="absolute top-full right-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                          <div className="p-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTrip(trip.id, trip.name);
+                                setOpenMenuTripId(null);
+                              }}
+                              className="w-full px-4 py-2.5 text-left text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg flex items-center gap-3 transition-colors text-sm font-medium"
+                            >
+                              <i className="fas fa-trash-alt w-4"></i>
+                              <span>Eliminar Viaje</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-white truncate mb-1">{trip.name}</h3>
-                      <p className="text-blue-300 text-sm">
-                        <i className="fas fa-location-dot mr-2"></i>
-                        {trip.city}{trip.country ? `, ${trip.country}` : ''}
-                      </p>
-                    </div>
-                    <i className="fas fa-chevron-right text-slate-500 group-hover:text-blue-400 transition-colors"></i>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTrip(trip.id, trip.name);
-                    }}
-                    className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
-                    title="Eliminar viaje"
-                  >
-                    <i className="fas fa-trash text-sm"></i>
-                  </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -224,11 +341,17 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip }) => {
                 Cancelar
               </button>
               <button
-                onClick={handleCreateTrip}
-                className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-[0.98] transition-all"
+                onClick={() => setShowAIGenerator(true)}
+                className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <i className="fas fa-plus-circle mr-2"></i>
-                Crear Viaje
+                <i className="fas fa-sparkles"></i>
+                <span>Generar con IA</span>
+              </button>
+              <button
+                onClick={handleCreateTrip}
+                className="flex-1 bg-slate-800 text-slate-300 py-3 rounded-xl font-bold hover:bg-slate-700 transition"
+              >
+                Manual
               </button>
             </div>
           </div>
@@ -247,6 +370,16 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip }) => {
           <p>Planifica, explora y disfruta cada momento</p>
         </div>
       </div>
+
+      {/* AI Generator Modal */}
+      {showAIGenerator && newTripData.baseLocation && (
+        <AIItineraryGenerator
+          city={newTripData.city}
+          country={newTripData.country}
+          onGenerate={handleGenerateWithAI}
+          onCancel={() => setShowAIGenerator(false)}
+        />
+      )}
     </div>
   );
 };
