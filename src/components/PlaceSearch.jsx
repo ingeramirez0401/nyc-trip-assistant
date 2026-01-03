@@ -62,10 +62,10 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-        <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-fade-in-down">
+    <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+        <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-down">
             
-            <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-5 border-b border-white/10 flex items-center gap-4 bg-white/5">
                 <button onClick={() => {
                     if (selectedPlace) {
                         setSelectedPlace(null);
@@ -73,23 +73,23 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                     } else {
                         onClose();
                     }
-                }} className="text-gray-400 hover:text-gray-600">
-                    <i className="fas fa-arrow-left"></i>
+                }} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition">
+                    <i className="fas fa-arrow-left text-sm"></i>
                 </button>
-                <h2 className="font-bold text-lg text-slate-800">
-                    {selectedPlace ? 'Confirmar Lugar' : 'Agregar Lugar'}
+                <h2 className="font-bold text-lg text-white">
+                    {selectedPlace ? 'Confirmar Lugar' : 'Agregar Nuevo Lugar'}
                 </h2>
             </div>
 
             {!selectedPlace ? (
                 <>
-                    <form onSubmit={searchPlaces} className="p-4 bg-gray-50">
+                    <form onSubmit={searchPlaces} className="p-5">
                         <div className="relative">
-                            <i className="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                            <i className="fas fa-search absolute left-4 top-4 text-slate-400"></i>
                             <input 
                                 type="text" 
-                                placeholder="Ej: Harry Potter Store, Katz Delicatessen..." 
-                                className="w-full pl-10 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="Ej: Central Park, Empire State..." 
+                                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-800 border border-white/10 text-white placeholder-slate-500 shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 autoFocus
@@ -97,35 +97,36 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                         </div>
                     </form>
 
-                    <div className="flex-1 overflow-y-auto p-2">
-                {loading && (
-                    <div className="p-8 text-center text-gray-400">
-                        <i className="fas fa-circle-notch fa-spin text-2xl mb-2"></i>
-                        <p>Buscando en NYC...</p>
-                    </div>
-                )}
+                    <div className="flex-1 overflow-y-auto px-5 pb-5 hide-scrollbar">
+                        {loading && (
+                            <div className="py-12 text-center text-slate-500">
+                                <div className="w-12 h-12 rounded-full border-4 border-slate-700 border-t-blue-500 animate-spin mx-auto mb-4"></div>
+                                <p className="font-medium">Buscando en la Gran Manzana...</p>
+                            </div>
+                        )}
 
-                {!loading && results.length === 0 && query && (
-                    <div className="p-8 text-center text-gray-400">
-                        <p>No encontramos lugares. Intenta ser más específico.</p>
-                    </div>
-                )}
+                        {!loading && results.length === 0 && query && (
+                            <div className="py-12 text-center text-slate-500 bg-slate-800/50 rounded-2xl border border-white/5 border-dashed mx-2">
+                                <i className="fas fa-map-signs text-3xl mb-3 opacity-50"></i>
+                                <p>No encontramos lugares con ese nombre.</p>
+                            </div>
+                        )}
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3">
                             {results.map((item) => (
                                 <button 
                                     key={item.place_id}
                                     onClick={() => handleSelectPlace(item)}
-                                    className="text-left p-3 rounded-xl hover:bg-blue-50 transition flex items-start gap-3 group"
+                                    className="text-left p-4 rounded-2xl bg-slate-800/50 hover:bg-slate-800 border border-white/5 hover:border-blue-500/30 transition-all flex items-start gap-4 group active:scale-[0.98]"
                                 >
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition">
+                                    <div className="w-12 h-12 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition shadow-lg">
                                         <i className="fas fa-map-pin"></i>
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800 leading-tight">
+                                        <h3 className="font-bold text-white text-lg leading-tight mb-1 group-hover:text-blue-400 transition">
                                             {item.name || item.display_name.split(',')[0]}
                                         </h3>
-                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                                             {item.display_name}
                                         </p>
                                     </div>
@@ -135,53 +136,61 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                     </div>
                 </>
             ) : (
-                <div className="flex-1 overflow-y-auto p-4">
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="font-bold text-slate-800 text-lg mb-1">{selectedPlace.title}</h3>
-                            <p className="text-sm text-gray-500">{selectedPlace.address}</p>
+                <div className="flex-1 overflow-y-auto p-5 hide-scrollbar">
+                    <div className="space-y-6">
+                        <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5">
+                            <h3 className="font-bold text-white text-xl mb-1">{selectedPlace.title}</h3>
+                            <p className="text-sm text-slate-400 leading-relaxed">{selectedPlace.address}</p>
                         </div>
 
                         {/* Category Selector */}
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Categoría</label>
-                            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Selecciona una Categoría</label>
+                            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
                                         onClick={() => setSelectedCategory(cat.name)}
-                                        className={`p-2 rounded-lg border-2 transition-all ${
+                                        className={`p-3 rounded-xl border transition-all flex flex-col items-center gap-2 ${
                                             selectedCategory === cat.name
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                                ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                                                : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
                                         }`}
                                     >
-                                        <i className={`fas ${cat.icon} text-lg mb-1`} style={{ color: cat.color }}></i>
-                                        <p className="text-[10px] font-medium text-slate-700 truncate">{cat.name}</p>
+                                        <i className={`fas ${cat.icon} text-xl`} style={{ color: selectedCategory === cat.name ? '#60a5fa' : cat.color }}></i>
+                                        <p className={`text-[10px] font-bold truncate w-full text-center ${selectedCategory === cat.name ? 'text-white' : 'text-slate-400'}`}>
+                                            {cat.name}
+                                        </p>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
+                        <div className="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-2xl p-6 text-center transition-colors bg-slate-800/30">
                             {uploadedImage ? (
-                                <div className="relative">
-                                    <img src={uploadedImage} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
-                                    <button 
-                                        onClick={() => setUploadedImage(null)}
-                                        className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs"
-                                    >
-                                        <i className="fas fa-times"></i>
-                                    </button>
+                                <div className="relative group">
+                                    <img src={uploadedImage} alt="Preview" className="w-full h-48 object-cover rounded-xl shadow-lg" />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                                        <button 
+                                            onClick={() => setUploadedImage(null)}
+                                            className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
+                                        >
+                                            <i className="fas fa-trash-alt mr-2"></i> Eliminar
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full py-8 text-gray-400 hover:text-blue-600 transition"
+                                    className="w-full py-4 flex flex-col items-center gap-3 text-slate-400 hover:text-white transition"
                                 >
-                                    <i className="fas fa-camera text-3xl mb-2"></i>
-                                    <p className="text-sm font-medium">Toca para agregar una foto</p>
-                                    <p className="text-xs mt-1">Opcional - Puedes usar tu cámara o galería</p>
+                                    <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-2 shadow-inner">
+                                        <i className="fas fa-camera text-2xl"></i>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-sm font-bold">Agregar foto del lugar</p>
+                                        <p className="text-xs opacity-60 mt-1">Cámara o Galería</p>
+                                    </div>
                                 </button>
                             )}
                             <input 
@@ -195,10 +204,10 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
 
                         <button 
                             onClick={handleConfirmAdd}
-                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition"
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                         >
-                            <i className="fas fa-plus mr-2"></i>
-                            Agregar al itinerario
+                            <i className="fas fa-plus-circle"></i>
+                            <span>Agregar al Itinerario</span>
                         </button>
                     </div>
                 </div>

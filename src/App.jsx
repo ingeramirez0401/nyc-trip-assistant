@@ -4,19 +4,77 @@ import BottomSheet from './components/BottomSheet';
 import DaySelector from './components/DaySelector';
 import PlaceSearch from './components/PlaceSearch';
 import EditPlaceModal from './components/EditPlaceModal';
-import { useItinerary } from './hooks/useItinerary';
+import SideMenu from './components/SideMenu';
+import ItineraryList from './components/ItineraryList';
+import WelcomeScreen from './components/WelcomeScreen';
+import TripSetup from './components/TripSetup';
+import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
+import { testConnection } from './lib/supabase';
 
 function App() {
-  const { days, visited, toggleVisited, addStop, removeStop, updateStopImage, updateStop, reorderStopsByDistance, baseLocation } = useItinerary();
-  
-  const [activeDayId, setActiveDayId] = useState(1);
+  // App State Management
+  const [currentTrip, setCurrentTrip] = useState(null);
+  const [setupMode, setSetupMode] = useState(false);
+  const [activeDayId, setActiveDayId] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [placeToEdit, setPlaceToEdit] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isListOpen, setIsListOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Supabase Hook (only when trip is selected)
+  const { 
+    trip,
+    days, 
+    visited, 
+    loading,
+    error,
+    toggleVisited, 
+    addStop, 
+    removeStop, 
+    updateStopImage, 
+    updateStop, 
+    reorderStopsByDistance, 
+    baseLocation,
+    refreshData 
+  } = useSupabaseItinerary(currentTrip?.id);
+
+  // Test Supabase connection on mount
+  useEffect(() => {
+    const runTests = async () => {
+      await testConnection();
+      // Importar y ejecutar test de inserción
+      const { testInsert } = await import('./lib/supabase');
+      await testInsert();
+    };
+    runTests();
+  }, []);
+
+  // Set first day as active when days load
+  useEffect(() => {
+    if (days.length > 0 && !activeDayId) {
+      setActiveDayId(days[0].id);
+    }
+  }, [days]);
 
   const activeDay = days.find(d => d.id === activeDayId);
+
+  const handleSelectTrip = (trip) => {
+    setCurrentTrip(trip);
+  };
+
+  const handleCreateTrip = (trip) => {
+    setCurrentTrip(trip);
+    setSetupMode(true);
+  };
+
+  const handleSetupComplete = async () => {
+    setSetupMode(false);
+    await refreshData();
+  };
 
   const handleDeleteStop = (stopId) => {
     removeStop(activeDayId, stopId);
@@ -76,8 +134,50 @@ function App() {
     }, 100);
   };
 
+  // Show Welcome Screen if no trip selected
+  if (!currentTrip) {
+    return <WelcomeScreen onSelectTrip={handleSelectTrip} onCreateTrip={handleCreateTrip} />;
+  }
+
+  // Show Setup Screen if in setup mode
+  if (setupMode) {
+    return <TripSetup trip={currentTrip} onComplete={handleSetupComplete} />;
+  }
+
+  // Show Loading State
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white font-medium">Cargando itinerario...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show Error State
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <i className="fas fa-exclamation-triangle text-5xl text-red-500 mb-4"></i>
+          <h2 className="text-2xl font-bold text-white mb-2">Error de Conexión</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Main App UI
   return (
-    <div className="h-screen w-screen overflow-hidden bg-slate-900 relative">
+    <div className={`h-screen w-screen overflow-hidden relative ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
       
       {/* MAPA */}
       <MapComponent 
@@ -87,40 +187,64 @@ function App() {
         onStopClick={handleStopClick}
         userLocation={userLocation}
         visited={visited}
+        isDarkMode={isDarkMode}
       />
 
-      {/* HEADER */}
-      <div className="absolute top-0 left-0 right-0 z-[500] p-4 pointer-events-none">
-        <div className="flex justify-between items-start pointer-events-auto">
-            {/* Title Card */}
-            <div className="glass-panel rounded-2xl p-3 pl-4 flex items-center gap-3 animate-fade-in-down">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg">
-                    <i className="fas fa-plane-departure"></i>
-                </div>
-                <div>
-                    <h1 className="text-sm font-bold text-slate-800 leading-none">NYC 2026</h1>
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                        {activeDay?.title}
-                    </span>
-                </div>
-            </div>
+      {/* HEADER CONTROLS */}
+      <div className="absolute top-6 left-4 z-[500]">
+        <button 
+          onClick={() => setIsMenuOpen(true)}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
+        >
+          <i className="fas fa-bars text-lg"></i>
+        </button>
+      </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-3">
-                <button 
-                  onClick={() => setIsSearchOpen(true)}
-                  className="glass-panel w-11 h-11 rounded-full flex items-center justify-center text-emerald-600 shadow-lg active:scale-90 transition-transform"
-                >
-                    <i className="fas fa-plus"></i>
-                </button>
-                <button 
-                  onClick={() => setSelectedStop(null)} // TODO: Pass center logic if needed or just use this to clear selection
-                  className="glass-dark w-11 h-11 rounded-full flex items-center justify-center text-amber-300 shadow-lg active:scale-90 transition-transform"
-                >
-                    <i className="fas fa-bed"></i>
-                </button>
-            </div>
-        </div>
+      {/* SIDE MENU */}
+      <SideMenu 
+        isOpen={isMenuOpen} 
+        onClose={() => setIsMenuOpen(false)}
+        isDarkMode={isDarkMode}
+        toggleTheme={() => setIsDarkMode(!isDarkMode)}
+        onOpenList={() => setIsListOpen(true)}
+      />
+
+      {/* ITINERARY LIST OVERLAY */}
+      {isListOpen && activeDay && (
+        <ItineraryList 
+          activeDay={activeDay}
+          stops={activeDay.stops}
+          visited={visited}
+          onClose={() => setIsListOpen(false)}
+          onStopClick={(stop) => {
+            handleStopClick(stop);
+            setIsListOpen(false);
+          }}
+          onToggleVisited={toggleVisited}
+          onDelete={handleDeleteStop}
+          onEdit={(place) => {
+              setIsListOpen(false);
+              handleEditPlace(place);
+          }}
+        />
+      )}
+
+      {/* FLOATING ACTION BUTTONS */}
+      <div className="absolute bottom-[170px] right-4 z-[400] flex flex-col gap-3 pointer-events-none">
+        <button 
+          onClick={() => setIsSearchOpen(true)}
+          className="w-12 h-12 rounded-full bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)] flex items-center justify-center hover:bg-blue-500 active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm"
+        >
+            <i className="fas fa-plus text-lg"></i>
+        </button>
+        <button 
+          onClick={() => {
+             setSelectedStop(null);
+          }}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${isDarkMode ? 'bg-slate-900/90 text-amber-400 hover:bg-slate-800' : 'bg-white text-amber-500 hover:bg-slate-50'}`}
+        >
+            <i className="fas fa-bed text-lg"></i>
+        </button>
       </div>
 
       {/* BOTTOM SHEET DETAIL */}
@@ -157,8 +281,8 @@ function App() {
       {/* SEARCH MODAL */}
       {isSearchOpen && (
         <PlaceSearch 
-            onAddPlace={handleAddPlace} 
-            onClose={() => setIsSearchOpen(false)} 
+          onAddPlace={handleAddPlace} 
+          onClose={() => setIsSearchOpen(false)} 
         />
       )}
 

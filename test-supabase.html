@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Connection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .container {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #3b82f6;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+        .success {
+            color: #10b981;
+            border-left-color: #10b981;
+        }
+        .error {
+            color: #ef4444;
+            border-left-color: #ef4444;
+        }
+        .warning {
+            color: #f59e0b;
+            border-left-color: #f59e0b;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        pre {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .status.ok { background: #10b981; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        .status.pending { background: #64748b; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico de Conexión Supabase</h1>
+        
+        <div class="test-section">
+            <h3>📋 Configuración</h3>
+            <p><strong>URL:</strong> <span id="url-display">Cargando...</span></p>
+            <p><strong>Key Type:</strong> <span id="key-type">Analizando...</span></p>
+            <p><strong>Key Length:</strong> <span id="key-length">-</span></p>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Tests</h3>
+            <button onclick="testConnection()">1. Test Conexión Básica</button>
+            <button onclick="testTables()">2. Test Tablas</button>
+            <button onclick="testInsert()">3. Test Inserción</button>
+            <button onclick="testStorage()">4. Test Storage</button>
+            <button onclick="runAllTests()">▶️ Ejecutar Todos</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        // Leer variables de entorno (debes reemplazar con tus valores)
+        const SUPABASE_URL = 'https://devsupabase.cambiosapp.com';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogInNlcnZpY2Vfcm9sZSIsCiAgImlzcyI6ICJzdXBhYmFzZSIsCiAgImlhdCI6IDE3MTUwNTA4MDAsCiAgImV4cCI6IDE4NzI4MTcyMDAKfQ.pG42nkDNNDYyncEGmPJnqCplaBUsmkDcpRLUw76_Lj4';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Mostrar configuración
+        document.getElementById('url-display').textContent = SUPABASE_URL;
+        document.getElementById('key-length').textContent = SUPABASE_KEY.length + ' caracteres';
+
+        // Detectar tipo de key
+        try {
+            const payload = JSON.parse(atob(SUPABASE_KEY.split('.')[1]));
+            const keyType = payload.role || 'unknown';
+            const keyTypeEl = document.getElementById('key-type');
+            
+            if (keyType === 'service_role') {
+                keyTypeEl.innerHTML = '<span class="status fail">SERVICE_ROLE ⚠️</span> (Debería ser "anon")';
+            } else if (keyType === 'anon') {
+                keyTypeEl.innerHTML = '<span class="status ok">ANON ✓</span>';
+            } else {
+                keyTypeEl.innerHTML = '<span class="status fail">' + keyType + '</span>';
+            }
+        } catch (e) {
+            document.getElementById('key-type').innerHTML = '<span class="status fail">Invalid JWT</span>';
+        }
+
+        function addResult(title, status, message, details = null) {
+            const resultsDiv = document.getElementById('results');
+            const section = document.createElement('div');
+            section.className = 'test-section ' + status;
+            
+            let html = `<h3>${title} <span class="status ${status === 'success' ? 'ok' : 'fail'}">${status === 'success' ? '✓' : '✗'}</span></h3>`;
+            html += `<p>${message}</p>`;
+            
+            if (details) {
+                html += `<pre>${JSON.stringify(details, null, 2)}</pre>`;
+            }
+            
+            section.innerHTML = html;
+            resultsDiv.appendChild(section);
+        }
+
+        window.testConnection = async function() {
+            document.getElementById('results').innerHTML = '';
+            try {
+                const { data, error } = await supabase.from('trips').select('count');
+                
+                if (error) throw error;
+                
+                addResult('Test de Conexión', 'success', 'Conexión exitosa a Supabase', { 
+                    message: 'La base de datos responde correctamente',
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                addResult('Test de Conexión', 'error', 'Error al conectar', {
+                    error: error.message,
+                    code: error.code,
+                    details: error.details
+                });
+            }
+        };
+
+        window.testTables = async function() {
+            document.getElementById('results').innerHTML = '';
+            const tables = ['trips', 'days', 'stops'];
+            
+            for (const table of tables) {
+                try {
+                    const { data, error } = await supabase.from(table).select('*').limit(1);
+                    
+                    if (error) throw error;
+                    
+                    addResult(`Tabla: ${table}`, 'success', `Tabla accesible (${data.length} registros de prueba)`, data);
+                } catch (error) {
+                    addResult(`Tabla: ${table}`, 'error', 'Error al acceder a la tabla', {
+                        error: error.message,
+                        hint: error.hint
+                    });
+                }
+            }
+        };
+
+        window.testInsert = async function() {
+            document.getElementById('results').innerHTML = '';
+            try {
+                // Intentar crear un viaje de prueba
+                const { data, error } = await supabase
+                    .from('trips')
+                    .insert([{
+                        name: 'Test Trip',
+                        city: 'Test City',
+                        country: 'Test Country'
+                    }])
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                addResult('Test de Inserción', 'success', 'Viaje de prueba creado exitosamente', data);
+                
+                // Limpiar - eliminar el viaje de prueba
+                await supabase.from('trips').delete().eq('id', data.id);
+                addResult('Limpieza', 'success', 'Viaje de prueba eliminado');
+                
+            } catch (error) {
+                addResult('Test de Inserción', 'error', 'Error al insertar datos', {
+                    error: error.message,
+                    code: error.code,
+                    hint: error.hint
+                });
+            }
+        };
+
+        window.testStorage = async function() {
+            document.getElementById('results').innerHTML = '';
+            try {
+                const { data, error } = await supabase.storage.getBucket('trip-images');
+                
+                if (error) throw error;
+                
+                addResult('Test de Storage', 'success', 'Bucket "trip-images" encontrado', data);
+            } catch (error) {
+                addResult('Test de Storage', 'error', 'Error al acceder al bucket', {
+                    error: error.message,
+                    hint: 'Verifica que el bucket "trip-images" existe en Storage'
+                });
+            }
+        };
+
+        window.runAllTests = async function() {
+            document.getElementById('results').innerHTML = '';
+            await testConnection();
+            await new Promise(r => setTimeout(r, 500));
+            await testTables();
+            await new Promise(r => setTimeout(r, 500));
+            await testInsert();
+            await new Promise(r => setTimeout(r, 500));
+            await testStorage();
+        };
+
+        // Auto-run connection test on load
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 500);
+        });
+    </script>
+</body>
+</html>

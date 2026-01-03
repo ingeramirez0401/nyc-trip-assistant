@@ -40,48 +40,50 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
   const showImage = currentImage && (currentImage.startsWith('http') || currentImage.startsWith('data:image'));
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-down">
+    <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+      <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-down">
         
         {/* Header */}
-        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <i className="fas fa-times"></i>
+        <div className="p-5 border-b border-white/10 flex items-center gap-4 bg-white/5">
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition">
+            <i className="fas fa-times text-sm"></i>
           </button>
-          <h2 className="font-bold text-lg text-slate-800">Editar Lugar</h2>
+          <h2 className="font-bold text-lg text-white">Editar Lugar</h2>
         </div>
 
         {/* Form */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-5 space-y-6 hide-scrollbar">
           
           {/* Title */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre del lugar</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Nombre del lugar</label>
             <input 
               type="text"
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-3.5 rounded-xl bg-slate-800 border border-white/10 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-600"
               placeholder="Ej: Times Square"
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Categoría</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Categoría</label>
             <div className="grid grid-cols-3 gap-2">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => handleChange('cat', cat.name)}
-                  className={`p-3 rounded-xl border-2 transition-all ${
+                  className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${
                     formData.cat === cat.name
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                      : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
                   }`}
                 >
-                  <i className={`fas ${cat.icon} text-xl mb-1`} style={{ color: cat.color }}></i>
-                  <p className="text-xs font-medium text-slate-700 truncate">{cat.name}</p>
+                  <i className={`fas ${cat.icon} text-lg`} style={{ color: formData.cat === cat.name ? '#60a5fa' : cat.color }}></i>
+                  <p className={`text-[10px] font-bold truncate w-full text-center ${formData.cat === cat.name ? 'text-white' : 'text-slate-400'}`}>
+                      {cat.name}
+                  </p>
                 </button>
               ))}
             </div>
@@ -89,11 +91,11 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
 
           {/* Tip */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Consejo</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Consejo de Viajero</label>
             <textarea 
               value={formData.tip}
               onChange={(e) => handleChange('tip', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+              className="w-full px-4 py-3.5 rounded-xl bg-slate-800 border border-white/10 text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none placeholder-slate-600"
               rows="3"
               placeholder="Ej: Mejor vista desde las escaleras rojas"
             />
@@ -101,40 +103,44 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
 
           {/* Time */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Tiempo sugerido</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Tiempo sugerido</label>
             <input 
               type="text"
               value={formData.time}
               onChange={(e) => handleChange('time', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-3.5 rounded-xl bg-slate-800 border border-white/10 text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-slate-600"
               placeholder="Ej: 45 min"
             />
           </div>
 
           {/* Image */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Imagen</label>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Imagen</label>
+            <div className="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-2xl p-4 text-center bg-slate-800/30 transition-colors">
               {showImage ? (
-                <div className="relative">
-                  <img src={currentImage} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
-                  <button 
-                    onClick={() => {
-                      setUploadedImage(null);
-                      handleChange('img', '');
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
+                <div className="relative group">
+                  <img src={currentImage} alt="Preview" className="w-full h-40 object-cover rounded-xl shadow-lg" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                    <button 
+                      onClick={() => {
+                        setUploadedImage(null);
+                        handleChange('img', '');
+                      }}
+                      className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
+                    >
+                      <i className="fas fa-trash-alt mr-2"></i> Eliminar
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-8 text-gray-400 hover:text-blue-600 transition"
+                  className="w-full py-6 flex flex-col items-center gap-2 text-slate-400 hover:text-white transition"
                 >
-                  <i className="fas fa-camera text-3xl mb-2"></i>
-                  <p className="text-sm font-medium">Toca para cambiar la foto</p>
+                  <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center shadow-inner">
+                    <i className="fas fa-camera text-xl"></i>
+                  </div>
+                  <span className="text-sm font-bold">Cambiar foto</span>
                 </button>
               )}
               <input 
@@ -149,19 +155,19 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
         </div>
 
         {/* Actions */}
-        <div className="p-4 border-t border-gray-100 space-y-2">
-          <button 
-            onClick={handleSave}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition"
-          >
-            <i className="fas fa-save mr-2"></i>
-            Guardar cambios
-          </button>
+        <div className="p-5 border-t border-white/10 flex gap-3 bg-white/5">
           <button 
             onClick={onClose}
-            className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"
+            className="flex-1 bg-slate-800 text-slate-300 py-3.5 rounded-xl font-bold hover:bg-slate-700 transition"
           >
             Cancelar
+          </button>
+          <button 
+            onClick={handleSave}
+            className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <i className="fas fa-save"></i>
+            Guardar Cambios
           </button>
         </div>
       </div>
