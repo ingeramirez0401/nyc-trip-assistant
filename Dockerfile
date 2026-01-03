@@ -3,6 +3,18 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Declarar build arguments para Supabase
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_SUPABASE_SERVICE_KEY
+ARG VITE_SUPABASE_JWT_SECRET
+
+# Convertir ARG a ENV para que estén disponibles durante el build
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_SERVICE_KEY=$VITE_SUPABASE_SERVICE_KEY
+ENV VITE_SUPABASE_JWT_SECRET=$VITE_SUPABASE_JWT_SECRET
+
 # Copy package files
 COPY package*.json ./
 
@@ -12,7 +24,7 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application (Vite inyectará las variables de entorno aquí)
 RUN npm run build
 
 # Production stage
