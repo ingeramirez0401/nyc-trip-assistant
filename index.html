@@ -23,6 +23,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Unregister old service workers to clear PWA cache -->
+    <script src="/unregister-sw.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -63,9 +63,9 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-        <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-down">
+        <div className="bg-white dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-down transition-colors duration-300">
             
-            <div className="p-5 border-b border-white/10 flex items-center gap-4 bg-white/5">
+            <div className="p-5 border-b border-slate-200 dark:border-white/10 flex items-center gap-4 bg-slate-50 dark:bg-white/5">
                 <button onClick={() => {
                     if (selectedPlace) {
                         setSelectedPlace(null);
@@ -73,10 +73,10 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                     } else {
                         onClose();
                     }
-                }} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition">
+                }} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white hover:bg-slate-300 dark:hover:bg-white/20 transition">
                     <i className="fas fa-arrow-left text-sm"></i>
                 </button>
-                <h2 className="font-bold text-lg text-white">
+                <h2 className="font-bold text-lg text-slate-900 dark:text-white">
                     {selectedPlace ? 'Confirmar Lugar' : 'Agregar Nuevo Lugar'}
                 </h2>
             </div>
@@ -89,7 +89,7 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                             <input 
                                 type="text" 
                                 placeholder="Ej: Central Park, Empire State..." 
-                                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-800 border border-white/10 text-white placeholder-slate-500 shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-500 shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 autoFocus
@@ -100,13 +100,13 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                     <div className="flex-1 overflow-y-auto px-5 pb-5 hide-scrollbar">
                         {loading && (
                             <div className="py-12 text-center text-slate-500">
-                                <div className="w-12 h-12 rounded-full border-4 border-slate-700 border-t-blue-500 animate-spin mx-auto mb-4"></div>
+                                <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-blue-500 animate-spin mx-auto mb-4"></div>
                                 <p className="font-medium">Buscando en la Gran Manzana...</p>
                             </div>
                         )}
 
                         {!loading && results.length === 0 && query && (
-                            <div className="py-12 text-center text-slate-500 bg-slate-800/50 rounded-2xl border border-white/5 border-dashed mx-2">
+                            <div className="py-12 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5 border-dashed mx-2">
                                 <i className="fas fa-map-signs text-3xl mb-3 opacity-50"></i>
                                 <p>No encontramos lugares con ese nombre.</p>
                             </div>
@@ -117,16 +117,16 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                                 <button 
                                     key={item.place_id}
                                     onClick={() => handleSelectPlace(item)}
-                                    className="text-left p-4 rounded-2xl bg-slate-800/50 hover:bg-slate-800 border border-white/5 hover:border-blue-500/30 transition-all flex items-start gap-4 group active:scale-[0.98]"
+                                    className="text-left p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all flex items-start gap-4 group active:scale-[0.98]"
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition shadow-lg">
+                                    <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition shadow-lg">
                                         <i className="fas fa-map-pin"></i>
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-white text-lg leading-tight mb-1 group-hover:text-blue-400 transition">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
                                             {item.name || item.display_name.split(',')[0]}
                                         </h3>
-                                        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                                             {item.display_name}
                                         </p>
                                     </div>
@@ -138,9 +138,9 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
             ) : (
                 <div className="flex-1 overflow-y-auto p-5 hide-scrollbar">
                     <div className="space-y-6">
-                        <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5">
-                            <h3 className="font-bold text-white text-xl mb-1">{selectedPlace.title}</h3>
-                            <p className="text-sm text-slate-400 leading-relaxed">{selectedPlace.address}</p>
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
+                            <h3 className="font-bold text-slate-900 dark:text-white text-xl mb-1">{selectedPlace.title}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{selectedPlace.address}</p>
                         </div>
 
                         {/* Category Selector */}
@@ -153,12 +153,12 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                                         onClick={() => setSelectedCategory(cat.name)}
                                         className={`p-3 rounded-xl border transition-all flex flex-col items-center gap-2 ${
                                             selectedCategory === cat.name
-                                                ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
-                                                : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
+                                                ? 'bg-blue-500/10 dark:bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                                                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                     >
-                                        <i className={`fas ${cat.icon} text-xl`} style={{ color: selectedCategory === cat.name ? '#60a5fa' : cat.color }}></i>
-                                        <p className={`text-[10px] font-bold truncate w-full text-center ${selectedCategory === cat.name ? 'text-white' : 'text-slate-400'}`}>
+                                        <i className={`fas ${cat.icon} text-xl`} style={{ color: selectedCategory === cat.name ? '#3b82f6' : cat.color }}></i>
+                                        <p className={`text-[10px] font-bold truncate w-full text-center ${selectedCategory === cat.name ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
                                             {cat.name}
                                         </p>
                                     </button>
@@ -166,7 +166,7 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                             </div>
                         </div>
 
-                        <div className="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-2xl p-6 text-center transition-colors bg-slate-800/30">
+                        <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-2xl p-6 text-center transition-colors bg-slate-50 dark:bg-slate-800/30">
                             {uploadedImage ? (
                                 <div className="relative group">
                                     <img src={uploadedImage} alt="Preview" className="w-full h-48 object-cover rounded-xl shadow-lg" />
@@ -182,13 +182,13 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                             ) : (
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full py-4 flex flex-col items-center gap-3 text-slate-400 hover:text-white transition"
+                                    className="w-full py-4 flex flex-col items-center gap-3 text-slate-400 hover:text-slate-600 dark:hover:text-white transition"
                                 >
-                                    <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-2 shadow-inner">
-                                        <i className="fas fa-camera text-2xl"></i>
+                                    <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center mb-2 shadow-inner">
+                                        <i className="fas fa-camera text-2xl text-slate-500 dark:text-slate-400"></i>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-sm font-bold">Agregar foto del lugar</p>
+                                        <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Agregar foto del lugar</p>
                                         <p className="text-xs opacity-60 mt-1">Cámara o Galería</p>
                                     </div>
                                 </button>

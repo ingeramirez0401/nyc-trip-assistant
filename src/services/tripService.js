@@ -46,6 +46,7 @@ export const tripService = {
         base_location_title: cleanString(tripData.baseLocation?.title),
         base_location_desc: cleanString(tripData.baseLocation?.desc),
         base_location_img: cleanString(tripData.baseLocation?.img),
+        user_id: tripData.user_id || null, // Add user_id association
       };
       
       console.log('📝 Inserting trip data:', insertData);

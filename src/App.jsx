@@ -33,6 +33,15 @@ function App() {
   // Geolocalización en tiempo real (solo si está habilitada)
   const { location: userLocation, error: geoError } = useGeolocation(gpsEnabled);
 
+  // Efecto para aplicar la clase 'dark' al html tag
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   // Supabase Hook (only when trip is selected)
   const { 
     trip,
@@ -54,9 +63,6 @@ function App() {
   useEffect(() => {
     const runTests = async () => {
       await testConnection();
-      // Importar y ejecutar test de inserción
-      const { testInsert } = await import('./lib/supabase');
-      await testInsert();
     };
     runTests();
   }, []);
@@ -105,6 +111,8 @@ function App() {
   const handleStopClick = (stop) => {
     setSelectedStop(stop);
   };
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   const handleCenterOnUser = () => {
     if (!gpsEnabled) {
@@ -169,7 +177,14 @@ function App() {
 
   // Show Welcome Screen if no trip selected
   if (!currentTrip) {
-    return <WelcomeScreen onSelectTrip={handleSelectTrip} onCreateTrip={handleCreateTrip} />;
+    return (
+      <WelcomeScreen 
+        onSelectTrip={handleSelectTrip} 
+        onCreateTrip={handleCreateTrip} 
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+      />
+    );
   }
 
   // Show Setup Screen if in setup mode
@@ -232,6 +247,15 @@ function App() {
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
         >
           <i className="fas fa-bars text-lg"></i>
+        </button>
+      </div>
+
+      <div className="absolute top-6 right-4 z-[500]">
+        <button 
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
+        >
+          <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
         </button>
       </div>
 

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import LocationSearchInput from './LocationSearchInput';
+import { useToast } from '../contexts/ToastContext';
 
 const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
+  const toast = useToast();
+  const [step, setStep] = useState(1);
   const [numDays, setNumDays] = useState(3);
   const [interests, setInterests] = useState([]);
   const [budget, setBudget] = useState('medium');
@@ -18,6 +21,8 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
     { id: 'adventure', label: '⛰️ Aventura', icon: 'fa-hiking' },
     { id: 'culture', label: '🎭 Cultura', icon: 'fa-masks-theater' }
   ];
+
+  const totalSteps = 4;
 
   const toggleInterest = (id) => {
     setInterests(prev => 
@@ -36,9 +41,17 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
     });
   };
 
+  const handleNext = () => {
+    if (step < totalSteps) setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
   const handleGenerate = async () => {
     if (interests.length === 0) {
-      alert('Selecciona al menos un interés');
+      toast.warning('Selecciona al menos un interés');
       return;
     }
 
@@ -47,207 +60,230 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
       await onGenerate({ numDays, interests, budget, baseLocation });
     } catch (error) {
       console.error('Error generating:', error);
-      alert('Error al generar itinerario. Por favor intenta de nuevo.');
+      toast.error('Error al generar itinerario. Por favor intenta de nuevo.');
     } finally {
       setGenerating(false);
     }
   };
 
+  const getStepTitle = () => {
+    switch(step) {
+      case 1: return 'Duración del Viaje';
+      case 2: return 'Intereses';
+      case 3: return 'Presupuesto';
+      case 4: return 'Alojamiento';
+      default: return '';
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[3000] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-white/10">
+    <div className="fixed inset-0 z-[3000] bg-white dark:bg-slate-900 md:bg-black/80 md:backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 w-full md:w-full md:max-w-xl md:rounded-3xl shadow-2xl overflow-hidden border-none md:border md:border-slate-200 dark:md:border-white/10 flex flex-col h-full md:h-auto md:max-h-[85vh]">
         
         {/* Header */}
-        <div className="p-6 border-b border-white/10 bg-white/5">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
-              <i className="fas fa-sparkles text-2xl text-white"></i>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white">Generar con IA</h2>
-              <p className="text-blue-300 text-sm">
-                <i className="fas fa-map-marked-alt mr-2"></i>
-                {city}, {country}
-              </p>
-            </div>
+        <div className="p-6 border-b border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 shrink-0 safe-top">
+          <div className="flex items-center justify-between mb-4">
             <button 
-              onClick={onCancel}
-              className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition"
+              onClick={step > 1 ? handleBack : onCancel}
+              className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 flex items-center justify-center text-slate-700 dark:text-white transition"
             >
-              <i className="fas fa-times"></i>
+              <i className={`fas ${step > 1 ? 'fa-arrow-left' : 'fa-times'}`}></i>
             </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-          
-          {/* Number of Days */}
-          <div>
-            <label className="block text-sm font-bold text-slate-300 mb-3 uppercase tracking-wider">
-              ¿Cuántos días?
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                <button
-                  key={num}
-                  onClick={() => setNumDays(num)}
-                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                    numDays === num
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                      : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
+            <div className="text-center">
+              <span className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">Paso {step} de {totalSteps}</span>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{getStepTitle()}</h2>
             </div>
+            <div className="w-10"></div> {/* Spacer for alignment */}
           </div>
 
-          {/* Base Location (Optional) */}
-          <div>
-            <label className="block text-sm font-bold text-slate-300 mb-3 uppercase tracking-wider">
-              <i className="fas fa-hotel mr-2"></i>
-              Ubicación Base (Opcional)
-            </label>
-            <p className="text-xs text-slate-400 mb-3">Busca tu hotel, Airbnb o punto de partida principal</p>
-            <LocationSearchInput
-              onLocationSelect={handleLocationSelect}
-              placeholder={`Busca tu alojamiento en ${city}...`}
+          {/* Progress Bar */}
+          <div className="h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-blue-500 transition-all duration-300 ease-out"
+              style={{ width: `${(step / totalSteps) * 100}%` }}
             />
-            {baseLocation && (
-              <div className="mt-3 p-4 bg-green-900/20 border border-green-500/30 rounded-xl animate-fade-in">
-                <div className="flex items-start gap-3">
-                  <i className="fas fa-map-marker-alt text-green-400 mt-1"></i>
-                  <div className="flex-1">
-                    <p className="text-green-400 font-medium">{baseLocation.title}</p>
-                    <p className="text-green-500/70 text-sm mt-1">{baseLocation.desc}</p>
-                    <p className="text-green-500/50 text-xs mt-2">
-                      📍 {baseLocation.lat.toFixed(4)}, {baseLocation.lng.toFixed(4)}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setBaseLocation(null)}
-                    className="text-green-500/50 hover:text-green-400 transition"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Interests */}
-          <div>
-            <label className="block text-sm font-bold text-slate-300 mb-3 uppercase tracking-wider">
-              ¿Qué te interesa? (Selecciona varios)
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {interestOptions.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => toggleInterest(option.id)}
-                  className={`p-4 rounded-xl border transition-all flex flex-col items-center gap-2 ${
-                    interests.includes(option.id)
-                      ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
-                      : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
-                  }`}
-                >
-                  <i className={`fas ${option.icon} text-2xl ${interests.includes(option.id) ? 'text-blue-400' : 'text-slate-400'}`}></i>
-                  <span className={`text-xs font-bold ${interests.includes(option.id) ? 'text-white' : 'text-slate-400'}`}>
-                    {option.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Budget */}
-          <div>
-            <label className="block text-sm font-bold text-slate-300 mb-3 uppercase tracking-wider">
-              Presupuesto
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                onClick={() => setBudget('low')}
-                className={`p-4 rounded-xl border transition-all ${
-                  budget === 'low'
-                    ? 'bg-green-600/20 border-green-500 shadow-lg'
-                    : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
-                }`}
-              >
-                <div className="text-2xl mb-2">💰</div>
-                <div className={`text-sm font-bold ${budget === 'low' ? 'text-white' : 'text-slate-400'}`}>
-                  Económico
-                </div>
-              </button>
-              <button
-                onClick={() => setBudget('medium')}
-                className={`p-4 rounded-xl border transition-all ${
-                  budget === 'medium'
-                    ? 'bg-blue-600/20 border-blue-500 shadow-lg'
-                    : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
-                }`}
-              >
-                <div className="text-2xl mb-2">💵</div>
-                <div className={`text-sm font-bold ${budget === 'medium' ? 'text-white' : 'text-slate-400'}`}>
-                  Moderado
-                </div>
-              </button>
-              <button
-                onClick={() => setBudget('high')}
-                className={`p-4 rounded-xl border transition-all ${
-                  budget === 'high'
-                    ? 'bg-purple-600/20 border-purple-500 shadow-lg'
-                    : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
-                }`}
-              >
-                <div className="text-2xl mb-2">💎</div>
-                <div className={`text-sm font-bold ${budget === 'high' ? 'text-white' : 'text-slate-400'}`}>
-                  Premium
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Info Box */}
-          <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <i className="fas fa-info-circle text-blue-400 mt-1"></i>
-              <div className="text-sm text-blue-200">
-                <p className="font-bold mb-1">La IA creará un itinerario personalizado</p>
-                <p className="text-blue-300/80">Incluirá lugares reales con coordenadas, tips locales y tiempos estimados optimizados por distancia.</p>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-white/10 bg-white/5 flex gap-3">
-          <button
-            onClick={onCancel}
-            disabled={generating}
-            className="flex-1 bg-slate-800 text-slate-300 py-4 rounded-xl font-bold hover:bg-slate-700 transition disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleGenerate}
-            disabled={generating || interests.length === 0}
-            className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {generating ? (
-              <>
-                <i className="fas fa-circle-notch fa-spin"></i>
-                <span>Generando con IA...</span>
-              </>
-            ) : (
-              <>
-                <i className="fas fa-sparkles"></i>
-                <span>Generar Itinerario</span>
-              </>
-            )}
-          </button>
+        {/* Content - Scrollable */}
+        <div className="p-6 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
+          
+          {/* Step 1: Duration */}
+          {step === 1 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">📅</span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¿Cuántos días?</h3>
+                <p className="text-slate-500 dark:text-slate-400">Define la duración de tu aventura en {city}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => setNumDays(num)}
+                    className={`p-4 rounded-xl font-bold transition-all border-2 ${
+                      numDays === num
+                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg scale-105'
+                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="text-xl block mb-1">{num}</span>
+                    <span className="text-xs uppercase opacity-70">{num === 1 ? 'Día' : 'Días'}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Interests */}
+          {step === 2 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center mb-6">
+                 <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">✨</span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¿Qué te apasiona?</h3>
+                <p className="text-slate-500 dark:text-slate-400">Selecciona al menos uno para personalizar tu viaje</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {interestOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => toggleInterest(option.id)}
+                    className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 text-center ${
+                      interests.includes(option.id)
+                        ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-500 shadow-lg'
+                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <i className={`fas ${option.icon} text-2xl ${interests.includes(option.id) ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`}></i>
+                    <span className={`text-sm font-bold ${interests.includes(option.id) ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
+                      {option.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Budget */}
+          {step === 3 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">💸</span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Tu Presupuesto</h3>
+                <p className="text-slate-500 dark:text-slate-400">Para recomendarte los mejores lugares</p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { id: 'low', icon: '💰', label: 'Económico', desc: 'Ahorro máximo, lugares gratuitos' },
+                  { id: 'medium', icon: '💵', label: 'Moderado', desc: 'Equilibrio entre calidad y precio' },
+                  { id: 'high', icon: '💎', label: 'Premium', desc: 'Experiencias exclusivas' }
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setBudget(opt.id)}
+                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 text-left ${
+                      budget === opt.id
+                        ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-500 shadow-lg'
+                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="text-3xl">{opt.icon}</span>
+                    <div>
+                      <div className={`font-bold ${budget === opt.id ? 'text-blue-700 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>{opt.label}</div>
+                      <div className="text-xs text-slate-500">{opt.desc}</div>
+                    </div>
+                    {budget === opt.id && <i className="fas fa-check-circle text-blue-500 ml-auto text-xl"></i>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Base Location */}
+          {step === 4 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">🏨</span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¿Dónde te hospedas?</h3>
+                <p className="text-slate-500 dark:text-slate-400">Opcional: Para optimizar tus rutas diarias</p>
+              </div>
+
+              <LocationSearchInput
+                onLocationSelect={handleLocationSelect}
+                placeholder={`Busca tu hotel en ${city}...`}
+              />
+
+              {baseLocation && (
+                <div className="mt-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 rounded-xl animate-fade-in">
+                  <div className="flex items-start gap-3">
+                    <i className="fas fa-map-marker-alt text-green-600 dark:text-green-400 mt-1"></i>
+                    <div className="flex-1">
+                      <p className="text-green-800 dark:text-green-400 font-medium">{baseLocation.title}</p>
+                      <p className="text-green-600 dark:text-green-500/70 text-sm mt-1">{baseLocation.desc}</p>
+                    </div>
+                    <button
+                      onClick={() => setBaseLocation(null)}
+                      className="text-green-600/50 hover:text-green-600 dark:text-green-500/50 dark:hover:text-green-400 transition"
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-xl p-4 mt-6">
+                <div className="flex items-start gap-3">
+                  <i className="fas fa-info-circle text-blue-500 dark:text-blue-400 mt-1"></i>
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    La IA usará esta ubicación para planear el inicio y fin de tus días.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5 shrink-0">
+          {step < totalSteps ? (
+            <button
+              onClick={handleNext}
+              disabled={step === 2 && interests.length === 0}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <span>Continuar</span>
+              <i className="fas fa-arrow-right"></i>
+            </button>
+          ) : (
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-4 rounded-xl font-bold shadow-lg shadow-emerald-900/50 hover:shadow-emerald-900/80 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {generating ? (
+                <>
+                  <i className="fas fa-circle-notch fa-spin"></i>
+                  <span>Creando tu viaje...</span>
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-sparkles"></i>
+                  <span>Generar Itinerario</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

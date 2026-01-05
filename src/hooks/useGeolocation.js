@@ -33,28 +33,42 @@ export const useGeolocation = (enabled = false, options = {}) => {
     };
 
     const handleError = (err) => {
-      setError(err.message);
+      let errorMessage = 'Error al obtener ubicación';
+      
+      switch(err.code) {
+        case err.PERMISSION_DENIED:
+          errorMessage = 'Permisos de ubicación denegados. Por favor, habilita los permisos en la configuración de tu dispositivo.';
+          break;
+        case err.POSITION_UNAVAILABLE:
+          errorMessage = 'Ubicación no disponible';
+          break;
+        case err.TIMEOUT:
+          errorMessage = 'Tiempo de espera agotado';
+          break;
+        default:
+          errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setLoading(false);
     };
 
-    // Obtener posición inicial
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
+    // Configuración optimizada para iOS
+    const geoOptions = {
       enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0,
+      timeout: 10000, // Aumentado para iOS
+      maximumAge: 5000, // Permitir caché reciente en iOS
       ...options
-    });
+    };
+
+    // Obtener posición inicial con manejo de permisos explícito
+    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
 
     // Seguir actualizando la posición
     const watchId = navigator.geolocation.watchPosition(
       handleSuccess,
       handleError,
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
-        ...options
-      }
+      geoOptions
     );
 
     return () => navigator.geolocation.clearWatch(watchId);

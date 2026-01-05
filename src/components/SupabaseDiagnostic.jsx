@@ -92,6 +92,28 @@ const SupabaseDiagnostic = () => {
       addTest('🔍 SELECT trips', 'error', 'Excepción', err.message);
     }
 
+    // 4.1 Test de tabla profiles (Auth check)
+    addTest('👤 SELECT profiles', 'running', 'Intentando leer tabla profiles (Auth check)...');
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .limit(1);
+
+      if (error) {
+        // Si el error es 42P01, la tabla no existe (normal si aún no hemos corrido migraciones)
+        if (error.code === '42P01') {
+           addTest('👤 SELECT profiles', 'warning', 'Tabla profiles no existe aún', error.message);
+        } else {
+           addTest('👤 SELECT profiles', 'error', `Error Auth/RLS: ${error.message}`, error);
+        }
+      } else {
+        addTest('👤 SELECT profiles', 'success', `Acceso correcto. Registros: ${data?.length || 0}`, data);
+      }
+    } catch (err) {
+      addTest('👤 SELECT profiles', 'error', 'Excepción crítica', err.message);
+    }
+
     // 5. Test de INSERT en trips
     addTest('➕ INSERT trips', 'running', 'Intentando insertar en trips...');
     try {
@@ -255,8 +277,8 @@ const SupabaseDiagnostic = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="fixed inset-0 h-screen w-screen overflow-y-auto bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-4 z-[9999]">
+      <div className="max-w-4xl mx-auto pb-20">
         <h1 className="text-3xl font-bold mb-2 text-center">🔧 Supabase Diagnostic</h1>
         <p className="text-gray-400 text-center mb-6">Herramienta de diagnóstico para conexión con Supabase</p>
 
