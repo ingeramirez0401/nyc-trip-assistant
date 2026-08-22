@@ -41,7 +41,7 @@ export const testConnection = async () => {
     console.log('URL:', supabaseUrl);
     console.log('Key length:', supabaseAnonKey?.length);
     
-    const { data, error } = await supabase.from('trippulse_trips').select('count');
+    const { error } = await supabase.from('trippulse_trips').select('count');
     if (error) {
       console.error('❌ Connection test failed:', error);
       throw error;
