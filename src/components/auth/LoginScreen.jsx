@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
-const LoginScreen = ({ onClose, onLoginSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialMode !== 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');

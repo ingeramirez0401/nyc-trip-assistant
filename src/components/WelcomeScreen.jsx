@@ -6,6 +6,7 @@ import { generateItinerary } from '../services/aiService';
 import LocationSearchInput from './LocationSearchInput';
 import AIItineraryGenerator from './AIItineraryGenerator';
 import LoginScreen from './auth/LoginScreen';
+import PlansSection from './PlansSection';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { profileService } from '../services/profileService';
@@ -17,6 +18,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [loginMode, setLoginMode] = useState('login');
   const [newTripData, setNewTripData] = useState({
     name: '',
     city: '',
@@ -115,8 +117,20 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
     });
   };
 
+  const handleStartFree = () => {
+    setLoginMode('signup');
+    setShowLogin(true);
+  };
+
+  const handleStartVIP = () => {
+    toast.info('El plan VIP se activa después de crear tu cuenta. Contáctanos para completar la actualización.');
+    setLoginMode('signup');
+    setShowLogin(true);
+  };
+
   const handleStartCreate = () => {
     if (!user) {
+      setLoginMode('login');
       setShowLogin(true);
       return;
     }
@@ -338,8 +352,13 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
           <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">Descubre. Planifica. Vive.</p>
         </div>
 
-        {/* Trips List or Empty State */}
-        {trips.length === 0 && !showCreateForm ? (
+        {/* Plans: solo para visitantes sin cuenta */}
+        {!user && !showCreateForm && (
+          <PlansSection onStartFree={handleStartFree} onStartVIP={handleStartVIP} />
+        )}
+
+        {/* Trips List or Empty State (solo con sesión activa) */}
+        {user && trips.length === 0 && !showCreateForm ? (
           <div className="max-w-md w-full text-center mb-8">
             <div className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-12 mb-6 shadow-xl dark:shadow-none">
               <i className="fas fa-map-marked-alt text-6xl text-blue-400 mb-6 opacity-50"></i>
@@ -349,7 +368,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
               </p>
             </div>
           </div>
-        ) : !showCreateForm ? (
+        ) : user && !showCreateForm ? (
           <div className="max-w-2xl w-full mb-8">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">Tus Viajes</h2>
             <div className="grid gap-4">
@@ -490,7 +509,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
               </button>
             </div>
           </div>
-        ) : (
+        ) : user ? (
           <button
             onClick={handleStartCreate}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-2xl shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-95 transition-all w-full md:w-auto"
@@ -498,7 +517,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
             <i className="fas fa-plus-circle mr-2 md:mr-3"></i>
             Crear Nuevo Viaje
           </button>
-        )}
+        ) : null}
 
         {/* Footer */}
         <div className="mt-12 text-center text-slate-500 dark:text-slate-300 text-sm">
@@ -519,6 +538,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
       {/* Login Modal */}
       {showLogin && (
         <LoginScreen
+          initialMode={loginMode}
           onClose={() => setShowLogin(false)}
           onLoginSuccess={() => {
             setShowLogin(false);
