@@ -157,7 +157,7 @@ const MapComponent = ({
           })}
         >
           <Popup className="custom-popup">
-            <div class="text-slate-900 font-bold">📍 Tu ubicación</div>
+            <div className="text-slate-900 font-bold">📍 Tu ubicación</div>
           </Popup>
         </Marker>
       )}
@@ -177,7 +177,7 @@ const MapComponent = ({
           }}
         >
           <Popup className="custom-popup">
-             <div class="text-slate-900 font-bold">{stop.title}</div>
+             <div className="text-slate-900 font-bold">{stop.title}</div>
           </Popup>
         </Marker>
       ))}

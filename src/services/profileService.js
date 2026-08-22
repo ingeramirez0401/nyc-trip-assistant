@@ -4,7 +4,7 @@ export const profileService = {
   // Get profile by ID
   async getProfile(userId) {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('trippulse_profiles')
       .select('*')
       .eq('id', userId)
       .single();
@@ -16,7 +16,7 @@ export const profileService = {
   // Update profile data
   async updateProfile(userId, updates) {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('trippulse_profiles')
       .update(updates)
       .eq('id', userId)
       .select()
@@ -34,7 +34,7 @@ export const profileService = {
     
     // Fallback client-side increment
     const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
+      .from('trippulse_profiles')
       .select('trips_created_count')
       .eq('id', userId)
       .single();
@@ -44,7 +44,7 @@ export const profileService = {
     const newCount = (profile.trips_created_count || 0) + 1;
 
     const { data, error } = await supabase
-      .from('profiles')
+      .from('trippulse_profiles')
       .update({ trips_created_count: newCount })
       .eq('id', userId)
       .select()
@@ -57,7 +57,7 @@ export const profileService = {
   // Increment AI generation usage
   async incrementAIUsage(userId) {
     const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
+      .from('trippulse_profiles')
       .select('ai_generations_used')
       .eq('id', userId)
       .single();
@@ -67,7 +67,7 @@ export const profileService = {
     const newCount = (profile.ai_generations_used || 0) + 1;
 
     const { data, error } = await supabase
-      .from('profiles')
+      .from('trippulse_profiles')
       .update({ ai_generations_used: newCount })
       .eq('id', userId)
       .select()

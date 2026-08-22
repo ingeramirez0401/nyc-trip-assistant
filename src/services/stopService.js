@@ -8,7 +8,7 @@ export const stopService = {
   // Obtener todas las paradas de un día
   async getByDayId(dayId) {
     const { data, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .select('*')
       .eq('day_id', dayId)
       .order('order_index', { ascending: true });
@@ -20,7 +20,7 @@ export const stopService = {
   // Obtener una parada específica
   async getById(id) {
     const { data, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .select('*')
       .eq('id', id)
       .single();
@@ -33,12 +33,12 @@ export const stopService = {
   async create(stopData) {
     // Obtener el siguiente order_index
     const { count } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .select('*', { count: 'exact', head: true })
       .eq('day_id', stopData.dayId);
 
     const { data, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .insert([{
         day_id: stopData.dayId,
         title: stopData.title,
@@ -75,7 +75,7 @@ export const stopService = {
     if (stopData.isVisited !== undefined) updateData.is_visited = stopData.isVisited;
 
     const { data, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -88,7 +88,7 @@ export const stopService = {
   // Actualizar solo la imagen
   async updateImage(id, imageUrl) {
     const { data, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .update({ img: imageUrl })
       .eq('id', id)
       .select()
@@ -102,13 +102,13 @@ export const stopService = {
   async toggleVisited(id) {
     // Primero obtener el estado actual
     const { data: currentStop } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .select('is_visited')
       .eq('id', id)
       .single();
 
     const { data, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .update({ is_visited: !currentStop.is_visited })
       .eq('id', id)
       .select()
@@ -121,7 +121,7 @@ export const stopService = {
   // Eliminar una parada
   async delete(id) {
     const { error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .delete()
       .eq('id', id);
     
@@ -134,7 +134,7 @@ export const stopService = {
     // stopsWithNewOrder es un array de { id, orderIndex }
     const updates = stopsWithNewOrder.map(stop => 
       supabase
-        .from('stops')
+        .from('trippulse_stops')
         .update({ order_index: stop.orderIndex })
         .eq('id', stop.id)
     );
@@ -148,7 +148,7 @@ export const stopService = {
   // Obtener paradas visitadas de un día
   async getVisitedByDayId(dayId) {
     const { data, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .select('*')
       .eq('day_id', dayId)
       .eq('is_visited', true)
@@ -161,7 +161,7 @@ export const stopService = {
   // Contar paradas de un día
   async countByDayId(dayId) {
     const { count, error } = await supabase
-      .from('stops')
+      .from('trippulse_stops')
       .select('*', { count: 'exact', head: true })
       .eq('day_id', dayId);
     

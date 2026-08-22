@@ -41,7 +41,7 @@ export const testConnection = async () => {
     console.log('URL:', supabaseUrl);
     console.log('Key length:', supabaseAnonKey?.length);
     
-    const { data, error } = await supabase.from('trips').select('count');
+    const { data, error } = await supabase.from('trippulse_trips').select('count');
     if (error) {
       console.error('❌ Connection test failed:', error);
       throw error;
@@ -60,7 +60,7 @@ export const testInsert = async () => {
   try {
     console.log('🧪 Testing INSERT capability...');
     const { data, error } = await supabase
-      .from('trips')
+      .from('trippulse_trips')
       .insert([{
         name: 'Test Trip',
         city: 'Test City',
@@ -77,7 +77,7 @@ export const testInsert = async () => {
     console.log('✅ INSERT successful:', data);
     
     // Limpiar
-    await supabase.from('trips').delete().eq('id', data.id);
+    await supabase.from('trippulse_trips').delete().eq('id', data.id);
     console.log('🧹 Test data cleaned');
     
     return true;

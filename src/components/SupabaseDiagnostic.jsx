@@ -73,7 +73,7 @@ const SupabaseDiagnostic = () => {
     addTest('🔍 SELECT trips', 'running', 'Intentando leer tabla trips...');
     try {
       const { data, error, status, statusText } = await supabase
-        .from('trips')
+        .from('trippulse_trips')
         .select('*')
         .limit(1);
       
@@ -96,7 +96,7 @@ const SupabaseDiagnostic = () => {
     addTest('👤 SELECT profiles', 'running', 'Intentando leer tabla profiles (Auth check)...');
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('trippulse_profiles')
         .select('id, email')
         .limit(1);
 
@@ -124,7 +124,7 @@ const SupabaseDiagnostic = () => {
       };
       
       const { data, error, status, statusText } = await supabase
-        .from('trips')
+        .from('trippulse_trips')
         .insert([testData])
         .select()
         .single();
@@ -144,7 +144,7 @@ const SupabaseDiagnostic = () => {
         // 6. Test de DELETE (limpiar)
         addTest('🗑️ DELETE trips', 'running', 'Limpiando registro de prueba...');
         const { error: deleteError } = await supabase
-          .from('trips')
+          .from('trippulse_trips')
           .delete()
           .eq('id', data.id);
         
@@ -167,7 +167,7 @@ const SupabaseDiagnostic = () => {
         country: 'FetchCountry'
       };
       
-      const response = await fetch(`${url}/rest/v1/trips`, {
+      const response = await fetch(`${url}/rest/v1/trippulse_trips`, {
         method: 'POST',
         headers: {
           'apikey': key,
@@ -191,7 +191,7 @@ const SupabaseDiagnostic = () => {
         
         // Limpiar
         if (responseData && responseData[0]?.id) {
-          await fetch(`${url}/rest/v1/trips?id=eq.${responseData[0].id}`, {
+          await fetch(`${url}/rest/v1/trippulse_trips?id=eq.${responseData[0].id}`, {
             method: 'DELETE',
             headers: {
               'apikey': key,
@@ -214,7 +214,7 @@ const SupabaseDiagnostic = () => {
     // 8. Verificar headers de respuesta
     addTest('📨 Headers de Respuesta', 'running', 'Analizando headers...');
     try {
-      const response = await fetch(`${url}/rest/v1/trips?select=count`, {
+      const response = await fetch(`${url}/rest/v1/trippulse_trips?select=count`, {
         method: 'GET',
         headers: {
           'apikey': key,

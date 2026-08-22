@@ -8,7 +8,7 @@ export const tripService = {
   // Obtener todos los viajes
   async getAll() {
     const { data, error } = await supabase
-      .from('trips')
+      .from('trippulse_trips')
       .select('*')
       .order('created_at', { ascending: false });
     
@@ -19,7 +19,7 @@ export const tripService = {
   // Obtener un viaje por ID
   async getById(id) {
     const { data, error } = await supabase
-      .from('trips')
+      .from('trippulse_trips')
       .select('*')
       .eq('id', id)
       .single();
@@ -54,7 +54,7 @@ export const tripService = {
       
       // Usar insert directo
       const response = await supabase
-        .from('trips')
+        .from('trippulse_trips')
         .insert([insertData])
         .select()
         .single();
@@ -95,7 +95,7 @@ export const tripService = {
   // Actualizar un viaje
   async update(id, tripData) {
     const { data, error } = await supabase
-      .from('trips')
+      .from('trippulse_trips')
       .update({
         name: tripData.name,
         city: tripData.city,
@@ -117,7 +117,7 @@ export const tripService = {
   // Eliminar un viaje (CASCADE eliminará días y paradas)
   async delete(id) {
     const { error } = await supabase
-      .from('trips')
+      .from('trippulse_trips')
       .delete()
       .eq('id', id);
     
@@ -128,7 +128,7 @@ export const tripService = {
   // Buscar viajes por ciudad
   async searchByCity(cityName) {
     const { data, error } = await supabase
-      .from('trips')
+      .from('trippulse_trips')
       .select('*')
       .ilike('city', `%${cityName}%`)
       .order('created_at', { ascending: false });

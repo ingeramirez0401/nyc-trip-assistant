@@ -1,21 +1,17 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Declarar build arguments para Supabase y OpenAI
+# Solo variables públicas en build-time: se inlinean en el bundle JS que
+# llega al navegador (VITE_SUPABASE_ANON_KEY es pública por diseño).
+# La API key de OpenAI NUNCA pasa por aquí — vive solo en el servidor,
+# como variable de entorno en runtime (ver stage de producción abajo).
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_SUPABASE_SERVICE_KEY
-ARG VITE_SUPABASE_JWT_SECRET
-ARG VITE_OPENAI_API_KEY
 
-# Convertir ARG a ENV para que estén disponibles durante el build
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-ENV VITE_SUPABASE_SERVICE_KEY=$VITE_SUPABASE_SERVICE_KEY
-ENV VITE_SUPABASE_JWT_SECRET=$VITE_SUPABASE_JWT_SECRET
-ENV VITE_OPENAI_API_KEY=$VITE_OPENAI_API_KEY
 
 # Copy package files
 COPY package*.json ./
@@ -29,17 +25,23 @@ COPY . .
 # Build the application (Vite inyectará las variables de entorno aquí)
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Production stage: un solo proceso Node sirve el build estático (dist/)
+# y el backend (server/) que hace de proxy autenticado hacia OpenAI.
+FROM node:20-alpine AS runner
 
-# Copy built assets from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
+ENV NODE_ENV=production
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Expose port 80
+COPY --from=builder /app/dist ./dist
+COPY server ./server
+
+# OPENAI_API_KEY, VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY se pasan
+# como variables de entorno en runtime (docker-compose / Portainer),
+# nunca como build-arg.
 EXPOSE 80
+ENV PORT=80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server/index.js"]

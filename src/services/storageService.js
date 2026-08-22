@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 // STORAGE (Almacenamiento de imágenes)
 // =====================================================
 
-const BUCKET_NAME = 'trip-images';
+const BUCKET_NAME = 'trippulse-trip-images';
 
 export const storageService = {
   // Subir una imagen desde un archivo File

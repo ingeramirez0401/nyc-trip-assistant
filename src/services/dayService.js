@@ -8,7 +8,7 @@ export const dayService = {
   // Obtener todos los días de un viaje
   async getByTripId(tripId) {
     const { data, error } = await supabase
-      .from('days')
+      .from('trippulse_days')
       .select('*')
       .eq('trip_id', tripId)
       .order('day_number', { ascending: true });
@@ -20,7 +20,7 @@ export const dayService = {
   // Obtener un día específico
   async getById(id) {
     const { data, error } = await supabase
-      .from('days')
+      .from('trippulse_days')
       .select('*')
       .eq('id', id)
       .single();
@@ -32,7 +32,7 @@ export const dayService = {
   // Crear un nuevo día
   async create(dayData) {
     const { data, error } = await supabase
-      .from('days')
+      .from('trippulse_days')
       .insert([{
         trip_id: dayData.tripId,
         day_number: dayData.dayNumber,
@@ -56,7 +56,7 @@ export const dayService = {
     }));
 
     const { data, error } = await supabase
-      .from('days')
+      .from('trippulse_days')
       .insert(days)
       .select();
     
@@ -67,7 +67,7 @@ export const dayService = {
   // Actualizar un día
   async update(id, dayData) {
     const { data, error } = await supabase
-      .from('days')
+      .from('trippulse_days')
       .update({
         title: dayData.title,
         color: dayData.color,
@@ -84,7 +84,7 @@ export const dayService = {
   // Eliminar un día (CASCADE eliminará paradas)
   async delete(id) {
     const { error } = await supabase
-      .from('days')
+      .from('trippulse_days')
       .delete()
       .eq('id', id);
     
@@ -95,7 +95,7 @@ export const dayService = {
   // Obtener el conteo de días de un viaje
   async countByTripId(tripId) {
     const { count, error } = await supabase
-      .from('days')
+      .from('trippulse_days')
       .select('*', { count: 'exact', head: true })
       .eq('trip_id', tripId);
     

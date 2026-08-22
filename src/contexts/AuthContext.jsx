@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = async (userId) => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('trippulse_profiles')
         .select('*')
         .eq('id', userId)
         .single();
