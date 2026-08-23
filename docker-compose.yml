@@ -6,11 +6,12 @@ services:
     image: ghcr.io/ingeramirez0401/nyc-trip-assistant:latest
     container_name: nyc_trip_assistant
     environment:
-      # Requeridas en runtime por server/index.js (proxy de IA autenticado).
-      # TRIPPULSE_OPENAI_API_KEY es secreta y NUNCA debe llevar el prefijo VITE_.
-      # Nombre namespaced para evitar colisión con un OPENAI_API_KEY genérico
-      # que pueda existir en el host (p.ej. de Ollama).
+      # Requeridas en runtime por server/ (proxy de IA + licencias, ambos
+      # autenticados). Los secretos NUNCA llevan el prefijo VITE_.
       - TRIPPULSE_OPENAI_API_KEY=${TRIPPULSE_OPENAI_API_KEY}
+      - TRIPPULSE_SUPABASE_SERVICE_ROLE_KEY=${TRIPPULSE_SUPABASE_SERVICE_ROLE_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
       - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
       - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
     networks:

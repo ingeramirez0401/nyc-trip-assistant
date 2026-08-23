@@ -3,12 +3,12 @@ import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { requireAuth } from './supabaseAuth.js';
+import licenseRoutes from './licenseRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PORT = process.env.PORT || 3001;
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 // Nombre namespaced a propósito: evita colisión con la variable genérica
 // OPENAI_API_KEY que herramientas como Ollama suelen dejar seteada
 // globalmente en la máquina del desarrollador.
@@ -17,45 +17,13 @@ const OPENAI_API_KEY = process.env.TRIPPULSE_OPENAI_API_KEY;
 if (!OPENAI_API_KEY) {
   console.error('⚠️  TRIPPULSE_OPENAI_API_KEY no configurada. Las rutas /api/ai/* fallarán.');
 }
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('⚠️  SUPABASE_URL/ANON_KEY no configuradas. No se podrá verificar la sesión del usuario.');
-}
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 const app = express();
 app.use(express.json());
 
-// Verifica que la petición trae una sesión de Supabase válida antes de
-// gastar cuota de OpenAI. Esto es lo que evita que cualquier visitante
-// anónimo pueda pegarle directo al endpoint y generar costos.
-async function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-  if (!token) {
-    return res.status(401).json({ error: 'No autenticado' });
-  }
-
-  try {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      return res.status(401).json({ error: 'Sesión inválida o expirada' });
-    }
-
-    req.user = await response.json();
-    next();
-  } catch (err) {
-    console.error('Error verificando sesión:', err);
-    res.status(500).json({ error: 'Error verificando sesión' });
-  }
-}
+app.use('/api', licenseRoutes);
 
 // Límite defensivo de costos: 20 generaciones de IA por hora por IP.
 const aiLimiter = rateLimit({
@@ -186,8 +154,8 @@ app.post('/api/ai/suggestions', async (req, res) => {
 });
 
 app.post('/api/ai/optimize-route', async (req, res) => {
+  const { stops } = req.body;
   try {
-    const { stops } = req.body;
     if (!Array.isArray(stops) || stops.length === 0) {
       return res.status(400).json({ error: 'stops es requerido' });
     }

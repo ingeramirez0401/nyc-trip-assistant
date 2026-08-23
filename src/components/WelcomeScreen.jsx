@@ -7,12 +7,14 @@ import LocationSearchInput from './LocationSearchInput';
 import AIItineraryGenerator from './AIItineraryGenerator';
 import LoginScreen from './auth/LoginScreen';
 import PlansSection from './PlansSection';
+import RedeemLicense from './RedeemLicense';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { profileService } from '../services/profileService';
+import { licenseService } from '../services/licenseService';
 
-const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) => {
-  const { user, profile } = useAuth();
+const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel }) => {
+  const { user, profile, license, refreshLicense } = useAuth();
   const toast = useToast();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -128,15 +130,21 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
     setShowLogin(true);
   };
 
+  // Cupo disponible vía licencia de agencia para un tipo de acción dado
+  const hasLicenseQuota = (quotaType) =>
+    license?.quota_type === quotaType && license.quota_remaining > 0;
+
   const handleStartCreate = () => {
     if (!user) {
       setLoginMode('login');
       setShowLogin(true);
       return;
     }
-    // Check limits for Free tier immediately
-    if (profile?.tier !== 'vip' && trips.length >= 3) {
-      toast.warning('Has alcanzado el límite de 3 viajes gratuitos. ¡Actualiza a VIP para viajes ilimitados!');
+    // Vía libre: VIP, licencia de agencia con cupo de viajes, o dentro del
+    // límite de 3 viajes gratuitos del plan Free
+    const isFreeTierOk = profile?.tier === 'vip' || trips.length < 3;
+    if (!hasLicenseQuota('trips') && !isFreeTierOk) {
+      toast.warning('Has alcanzado el límite de 3 viajes gratuitos. ¡Actualiza a VIP o usa tu código de agencia para más!');
       return;
     }
     setShowCreateForm(true);
@@ -147,9 +155,9 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
       setShowLogin(true);
       return;
     }
-    // Check VIP status immediately
-    if (profile?.tier !== 'vip') {
-      toast.info('🔒 La generación con IA es exclusiva para usuarios VIP. Contáctanos para actualizar tu cuenta.');
+    // VIP o licencia de agencia con cupo de generaciones IA
+    if (profile?.tier !== 'vip' && !hasLicenseQuota('ai_generations')) {
+      toast.info('🔒 La generación con IA es exclusiva para usuarios VIP o con una licencia de agencia. Contáctanos para actualizar tu cuenta.');
       return;
     }
     setShowAIGenerator(true);
@@ -187,7 +195,11 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
       
       // Track usage
       await profileService.incrementTripCount(user.id);
-      
+      if (hasLicenseQuota('trips')) {
+        await licenseService.consumeQuota('trips');
+        await refreshLicense();
+      }
+
       toast.success('¡Viaje creado exitosamente!');
       console.log('✅ Trip created successfully:', trip);
       setShowCreateForm(false);
@@ -232,6 +244,10 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
 
       // Track AI usage
       await profileService.incrementAIUsage(user.id);
+      if (hasLicenseQuota('ai_generations')) {
+        await licenseService.consumeQuota('ai_generations');
+        await refreshLicense();
+      }
 
       // Crear el viaje
       const tripName = newTripData.name.trim() || `Viaje a ${newTripData.city}`;
@@ -302,6 +318,10 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
 
           // Track usage
           await profileService.incrementTripCount(user.id);
+          if (hasLicenseQuota('trips')) {
+            await licenseService.consumeQuota('trips');
+            await refreshLicense();
+          }
 
           console.log('✅ Trip created manually (fallback):', trip);
           setShowAIGenerator(false);
@@ -332,7 +352,16 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
   return (
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 md:bg-gradient-to-br md:from-slate-900 md:via-blue-900 md:to-slate-900 overflow-y-auto transition-colors duration-300">
       {/* Theme Toggle Button */}
-      <div className="absolute top-6 right-6 z-50">
+      <div className="absolute top-6 right-6 z-50 flex gap-3">
+        {profile?.role === 'agency_admin' && (
+          <button
+            onClick={onOpenAgencyPanel}
+            title="Panel de Agencia"
+            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-indigo-400 border border-white/10' : 'bg-white text-indigo-600'}`}
+          >
+            <i className="fas fa-building text-lg"></i>
+          </button>
+        )}
         <button
           onClick={toggleTheme}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
@@ -355,6 +384,11 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme }) 
         {/* Plans: solo para visitantes sin cuenta */}
         {!user && !showCreateForm && (
           <PlansSection onStartFree={handleStartFree} onStartVIP={handleStartVIP} />
+        )}
+
+        {/* Canje de licencia de agencia: para cualquiera que aún no tenga una activa */}
+        {!license && profile?.role !== 'agency_admin' && !showCreateForm && (
+          <RedeemLicense onRedeemed={loadTrips} />
         )}
 
         {/* Trips List or Empty State (solo con sesión activa) */}

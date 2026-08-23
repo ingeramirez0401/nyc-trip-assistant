@@ -8,6 +8,7 @@ import SideMenu from './components/SideMenu';
 import ItineraryList from './components/ItineraryList';
 import WelcomeScreen from './components/WelcomeScreen';
 import TripSetup from './components/TripSetup';
+import AgencyAdminPanel from './components/AgencyAdminPanel';
 import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
 import { useGeolocation } from './hooks/useGeolocation';
 import { testConnection } from './lib/supabase';
@@ -19,6 +20,7 @@ function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [setupMode, setSetupMode] = useState(false);
+  const [showAgencyPanel, setShowAgencyPanel] = useState(false);
   const [activeDayId, setActiveDayId] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -175,14 +177,20 @@ function App() {
     }, 100);
   };
 
+  // Show Agency Admin Panel if requested (works with or without a trip selected)
+  if (showAgencyPanel) {
+    return <AgencyAdminPanel onClose={() => setShowAgencyPanel(false)} />;
+  }
+
   // Show Welcome Screen if no trip selected
   if (!currentTrip) {
     return (
-      <WelcomeScreen 
-        onSelectTrip={handleSelectTrip} 
-        onCreateTrip={handleCreateTrip} 
+      <WelcomeScreen
+        onSelectTrip={handleSelectTrip}
+        onCreateTrip={handleCreateTrip}
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
+        onOpenAgencyPanel={() => setShowAgencyPanel(true)}
       />
     );
   }
@@ -260,13 +268,14 @@ function App() {
       </div>
 
       {/* SIDE MENU */}
-      <SideMenu 
-        isOpen={isMenuOpen} 
+      <SideMenu
+        isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         isDarkMode={isDarkMode}
         toggleTheme={() => setIsDarkMode(!isDarkMode)}
         onOpenList={() => setIsListOpen(true)}
         onExitTrip={handleExitTrip}
+        onOpenAgencyPanel={() => setShowAgencyPanel(true)}
       />
 
       {/* ITINERARY LIST OVERLAY */}

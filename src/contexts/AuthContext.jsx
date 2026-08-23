@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { licenseService } from '../services/licenseService';
 
 export const AuthContext = createContext({});
 
@@ -7,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [license, setLicense] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,11 +27,12 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
+        setLicense(null);
         setLoading(false);
       }
     });
@@ -54,6 +57,17 @@ export const AuthProvider = ({ children }) => {
       console.error('Exception fetching profile:', error);
     } finally {
       setLoading(false);
+    }
+    refreshLicense();
+  };
+
+  const refreshLicense = async () => {
+    try {
+      const active = await licenseService.getMine();
+      setLicense(active);
+    } catch (error) {
+      // No romper el flujo de auth por esto -- simplemente queda sin licencia.
+      console.error('Error fetching license:', error);
     }
   };
 
@@ -86,6 +100,7 @@ export const AuthProvider = ({ children }) => {
       setSession(null);
       setUser(null);
       setProfile(null);
+      setLicense(null);
     }
     return { error };
   };
@@ -94,6 +109,8 @@ export const AuthProvider = ({ children }) => {
     session,
     user,
     profile,
+    license,
+    refreshLicense,
     loading,
     signUp,
     signIn,

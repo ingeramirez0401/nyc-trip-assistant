@@ -3,8 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import LoginScreen from './auth/LoginScreen';
 
-const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip }) => {
-  const { user, profile, signOut } = useAuth();
+const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip, onOpenAgencyPanel }) => {
+  const { user, profile, license, signOut } = useAuth();
   const toast = useToast();
   const [showLogin, setShowLogin] = useState(false);
 
@@ -41,6 +41,16 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
                   {profile?.tier === 'vip' && (
                     <span className="inline-block mt-1 px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] rounded-full font-bold border border-amber-500/30">
                       VIP
+                    </span>
+                  )}
+                  {profile?.role === 'agency_admin' && (
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-300 text-[10px] rounded-full font-bold border border-indigo-500/30">
+                      AGENCIA
+                    </span>
+                  )}
+                  {license && (
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] rounded-full font-bold border border-green-500/30">
+                      {license.quota_remaining} {license.quota_type === 'trips' ? 'viajes' : 'gen. IA'} restantes
                     </span>
                   )}
               </div>
@@ -115,6 +125,25 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
                 </div>
                 <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
             </button>
+
+            {profile?.role === 'agency_admin' && (
+              <button
+                  onClick={() => {
+                      onOpenAgencyPanel();
+                      onClose();
+                  }}
+                  className="w-full text-left px-6 py-4 hover:bg-white/5 transition-colors flex items-center gap-4 text-white group"
+              >
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <i className="fas fa-building"></i>
+                  </div>
+                  <div>
+                      <span className="font-bold block">Panel de Agencia</span>
+                      <span className="text-xs text-slate-400">Generar y gestionar licencias</span>
+                  </div>
+                  <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
+              </button>
+            )}
 
             <div className="my-4 border-t border-white/5 mx-6"></div>
 
