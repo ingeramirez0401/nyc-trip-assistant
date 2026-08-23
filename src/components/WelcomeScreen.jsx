@@ -8,6 +8,8 @@ import AIItineraryGenerator from './AIItineraryGenerator';
 import LoginScreen from './auth/LoginScreen';
 import PlansSection from './PlansSection';
 import RedeemLicense from './RedeemLicense';
+import LandingIntro from './LandingIntro';
+import AgencyPitch from './AgencyPitch';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { profileService } from '../services/profileService';
@@ -127,6 +129,11 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   const handleStartVIP = () => {
     toast.info('El plan VIP se activa después de crear tu cuenta. Contáctanos para completar la actualización.');
     setLoginMode('signup');
+    setShowLogin(true);
+  };
+
+  const handleAgencyLogin = () => {
+    setLoginMode('login');
     setShowLogin(true);
   };
 
@@ -381,15 +388,23 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">Descubre. Planifica. Vive.</p>
         </div>
 
-        {/* Plans: solo para visitantes sin cuenta */}
-        {!user && !showCreateForm && (
-          <PlansSection onStartFree={handleStartFree} onStartVIP={handleStartVIP} />
-        )}
+        {/* Landing: hero + propuesta de valor, solo para visitantes sin cuenta */}
+        {!user && !showCreateForm && <LandingIntro />}
 
-        {/* Canje de licencia de agencia: para cualquiera que aún no tenga una activa */}
-        {!license && profile?.role !== 'agency_admin' && !showCreateForm && (
-          <RedeemLicense onRedeemed={loadTrips} />
-        )}
+        {/* Sección viajeros: planes + canje de licencia */}
+        <div id="viajeros" className="scroll-mt-24 w-full flex flex-col items-center">
+          {!user && !showCreateForm && (
+            <PlansSection onStartFree={handleStartFree} onStartVIP={handleStartVIP} />
+          )}
+
+          {/* Canje de licencia de agencia: para cualquiera que aún no tenga una activa */}
+          {!license && profile?.role !== 'agency_admin' && !showCreateForm && (
+            <RedeemLicense onRedeemed={loadTrips} />
+          )}
+        </div>
+
+        {/* Sección agencias: propuesta de valor + acceso, solo para visitantes sin cuenta */}
+        {!user && !showCreateForm && <AgencyPitch onAgencyLogin={handleAgencyLogin} />}
 
         {/* Trips List or Empty State (solo con sesión activa) */}
         {user && trips.length === 0 && !showCreateForm ? (
