@@ -9,8 +9,10 @@ import ItineraryList from './components/ItineraryList';
 import WelcomeScreen from './components/WelcomeScreen';
 import TripSetup from './components/TripSetup';
 import AgencyAdminPanel from './components/AgencyAdminPanel';
+import ResetPasswordScreen from './components/auth/ResetPasswordScreen';
 import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
 import { useGeolocation } from './hooks/useGeolocation';
+import { useAuth } from './hooks/useAuth';
 import { testConnection } from './lib/supabase';
 
 function App() {
@@ -96,6 +98,16 @@ function App() {
     setSelectedStop(null);
   };
 
+  // Al cerrar sesión, salir del viaje activo -- si no, useSupabaseItinerary
+  // sigue corriendo con hooks trip-scoped después de que la sesión ya no
+  // existe, y cualquier fetch en vuelo termina chocando con RLS (PGRST116).
+  const { user, isPasswordRecovery } = useAuth();
+  useEffect(() => {
+    if (!user && currentTrip) {
+      handleExitTrip();
+    }
+  }, [user]);
+
   const handleSetupComplete = async () => {
     setSetupMode(false);
     await refreshData();
@@ -114,7 +126,7 @@ function App() {
     setSelectedStop(stop);
   };
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+  const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
   const handleCenterOnUser = () => {
     if (!gpsEnabled) {
@@ -177,9 +189,20 @@ function App() {
     }, 100);
   };
 
+  // Show password recovery form if the user arrived via a reset-password link
+  if (isPasswordRecovery) {
+    return <ResetPasswordScreen />;
+  }
+
   // Show Agency Admin Panel if requested (works with or without a trip selected)
   if (showAgencyPanel) {
-    return <AgencyAdminPanel onClose={() => setShowAgencyPanel(false)} />;
+    return (
+      <AgencyAdminPanel
+        onClose={() => setShowAgencyPanel(false)}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+      />
+    );
   }
 
   // Show Welcome Screen if no trip selected
@@ -260,7 +283,7 @@ function App() {
 
       <div className="absolute top-6 right-4 z-[500]">
         <button 
-          onClick={() => setIsDarkMode(!isDarkMode)}
+          onClick={toggleTheme}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
         >
           <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
@@ -272,7 +295,7 @@ function App() {
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         isDarkMode={isDarkMode}
-        toggleTheme={() => setIsDarkMode(!isDarkMode)}
+        toggleTheme={toggleTheme}
         onOpenList={() => setIsListOpen(true)}
         onExitTrip={handleExitTrip}
         onOpenAgencyPanel={() => setShowAgencyPanel(true)}
@@ -377,9 +400,10 @@ function App() {
 
       {/* SEARCH MODAL */}
       {isSearchOpen && (
-        <PlaceSearch 
-          onAddPlace={handleAddPlace} 
-          onClose={() => setIsSearchOpen(false)} 
+        <PlaceSearch
+          onAddPlace={handleAddPlace}
+          onClose={() => setIsSearchOpen(false)}
+          city={trip?.city || currentTrip?.city}
         />
       )}
 

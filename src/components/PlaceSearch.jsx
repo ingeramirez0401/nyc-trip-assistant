@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { categories } from '../data/categories';
+import { placesService } from '../services/placesService';
 
-const PlaceSearch = ({ onAddPlace, onClose }) => {
+const PlaceSearch = ({ onAddPlace, onClose, city }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Interés');
@@ -15,15 +17,16 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
     if (!query.trim()) return;
 
     setLoading(true);
+    setSearchError(null);
     try {
-        // Using Nominatim OpenStreetMap API
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' New York')}&addressdetails=1&limit=5`);
-        const data = await res.json();
-        setResults(data);
+      const predictions = await placesService.autocomplete(query, city);
+      setResults(predictions);
     } catch (err) {
-        console.error("Search failed", err);
+      console.error('Search failed', err);
+      setResults([]);
+      setSearchError(err.message || 'Error en la búsqueda');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -38,14 +41,20 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
     }
   };
 
-  const handleSelectPlace = (item) => {
-    setSelectedPlace({
-        title: item.name || item.display_name.split(',')[0],
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-        cat: item.type || 'Interés',
-        address: item.display_name
-    });
+  const handleSelectPlace = async (prediction) => {
+    try {
+      const details = await placesService.getDetails(prediction.placeId);
+      setSelectedPlace({
+        title: details.name || prediction.text,
+        lat: details.lat,
+        lng: details.lng,
+        cat: 'Interés',
+        address: details.address,
+      });
+    } catch (err) {
+      console.error('Error getting place details', err);
+      setSearchError('No se pudo obtener el detalle de ese lugar. Intenta de nuevo.');
+    }
   };
 
   const handleConfirmAdd = () => {
@@ -101,11 +110,18 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                         {loading && (
                             <div className="py-12 text-center text-slate-500">
                                 <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-blue-500 animate-spin mx-auto mb-4"></div>
-                                <p className="font-medium">Buscando en la Gran Manzana...</p>
+                                <p className="font-medium">Buscando lugares...</p>
                             </div>
                         )}
 
-                        {!loading && results.length === 0 && query && (
+                        {!loading && searchError && (
+                            <div className="py-12 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5 border-dashed mx-2">
+                                <i className="fas fa-triangle-exclamation text-3xl mb-3 opacity-50"></i>
+                                <p>{searchError}</p>
+                            </div>
+                        )}
+
+                        {!loading && !searchError && results.length === 0 && query && (
                             <div className="py-12 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5 border-dashed mx-2">
                                 <i className="fas fa-map-signs text-3xl mb-3 opacity-50"></i>
                                 <p>No encontramos lugares con ese nombre.</p>
@@ -113,10 +129,10 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                         )}
 
                         <div className="flex flex-col gap-3">
-                            {results.map((item) => (
-                                <button 
-                                    key={item.place_id}
-                                    onClick={() => handleSelectPlace(item)}
+                            {results.map((prediction) => (
+                                <button
+                                    key={prediction.placeId}
+                                    onClick={() => handleSelectPlace(prediction)}
                                     className="text-left p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all flex items-start gap-4 group active:scale-[0.98]"
                                 >
                                     <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition shadow-lg">
@@ -124,11 +140,8 @@ const PlaceSearch = ({ onAddPlace, onClose }) => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                                            {item.name || item.display_name.split(',')[0]}
+                                            {prediction.text}
                                         </h3>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                                            {item.display_name}
-                                        </p>
                                     </div>
                                 </button>
                             ))}

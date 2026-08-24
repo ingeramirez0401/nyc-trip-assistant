@@ -22,9 +22,17 @@ const AgencyPitch = ({ onAgencyLogin }) => {
   return (
     <div
       id="agencias"
-      className="w-full bg-slate-900 md:bg-slate-950/60 border border-white/10 rounded-3xl p-8 md:p-12 mb-14 scroll-mt-24"
+      className="relative w-full border border-white/10 rounded-3xl p-8 md:p-12 mb-14 scroll-mt-24 overflow-hidden"
     >
-      <div className="max-w-3xl mx-auto text-center mb-10">
+      <img
+        src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1600&q=70"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-slate-950/85"></div>
+
+      <div className="relative max-w-3xl mx-auto text-center mb-10">
         <p className="text-indigo-300 font-bold uppercase tracking-widest text-xs md:text-sm mb-3">
           Para agencias de viaje
         </p>
@@ -37,7 +45,7 @@ const AgencyPitch = ({ onAgencyLogin }) => {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4 mb-10">
+      <div className="relative grid sm:grid-cols-3 gap-4 mb-10">
         {VALUE_PROPS.map((item) => (
           <div key={item.title} className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center mb-3">
@@ -49,7 +57,7 @@ const AgencyPitch = ({ onAgencyLogin }) => {
         ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+      <div className="relative flex flex-col sm:flex-row gap-3 justify-center items-center">
         <button
           onClick={onAgencyLogin}
           className="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 active:scale-95 transition-all shadow-lg"

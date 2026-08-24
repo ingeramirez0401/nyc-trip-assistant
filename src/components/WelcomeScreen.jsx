@@ -10,6 +10,7 @@ import PlansSection from './PlansSection';
 import RedeemLicense from './RedeemLicense';
 import LandingIntro from './LandingIntro';
 import AgencyPitch from './AgencyPitch';
+import SideMenu from './SideMenu';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { profileService } from '../services/profileService';
@@ -31,6 +32,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   });
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [openMenuTripId, setOpenMenuTripId] = useState(null);
   const [deletingTripId, setDeletingTripId] = useState(null);
@@ -122,12 +124,6 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   };
 
   const handleStartFree = () => {
-    setLoginMode('signup');
-    setShowLogin(true);
-  };
-
-  const handleStartVIP = () => {
-    toast.info('El plan VIP se activa después de crear tu cuenta. Contáctanos para completar la actualización.');
     setLoginMode('signup');
     setShowLogin(true);
   };
@@ -357,18 +353,22 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 md:bg-gradient-to-br md:from-slate-900 md:via-blue-900 md:to-slate-900 overflow-y-auto transition-colors duration-300">
+    <div className="fixed inset-0 bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 overflow-y-auto transition-colors duration-300">
+      {/* Account Menu Button */}
+      {user && (
+        <div className="absolute top-6 left-6 z-50">
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            title="Mi cuenta"
+            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
+          >
+            <i className="fas fa-bars text-lg"></i>
+          </button>
+        </div>
+      )}
+
       {/* Theme Toggle Button */}
       <div className="absolute top-6 right-6 z-50 flex gap-3">
-        {profile?.role === 'agency_admin' && (
-          <button
-            onClick={onOpenAgencyPanel}
-            title="Panel de Agencia"
-            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-indigo-400 border border-white/10' : 'bg-white text-indigo-600'}`}
-          >
-            <i className="fas fa-building text-lg"></i>
-          </button>
-        )}
         <button
           onClick={toggleTheme}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
@@ -382,9 +382,9 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         {/* Header */}
         <div className="text-center mb-8 md:mb-12 animate-fade-in-down">
           <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl md:rounded-[2rem] mx-auto mb-4 md:mb-6 flex items-center justify-center shadow-2xl shadow-blue-900/50 transform rotate-3 hover:rotate-6 transition-transform duration-500 border border-white/10">
-            <i className="fas fa-heart-pulse text-2xl md:text-4xl text-white"></i>
+            <i className="fas fa-route text-2xl md:text-4xl text-white"></i>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 md:from-white md:via-blue-100 md:to-blue-200 mb-2 md:mb-4 tracking-tight drop-shadow-lg">TripPulse</h1>
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 dark:from-white dark:via-blue-100 dark:to-blue-200 mb-2 md:mb-4 tracking-tight drop-shadow-lg">TripPulse</h1>
           <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">Descubre. Planifica. Vive.</p>
         </div>
 
@@ -394,7 +394,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         {/* Sección viajeros: planes + canje de licencia */}
         <div id="viajeros" className="scroll-mt-24 w-full flex flex-col items-center">
           {!user && !showCreateForm && (
-            <PlansSection onStartFree={handleStartFree} onStartVIP={handleStartVIP} />
+            <PlansSection onStartFree={handleStartFree} />
           )}
 
           {/* Canje de licencia de agencia: para cualquiera que aún no tenga una activa */}
@@ -595,6 +595,18 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           }}
         />
       )}
+
+      {/* Account Menu */}
+      <SideMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+        hasActiveTrip={false}
+        onOpenList={() => {}}
+        onExitTrip={() => {}}
+        onOpenAgencyPanel={onOpenAgencyPanel}
+      />
     </div>
   );
 };

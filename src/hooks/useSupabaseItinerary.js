@@ -49,6 +49,7 @@ export const useSupabaseItinerary = (tripId) => {
               tip: stop.tip,
               time: stop.time,
               address: stop.address,
+              isVisited: stop.is_visited,
             })),
           };
         })
@@ -56,12 +57,12 @@ export const useSupabaseItinerary = (tripId) => {
 
       setDays(daysWithStops);
 
-      // Construir objeto de visitados
+      // is_visited ya viene en el fetch de arriba (select('*')) -- no hace
+      // falta un segundo round-trip por parada para construirlo.
       const visitedMap = {};
       daysWithStops.forEach(day => {
-        day.stops.forEach(async (stop) => {
-          const fullStop = await stopService.getById(stop.id);
-          visitedMap[stop.id] = fullStop.is_visited;
+        day.stops.forEach(stop => {
+          visitedMap[stop.id] = stop.isVisited;
         });
       });
       setVisited(visitedMap);

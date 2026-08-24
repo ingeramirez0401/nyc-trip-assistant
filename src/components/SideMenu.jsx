@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import LoginScreen from './auth/LoginScreen';
 
-const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip, onOpenAgencyPanel }) => {
+const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip, onOpenAgencyPanel, hasActiveTrip = true }) => {
   const { user, profile, license, signOut } = useAuth();
   const toast = useToast();
   const [showLogin, setShowLogin] = useState(false);
@@ -58,7 +58,7 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
           ) : (
             <div className="flex items-center gap-3 mb-2">
                <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg ring-2 ring-white/10">
-                  <i className="fas fa-heart-pulse"></i>
+                  <i className="fas fa-route"></i>
               </div>
               <div>
                   <h1 className="text-xl font-bold text-white tracking-tight">TripPulse</h1>
@@ -86,36 +86,38 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
               </button>
             )}
 
-            <div className="px-4 mb-2 mt-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">Navegación</p>
-            </div>
-            
-            <button 
-                onClick={() => {
-                    onOpenList();
-                    onClose();
-                }}
-                className="w-full text-left px-6 py-4 hover:bg-white/5 transition-colors flex items-center gap-4 text-white group"
-            >
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <i className="fas fa-list-ul"></i>
+            {hasActiveTrip && (
+              <>
+                <div className="px-4 mb-2 mt-2">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">Navegación</p>
                 </div>
-                <div>
-                    <span className="font-bold block">Itinerario del Día</span>
-                    <span className="text-xs text-slate-400">Ver y gestionar paradas</span>
-                </div>
-                <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
-            </button>
 
-            <button 
-                onClick={async () => {
-                    if (await toast.confirm('¿Salir de este viaje y volver al selector?')) {
-                        onExitTrip();
+                <button
+                    onClick={() => {
+                        onOpenList();
                         onClose();
-                    }
-                }}
-                className="w-full text-left px-6 py-4 hover:bg-red-500/10 transition-colors flex items-center gap-4 text-white group"
-            >
+                    }}
+                    className="w-full text-left px-6 py-4 hover:bg-white/5 transition-colors flex items-center gap-4 text-white group"
+                >
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i className="fas fa-list-ul"></i>
+                    </div>
+                    <div>
+                        <span className="font-bold block">Itinerario del Día</span>
+                        <span className="text-xs text-slate-400">Ver y gestionar paradas</span>
+                    </div>
+                    <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
+                </button>
+
+                <button
+                    onClick={async () => {
+                        if (await toast.confirm('¿Salir de este viaje y volver al selector?')) {
+                            onExitTrip();
+                            onClose();
+                        }
+                    }}
+                    className="w-full text-left px-6 py-4 hover:bg-red-500/10 transition-colors flex items-center gap-4 text-white group"
+                >
                 <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <i className="fas fa-arrow-left"></i>
                 </div>
@@ -124,7 +126,9 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
                     <span className="text-xs text-slate-400">Volver al selector</span>
                 </div>
                 <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
-            </button>
+                </button>
+              </>
+            )}
 
             {profile?.role === 'agency_admin' && (
               <button

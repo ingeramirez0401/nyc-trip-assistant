@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [license, setLicense] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     // 1. Get initial session
@@ -24,7 +25,11 @@ export const AuthProvider = ({ children }) => {
     });
 
     // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -71,20 +76,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signUp = async (email, password, metadata = {}) => {
+  const signUp = async (email, password, metadata = {}, captchaToken) => {
     return await supabase.auth.signUp({
       email,
       password,
       options: {
         data: metadata, // full_name, etc.
+        ...(captchaToken && { captchaToken }),
       },
     });
   };
 
-  const signIn = async (email, password) => {
+  const signIn = async (email, password, captchaToken) => {
     return await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        ...(captchaToken && { captchaToken }),
+      },
     });
   };
 
@@ -92,6 +101,20 @@ export const AuthProvider = ({ children }) => {
     return await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
+  };
+
+  const resetPassword = async (email) => {
+    return await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/`,
+    });
+  };
+
+  const updatePassword = async (newPassword) => {
+    const result = await supabase.auth.updateUser({ password: newPassword });
+    if (!result.error) {
+      setIsPasswordRecovery(false);
+    }
+    return result;
   };
 
   const signOut = async () => {
@@ -112,10 +135,13 @@ export const AuthProvider = ({ children }) => {
     license,
     refreshLicense,
     loading,
+    isPasswordRecovery,
     signUp,
     signIn,
     signInWithGoogle,
     signOut,
+    resetPassword,
+    updatePassword,
   };
 
   return (

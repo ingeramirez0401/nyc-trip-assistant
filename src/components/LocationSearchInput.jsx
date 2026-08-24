@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import { placesService } from '../services/placesService';
 
-const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicación..." }) => {
+const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicación...", city }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [searchError, setSearchError] = useState(null);
   const searchTimeout = useRef(null);
   const wrapperRef = useRef(null);
 
@@ -38,59 +40,42 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
         clearTimeout(searchTimeout.current);
       }
     };
-  }, [query]);
+  }, [query, city]);
 
   const searchLocation = async (searchQuery) => {
     setIsSearching(true);
+    setSearchError(null);
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?` +
-        new URLSearchParams({
-          q: searchQuery,
-          format: 'json',
-          limit: '5',
-          addressdetails: '1',
-        }),
-        {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'TripPlannerApp/1.0',
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Error en la búsqueda');
-      }
-
-      const data = await response.json();
-      setResults(data);
+      const predictions = await placesService.autocomplete(searchQuery, city);
+      setResults(predictions);
       setShowResults(true);
     } catch (error) {
       console.error('Error searching location:', error);
       setResults([]);
+      setSearchError(error.message || 'Error en la búsqueda');
+      setShowResults(true);
     } finally {
       setIsSearching(false);
     }
   };
 
-  const handleSelectLocation = (location) => {
-    const locationData = {
-      name: location.display_name,
-      lat: parseFloat(location.lat),
-      lng: parseFloat(location.lon),
-      city: location.address?.city || 
-            location.address?.town || 
-            location.address?.village || 
-            location.address?.municipality ||
-            location.name,
-      country: location.address?.country || '',
-      address: location.display_name,
-    };
-
-    setQuery(locationData.city);
+  const handleSelectLocation = async (prediction) => {
     setShowResults(false);
-    onLocationSelect(locationData);
+    setQuery(prediction.text);
+    try {
+      const details = await placesService.getDetails(prediction.placeId);
+      onLocationSelect({
+        name: details.name || prediction.text,
+        lat: details.lat,
+        lng: details.lng,
+        city: details.city || details.name,
+        country: details.country || '',
+        address: details.address,
+      });
+    } catch (error) {
+      console.error('Error getting place details:', error);
+      setSearchError('No se pudo obtener el detalle de ese lugar. Intenta de nuevo.');
+    }
   };
 
   return (
@@ -111,6 +96,7 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
               setQuery('');
               setResults([]);
               setShowResults(false);
+              setSearchError(null);
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition"
           >
@@ -121,25 +107,17 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
 
       {showResults && results.length > 0 && (
         <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl max-h-64 overflow-y-auto">
-          {results.map((result, index) => (
+          {results.map((prediction) => (
             <button
-              key={index}
-              onClick={() => handleSelectLocation(result)}
+              key={prediction.placeId}
+              onClick={() => handleSelectLocation(prediction)}
               className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-100 dark:border-white/5 last:border-b-0"
             >
               <div className="flex items-start gap-3">
                 <i className="fas fa-map-marker-alt text-blue-500 dark:text-blue-400 mt-1 shrink-0"></i>
-                <div className="flex-1 min-w-0">
-                  <p className="text-slate-900 dark:text-white font-medium truncate">
-                    {result.address?.city || 
-                     result.address?.town || 
-                     result.address?.village ||
-                     result.name}
-                  </p>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm truncate">
-                    {result.display_name}
-                  </p>
-                </div>
+                <p className="text-slate-900 dark:text-white font-medium truncate">
+                  {prediction.text}
+                </p>
               </div>
             </button>
           ))}
@@ -148,8 +126,10 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
 
       {showResults && results.length === 0 && query.length >= 3 && !isSearching && (
         <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-4 text-center">
-          <i className="fas fa-search text-slate-400 dark:text-slate-500 text-2xl mb-2"></i>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">No se encontraron resultados</p>
+          <i className={`fas ${searchError ? 'fa-triangle-exclamation' : 'fa-search'} text-slate-400 dark:text-slate-500 text-2xl mb-2`}></i>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {searchError || 'No se encontraron resultados'}
+          </p>
         </div>
       )}
     </div>

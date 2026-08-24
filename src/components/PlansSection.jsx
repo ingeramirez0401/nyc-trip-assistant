@@ -14,12 +14,12 @@ const VIP_FEATURES = [
   'Soporte prioritario',
 ];
 
-const PlansSection = ({ onStartFree, onStartVIP }) => {
+const PlansSection = ({ onStartFree }) => {
   return (
     <div className="max-w-3xl w-full mb-10 animate-fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white md:text-white mb-2">Elige cómo empezar</h2>
-        <p className="text-slate-600 dark:text-blue-300 md:text-blue-300">Crea tu cuenta gratis, sin tarjeta de crédito</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Elige cómo empezar</h2>
+        <p className="text-slate-600 dark:text-blue-300">Crea tu cuenta gratis, sin tarjeta de crédito</p>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-5">
@@ -50,13 +50,11 @@ const PlansSection = ({ onStartFree, onStartVIP }) => {
         {/* VIP */}
         <div className="relative bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 flex flex-col shadow-2xl shadow-blue-900/40 border border-white/10">
           <span className="absolute -top-3 right-6 bg-amber-400 text-amber-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide">
-            Popular
+            Próximamente
           </span>
           <div className="mb-4">
             <h3 className="text-lg font-bold text-white">VIP</h3>
-            <p className="text-3xl font-black text-white mt-1">
-              $4.99 <span className="text-sm font-medium text-blue-100">/ mes</span>
-            </p>
+            <p className="text-sm font-medium text-blue-100 mt-1">Para viajeros frecuentes</p>
           </div>
           <ul className="space-y-2.5 mb-6 flex-1">
             {VIP_FEATURES.map((feature) => (
@@ -66,12 +64,12 @@ const PlansSection = ({ onStartFree, onStartVIP }) => {
               </li>
             ))}
           </ul>
-          <button
-            onClick={onStartVIP}
-            className="w-full bg-white text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-50 active:scale-[0.98] transition-all shadow-lg"
+          <a
+            href="mailto:hello@nodalyst.ai?subject=Interés en TripPulse VIP"
+            className="w-full text-center bg-white text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-50 active:scale-[0.98] transition-all shadow-lg"
           >
-            Probar VIP
-          </button>
+            Contáctanos
+          </a>
         </div>
       </div>
     </div>

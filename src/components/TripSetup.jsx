@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { dayService } from '../services/dayService';
+import { tripService } from '../services/tripService';
 import LocationSearchInput from './LocationSearchInput';
 import { useToast } from '../contexts/ToastContext';
 
@@ -88,7 +89,6 @@ const TripSetup = ({ trip, onComplete }) => {
 
       // Si hay base location, actualizar el viaje
       if (baseLocation) {
-        const { tripService } = await import('../services/tripService');
         await tripService.update(trip.id, {
           name: trip.name,
           city: trip.city,
@@ -210,6 +210,7 @@ const TripSetup = ({ trip, onComplete }) => {
             <LocationSearchInput
               onLocationSelect={handleLocationSelect}
               placeholder="Busca tu hotel o alojamiento..."
+              city={trip.city}
             />
             {baseLocation && (
               <div className="mt-3 p-4 bg-green-500/10 dark:bg-green-900/20 border border-green-500/30 rounded-xl">

@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { requireAuth } from './supabaseAuth.js';
 import licenseRoutes from './licenseRoutes.js';
+import placesRoutes from './placesRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +36,20 @@ const aiLimiter = rateLimit({
 });
 
 app.use('/api/ai', aiLimiter, requireAuth);
+
+// Límite defensivo de costos: cada autocomplete cuesta dinero en Google
+// Places, así que se limita más generoso que IA (es texto-mientras-escribes)
+// pero sigue acotado.
+const placesLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas búsquedas de lugares. Espera un momento.' },
+});
+
+app.use('/api/places', placesLimiter);
+app.use('/api', placesRoutes);
 
 app.post('/api/ai/generate-itinerary', async (req, res) => {
   try {
@@ -77,7 +92,7 @@ FORMATO DE RESPUESTA (JSON estricto):
           "title": "Nombre del lugar",
           "lat": 40.7580,
           "lng": -73.9855,
-          "category": "Icono|Cultura|Gastronomía|Naturaleza|Arte|Museo|Compras|Vida Nocturna",
+          "category": "Icono|Cultura|Restaurante|Naturaleza|Arte|Museo|Compras|Entretenimiento|Vista|Paseo",
           "tip": "Consejo práctico y específico",
           "time": "Tiempo sugerido (ej: 2 horas)",
           "address": "Dirección completa"

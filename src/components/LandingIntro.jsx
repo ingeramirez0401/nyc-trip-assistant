@@ -20,33 +20,58 @@ const HIGHLIGHTS = [
 
 const LandingIntro = () => {
   return (
-    <div className="max-w-4xl w-full mb-14 text-center">
-      <p className="text-blue-600 dark:text-blue-300 md:text-blue-300 font-bold uppercase tracking-widest text-xs md:text-sm mb-3">
-        Planificación de viajes con IA
-      </p>
-      <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white md:text-white mb-4 leading-tight">
-        Deja que la IA arme tu itinerario perfecto
-      </h2>
-      <p className="text-slate-600 dark:text-blue-200 md:text-blue-200 text-base md:text-lg max-w-2xl mx-auto mb-8">
-        Dinos tu destino, tus días y tus intereses. TripPulse te devuelve un plan
-        completo, con mapa y todo, listo para vivirse — no para seguir editando.
-      </p>
+    <div className="max-w-5xl w-full mb-14">
+      <div className="grid lg:grid-cols-2 gap-10 items-center mb-14">
+        {/* Texto */}
+        <div className="text-center lg:text-left">
+          <p className="text-blue-600 dark:text-blue-300 font-bold uppercase tracking-widest text-xs md:text-sm mb-3">
+            Planificación de viajes con IA
+          </p>
+          <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
+            Deja que la IA arme tu itinerario perfecto
+          </h2>
+          <p className="text-slate-600 dark:text-blue-200 text-base md:text-lg mb-8">
+            Dinos tu destino, tus días y tus intereses. TripPulse te devuelve un plan
+            completo, con mapa y todo, listo para vivirse — no para seguir editando.
+          </p>
 
-      <div className="flex flex-col sm:flex-row gap-3 justify-center mb-14">
-        <a
-          href="#viajeros"
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50 active:scale-95 transition-all"
-        >
-          <i className="fas fa-suitcase-rolling mr-2"></i>
-          Soy viajero
-        </a>
-        <a
-          href="#agencias"
-          className="bg-slate-900/5 dark:bg-white/10 md:bg-white/10 border border-slate-300 dark:border-white/20 md:border-white/20 text-slate-800 dark:text-white md:text-white px-6 py-3 rounded-xl font-bold hover:bg-white/20 active:scale-95 transition-all backdrop-blur-sm"
-        >
-          <i className="fas fa-building mr-2"></i>
-          Soy una agencia de viajes
-        </a>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+            <a
+              href="#viajeros"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 dark:shadow-blue-900/40 hover:shadow-blue-900/40 active:scale-95 transition-all"
+            >
+              <i className="fas fa-suitcase-rolling mr-2"></i>
+              Soy viajero
+            </a>
+            <a
+              href="#agencias"
+              className="bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-800 dark:text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-white/20 active:scale-95 transition-all shadow-sm"
+            >
+              <i className="fas fa-building mr-2"></i>
+              Soy una agencia de viajes
+            </a>
+          </div>
+        </div>
+
+        {/* Foto */}
+        <div className="relative">
+          <div className="rounded-3xl overflow-hidden shadow-2xl aspect-[4/3]">
+            <img
+              src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80"
+              alt="Un viaje por carretera entre paisajes de piedra roja"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="absolute -bottom-4 -left-4 bg-white dark:bg-slate-800 rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 border border-slate-100 dark:border-white/10">
+            <div className="w-9 h-9 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <i className="fas fa-sparkles text-sm"></i>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1">Itinerario listo</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-none">en segundos, con IA</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4 text-left">

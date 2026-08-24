@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { agencyService } from '../services/agencyService';
 import { licenseService } from '../services/licenseService';
+import SideMenu from './SideMenu';
 
 const STATUS_LABEL = {
   unused: 'Sin usar',
@@ -20,7 +21,7 @@ const STATUS_COLOR = {
   revoked: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
 };
 
-const AgencyAdminPanel = ({ onClose }) => {
+const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
   const { profile } = useAuth();
   const toast = useToast();
 
@@ -31,6 +32,7 @@ const AgencyAdminPanel = ({ onClose }) => {
   const [generating, setGenerating] = useState(false);
   const [sendingId, setSendingId] = useState(null);
   const [emailDrafts, setEmailDrafts] = useState({});
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [brandForm, setBrandForm] = useState({ name: '', logo_url: '', primary_color: '' });
   const [genForm, setGenForm] = useState({ quotaType: 'trips', quotaAmount: 3, validDays: 365, quantity: 5 });
@@ -144,23 +146,71 @@ const AgencyAdminPanel = ({ onClose }) => {
     );
   }
 
+  const totalLicenses = licenses.length;
+  const redeemedCount = licenses.filter((l) => l.status === 'redeemed').length;
+  const sentCount = licenses.filter((l) => l.status === 'sent').length;
+  const quotaDistributed = licenses.reduce((sum, l) => sum + (l.quota_amount || 0), 0);
+
+  const METRICS = [
+    { label: 'Licencias generadas', value: totalLicenses, icon: 'fa-ticket', color: 'text-blue-600 dark:text-blue-400 bg-blue-500/10' },
+    { label: 'Canjeadas', value: redeemedCount, icon: 'fa-circle-check', color: 'text-green-600 dark:text-green-400 bg-green-500/10' },
+    { label: 'Enviadas, sin canjear', value: sentCount, icon: 'fa-paper-plane', color: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
+    { label: 'Cupo total distribuido', value: quotaDistributed, icon: 'fa-layer-group', color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
+  ];
+
   return (
     <div className="fixed inset-0 z-[1500] bg-slate-50 dark:bg-slate-900 overflow-y-auto">
-      <div className="max-w-4xl mx-auto p-6 pb-24">
-        <div className="flex items-center justify-between mb-8 pt-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Panel de Agencia</h1>
-            {agency?.name && (
-              <p className="text-sm text-slate-500 dark:text-slate-400">{agency.name}</p>
-            )}
+      {/* Header band */}
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-600 pb-16">
+        <div className="max-w-4xl mx-auto px-6 pt-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center text-white">
+              <i className="fas fa-building text-lg"></i>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">Panel de Agencia</h1>
+              {agency?.name && (
+                <p className="text-sm text-blue-100">{agency.name}</p>
+              )}
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-white dark:bg-white/10 shadow flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/20 transition"
-          >
-            <i className="fas fa-times"></i>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              title="Mi cuenta"
+              className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"
+            >
+              <i className="fas fa-bars"></i>
+            </button>
+            <button
+              onClick={onClose}
+              title="Cerrar panel"
+              className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto p-6 pb-24 -mt-10">
+        {/* Metrics */}
+        {!loading && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            {METRICS.map((metric) => (
+              <div
+                key={metric.label}
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg"
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${metric.color}`}>
+                  <i className={`fas ${metric.icon} text-sm`}></i>
+                </div>
+                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mb-1">{metric.value}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">{metric.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-20 text-slate-500 dark:text-slate-400">Cargando...</div>
@@ -355,6 +405,17 @@ const AgencyAdminPanel = ({ onClose }) => {
           </div>
         )}
       </div>
+
+      <SideMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+        hasActiveTrip={false}
+        onOpenList={() => {}}
+        onExitTrip={() => {}}
+        onOpenAgencyPanel={() => {}}
+      />
     </div>
   );
 };

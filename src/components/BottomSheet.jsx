@@ -197,7 +197,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                         </div>
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white leading-tight mb-1 drop-shadow-sm">{place.title}</h2>
                         <p className="text-slate-600 dark:text-slate-400 text-sm flex items-center gap-2">
-                            <i className="fas fa-map-pin text-amber-500 dark:text-amber-400"></i> New York City
+                            <i className="fas fa-map-pin text-amber-500 dark:text-amber-400"></i> {place.address || city}
                         </p>
                     </div>
                 </div>
