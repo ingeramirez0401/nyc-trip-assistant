@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import SupabaseDiagnostic from './components/SupabaseDiagnostic.jsx'
+import ApproveAgencyScreen from './components/admin/ApproveAgencyScreen.jsx'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import './index.css'
@@ -13,7 +14,11 @@ const Router = () => {
   if (path === '/debug' || path === '/diagnostic') {
     return <SupabaseDiagnostic />;
   }
-  
+
+  if (path === '/admin/approve-agency') {
+    return <ApproveAgencyScreen />;
+  }
+
   return <App />;
 };
 

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import AgencyRequestForm from './AgencyRequestForm';
 
 const VALUE_PROPS = [
   {
@@ -19,6 +20,8 @@ const VALUE_PROPS = [
 ];
 
 const AgencyPitch = ({ onAgencyLogin }) => {
+  const [showRequestForm, setShowRequestForm] = useState(false);
+
   return (
     <div
       id="agencias"
@@ -65,13 +68,15 @@ const AgencyPitch = ({ onAgencyLogin }) => {
           <i className="fas fa-right-to-bracket mr-2"></i>
           Acceso Agencias
         </button>
-        <a
-          href="mailto:hello@nodalyst.ai?subject=Quiero%20ser%20agencia%20partner%20de%20TripPulse"
+        <button
+          onClick={() => setShowRequestForm(true)}
           className="text-blue-200 hover:text-white font-semibold px-6 py-3 transition-colors"
         >
-          ¿Aún no eres partner? Escríbenos <i className="fas fa-arrow-right ml-1"></i>
-        </a>
+          ¿Aún no eres partner? Solicita acceso <i className="fas fa-arrow-right ml-1"></i>
+        </button>
       </div>
+
+      {showRequestForm && <AgencyRequestForm onClose={() => setShowRequestForm(false)} />}
     </div>
   );
 };
