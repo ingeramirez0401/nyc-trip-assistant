@@ -23,10 +23,10 @@ async function callAPI(path, options = {}) {
 }
 
 export const agencyRequestService = {
-  async submit({ agencyName, contactName, contactEmail, phone, city, estimatedTravelers, message }) {
+  async submit({ agencyName, contactName, contactEmail, phone, city, estimatedTravelers, message, captchaToken }) {
     return await callAPI('/agency-requests', {
       method: 'POST',
-      body: JSON.stringify({ agencyName, contactName, contactEmail, phone, city, estimatedTravelers, message }),
+      body: JSON.stringify({ agencyName, contactName, contactEmail, phone, city, estimatedTravelers, message, captchaToken }),
     });
   },
 

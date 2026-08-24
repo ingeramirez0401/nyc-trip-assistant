@@ -14,12 +14,21 @@ const VIP_FEATURES = [
   'Soporte prioritario',
 ];
 
-const PlansSection = ({ onStartFree }) => {
+const PlansSection = ({ onStartFree, onLogin }) => {
   return (
     <div className="max-w-3xl w-full mb-10 animate-fade-in">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Elige cómo empezar</h2>
-        <p className="text-slate-600 dark:text-blue-300">Crea tu cuenta gratis, sin tarjeta de crédito</p>
+        <p className="text-slate-600 dark:text-blue-300 mb-3">Crea tu cuenta gratis, sin tarjeta de crédito</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          ¿Ya tienes cuenta?{' '}
+          <button
+            onClick={onLogin}
+            className="text-blue-600 dark:text-blue-300 font-bold hover:underline"
+          >
+            Inicia sesión
+          </button>
+        </p>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-5">

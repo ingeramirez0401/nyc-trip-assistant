@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { supabaseAdmin } from './supabaseAuth.js';
 import { sendAgencyRequestEmail } from './email.js';
 import { resolvePublicUrl } from './appUrl.js';
+import { verifyCaptcha } from './captcha.js';
 
 const router = Router();
 
@@ -49,7 +50,11 @@ const tokenLimiter = rateLimit({
 
 router.post('/agency-requests', requestLimiter, async (req, res) => {
   try {
-    const { agencyName, contactName, contactEmail, phone, city, estimatedTravelers, message } = req.body;
+    const { agencyName, contactName, contactEmail, phone, city, estimatedTravelers, message, captchaToken } = req.body;
+
+    if (!(await verifyCaptcha(captchaToken))) {
+      return res.status(400).json({ error: 'Verificación de seguridad fallida. Intenta de nuevo.' });
+    }
 
     if (!agencyName?.trim() || !contactName?.trim() || !contactEmail?.trim()) {
       return res.status(400).json({ error: 'Agencia, contacto y email son requeridos' });

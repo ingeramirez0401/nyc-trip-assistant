@@ -4,7 +4,20 @@ import { useAuth } from '../../hooks/useAuth';
 
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
 
-const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login' }) => {
+const HEADER_COPY = {
+  traveler: {
+    login: { title: 'Bienvenido de nuevo', subtitle: 'Ingresa para acceder a tus viajes guardados' },
+    signup: { title: 'Crea tu cuenta', subtitle: 'Únete para crear y compartir itinerarios increíbles' },
+    forgot: { title: 'Recupera tu contraseña', subtitle: 'Te enviaremos instrucciones a tu correo' },
+  },
+  agency: {
+    login: { title: 'Acceso de tu agencia', subtitle: 'Ingresa con el correo de tu cuenta ya aprobada' },
+    signup: { title: 'Activa tu cuenta de agencia', subtitle: 'Usa el mismo correo con el que aprobamos tu solicitud' },
+    forgot: { title: 'Recupera tu contraseña', subtitle: 'Te enviaremos instrucciones a tu correo' },
+  },
+};
+
+const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience = 'traveler' }) => {
   const [mode, setMode] = useState(initialMode === 'signup' ? 'signup' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -77,11 +90,8 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login' }) => {
     }
   };
 
-  const headerCopy = {
-    login: { title: 'Bienvenido de nuevo', subtitle: 'Ingresa para acceder a tus viajes guardados' },
-    signup: { title: 'Crea tu cuenta', subtitle: 'Únete para crear y compartir itinerarios increíbles' },
-    forgot: { title: 'Recupera tu contraseña', subtitle: 'Te enviaremos instrucciones a tu correo' },
-  }[mode];
+  const headerCopy = HEADER_COPY[audience][mode];
+  const isAgency = audience === 'agency';
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
@@ -99,10 +109,15 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login' }) => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <i className="fas fa-route text-3xl text-white"></i>
+              <i className={`fas ${isAgency ? 'fa-building' : 'fa-route'} text-3xl text-white`}></i>
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">{headerCopy.title}</h2>
             <p className="text-slate-400 text-sm">{headerCopy.subtitle}</p>
+            {isAgency && (
+              <span className="inline-block mt-3 text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full uppercase tracking-wider">
+                Acceso para agencias
+              </span>
+            )}
           </div>
 
           {/* Forgot password form */}
@@ -164,6 +179,15 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login' }) => {
             </form>
           ) : (
             <>
+              {isAgency && !isLogin && (
+                <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-circle-info text-blue-400 mt-0.5"></i>
+                  <p className="text-xs text-blue-200">
+                    Usa el mismo correo con el que aprobamos tu solicitud de agencia — así tu cuenta se activa automáticamente.
+                  </p>
+                </div>
+              )}
+
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -278,16 +302,33 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login' }) => {
               </form>
 
               {/* Toggle Login/Register */}
-              <div className="mt-6 text-center">
+              <div className="mt-6 text-center space-y-2">
                 <p className="text-slate-400 text-sm">
-                  {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
+                  {isLogin
+                    ? (isAgency ? '¿Tu agencia fue aprobada y no tienes cuenta?' : '¿No tienes una cuenta?')
+                    : '¿Ya tienes una cuenta?'}
                   <button
                     onClick={() => switchMode(isLogin ? 'signup' : 'login')}
                     className="ml-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors"
                   >
-                    {isLogin ? 'Regístrate' : 'Inicia Sesión'}
+                    {isLogin ? (isAgency ? 'Actívala aquí' : 'Regístrate') : 'Inicia Sesión'}
                   </button>
                 </p>
+                {isAgency && (
+                  <p className="text-xs text-slate-500">
+                    ¿Aún no eres partner?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        document.getElementById('agencias')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                    >
+                      Solicita acceso
+                    </button>
+                  </p>
+                )}
               </div>
             </>
           )}

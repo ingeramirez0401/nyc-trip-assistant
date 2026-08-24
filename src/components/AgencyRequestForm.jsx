@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { agencyRequestService } from '../services/agencyRequestService';
+
+const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
 
 const TRAVELER_RANGES = ['1-10', '11-50', '51-200', 'Más de 200'];
 
@@ -16,15 +19,22 @@ const AgencyRequestForm = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sent, setSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
 
   const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      setError('Por favor completa la verificación de seguridad.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await agencyRequestService.submit(form);
+      await agencyRequestService.submit({ ...form, captchaToken });
       setSent(true);
     } catch (err) {
       setError(err.message || 'Ha ocurrido un error');
@@ -151,6 +161,16 @@ const AgencyRequestForm = ({ onClose }) => {
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   />
                 </div>
+
+                {HCAPTCHA_SITE_KEY && (
+                  <div className="flex justify-center pt-1">
+                    <HCaptcha
+                      sitekey={HCAPTCHA_SITE_KEY}
+                      onVerify={(token) => setCaptchaToken(token)}
+                      onExpire={() => setCaptchaToken(null)}
+                    />
+                  </div>
+                )}
 
                 {error && (
                   <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">

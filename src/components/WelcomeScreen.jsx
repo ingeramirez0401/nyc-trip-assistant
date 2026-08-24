@@ -24,6 +24,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginMode, setLoginMode] = useState('login');
+  const [loginAudience, setLoginAudience] = useState('traveler');
   const [newTripData, setNewTripData] = useState({
     name: '',
     city: '',
@@ -124,11 +125,19 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   };
 
   const handleStartFree = () => {
+    setLoginAudience('traveler');
     setLoginMode('signup');
     setShowLogin(true);
   };
 
+  const handleTravelerLogin = () => {
+    setLoginAudience('traveler');
+    setLoginMode('login');
+    setShowLogin(true);
+  };
+
   const handleAgencyLogin = () => {
+    setLoginAudience('agency');
     setLoginMode('login');
     setShowLogin(true);
   };
@@ -139,6 +148,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
   const handleStartCreate = () => {
     if (!user) {
+      setLoginAudience('traveler');
       setLoginMode('login');
       setShowLogin(true);
       return;
@@ -155,6 +165,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
   const handleOpenAIGenerator = () => {
     if (!user) {
+      setLoginAudience('traveler');
       setShowLogin(true);
       return;
     }
@@ -168,6 +179,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
   const handleCreateTrip = async () => {
     if (!user) {
+      setLoginAudience('traveler');
       setShowLogin(true);
       return;
     }
@@ -223,6 +235,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
   const handleGenerateWithAI = async ({ numDays, interests, budget, baseLocation }) => {
     if (!user) {
+      setLoginAudience('traveler');
       setShowLogin(true);
       return;
     }
@@ -394,7 +407,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         {/* Sección viajeros: planes + canje de licencia */}
         <div id="viajeros" className="scroll-mt-24 w-full flex flex-col items-center">
           {!user && !showCreateForm && (
-            <PlansSection onStartFree={handleStartFree} />
+            <PlansSection onStartFree={handleStartFree} onLogin={handleTravelerLogin} />
           )}
 
           {/* Canje de licencia de agencia: para cualquiera que aún no tenga una activa */}
@@ -588,6 +601,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       {showLogin && (
         <LoginScreen
           initialMode={loginMode}
+          audience={loginAudience}
           onClose={() => setShowLogin(false)}
           onLoginSuccess={() => {
             setShowLogin(false);
