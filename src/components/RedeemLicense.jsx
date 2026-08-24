@@ -12,12 +12,22 @@ const RedeemLicense = ({ onRedeemed }) => {
   const [loading, setLoading] = useState(false);
   const [pendingRedeem, setPendingRedeem] = useState(false);
 
-  // Si llegan desde el link del email (?code=XXXX), prellenar.
+  // Si llegan desde el link del email (?code=XXXX): un solo clic -- si ya
+  // tienen sesión, canjear directo; si no, abrir el registro de una vez en
+  // lugar de esperar a que encuentren y pulsen "Canjear" ellos mismos.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paramCode = params.get('code');
-    if (paramCode) {
-      setCode(paramCode.toUpperCase());
+    if (!paramCode) return;
+
+    const upperCode = paramCode.toUpperCase();
+    setCode(upperCode);
+
+    if (user) {
+      doRedeem(upperCode);
+    } else {
+      setPendingRedeem(true);
+      setShowLogin(true);
     }
   }, []);
 

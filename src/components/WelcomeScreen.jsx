@@ -10,6 +10,7 @@ import PlansSection from './PlansSection';
 import RedeemLicense from './RedeemLicense';
 import LandingIntro from './LandingIntro';
 import AgencyPitch from './AgencyPitch';
+import OnboardingTour from './OnboardingTour';
 import SideMenu from './SideMenu';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
@@ -37,10 +38,28 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
   const [openMenuTripId, setOpenMenuTripId] = useState(null);
   const [deletingTripId, setDeletingTripId] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     loadTrips();
   }, [user]); // Reload trips when user auth state changes
+
+  // Tour de bienvenida: una sola vez por viajero, la primera vez que entra.
+  useEffect(() => {
+    if (user && profile && profile.role !== 'agency_admin' && !profile.has_completed_onboarding) {
+      setShowOnboarding(true);
+    }
+  }, [user, profile]);
+
+  const handleCompleteOnboarding = async () => {
+    setShowOnboarding(false);
+    if (!user) return;
+    try {
+      await profileService.updateProfile(user.id, { has_completed_onboarding: true });
+    } catch (error) {
+      console.error('Error guardando estado de onboarding:', error);
+    }
+  };
 
   // Cerrar menú al hacer click fuera
   useEffect(() => {
@@ -586,6 +605,9 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           <p>Planifica, explora y disfruta cada momento</p>
         </div>
       </div>
+
+      {/* Tour de bienvenida */}
+      {showOnboarding && <OnboardingTour onComplete={handleCompleteOnboarding} />}
 
       {/* AI Generator Modal */}
       {showAIGenerator && newTripData.baseLocation && (

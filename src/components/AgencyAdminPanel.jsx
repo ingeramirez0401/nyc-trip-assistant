@@ -84,12 +84,41 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     }
   };
 
+  // Mientras se edita, el campo puede quedar en '' (borrando para escribir un
+  // número nuevo) -- solo se fuerza el mínimo al salir del campo o al enviar.
+  const clampValue = (rawValue, fallback, { min = 1, max } = {}) => {
+    const n = Number(rawValue);
+    let value = rawValue !== '' && Number.isFinite(n) ? n : fallback;
+    value = Math.max(value, min);
+    if (max) value = Math.min(value, max);
+    return value;
+  };
+
+  const numberField = (field, fallback, options) => ({
+    type: 'number',
+    min: options?.min ?? 1,
+    ...(options?.max && { max: options.max }),
+    value: genForm[field],
+    onChange: (e) => {
+      const raw = e.target.value;
+      setGenForm({ ...genForm, [field]: raw === '' ? '' : Number(raw) });
+    },
+    onBlur: () => setGenForm((prev) => ({ ...prev, [field]: clampValue(prev[field], fallback, options) })),
+  });
+
   const handleGenerate = async (e) => {
     e.preventDefault();
+    const normalized = {
+      ...genForm,
+      quotaAmount: clampValue(genForm.quotaAmount, 1),
+      validDays: clampValue(genForm.validDays, 365),
+      quantity: clampValue(genForm.quantity, 1, { max: 500 }),
+    };
+    setGenForm(normalized);
     try {
       setGenerating(true);
-      await licenseService.generate(genForm);
-      toast.success(`${genForm.quantity} licencia(s) generada(s)`);
+      await licenseService.generate(normalized);
+      toast.success(`${normalized.quantity} licencia(s) generada(s)`);
       const updated = await licenseService.list();
       setLicenses(updated);
     } catch (error) {
@@ -289,10 +318,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                     Cantidad de cupo
                   </label>
                   <input
-                    type="number"
-                    min={1}
-                    value={genForm.quotaAmount}
-                    onChange={(e) => setGenForm({ ...genForm, quotaAmount: parseInt(e.target.value, 10) || 1 })}
+                    {...numberField('quotaAmount', 1)}
                     className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
@@ -301,10 +327,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                     Vigencia (días)
                   </label>
                   <input
-                    type="number"
-                    min={1}
-                    value={genForm.validDays}
-                    onChange={(e) => setGenForm({ ...genForm, validDays: parseInt(e.target.value, 10) || 365 })}
+                    {...numberField('validDays', 365)}
                     className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
@@ -313,11 +336,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                     N.° de licencias
                   </label>
                   <input
-                    type="number"
-                    min={1}
-                    max={500}
-                    value={genForm.quantity}
-                    onChange={(e) => setGenForm({ ...genForm, quantity: parseInt(e.target.value, 10) || 1 })}
+                    {...numberField('quantity', 1, { max: 500 })}
                     className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
