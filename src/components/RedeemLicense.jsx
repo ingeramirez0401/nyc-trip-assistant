@@ -4,8 +4,14 @@ import { useToast } from '../contexts/ToastContext';
 import { licenseService } from '../services/licenseService';
 import LoginScreen from './auth/LoginScreen';
 
+// Con verificación de correo activa, signUp() no deja sesión de una vez --
+// el usuario tiene que ir a su bandeja y volver por OTRO link, que llega a
+// "/" sin el ?code=. localStorage sobrevive ese salto entre pestañas/cargas
+// de página, así que es lo que usamos para no perder el canje pendiente.
+const PENDING_CODE_KEY = 'tp_pending_redeem_code';
+
 const RedeemLicense = ({ onRedeemed }) => {
-  const { user, refreshLicense } = useAuth();
+  const { user, refreshLicenses } = useAuth();
   const toast = useToast();
   const [code, setCode] = useState('');
   const [showLogin, setShowLogin] = useState(false);
@@ -18,16 +24,28 @@ const RedeemLicense = ({ onRedeemed }) => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paramCode = params.get('code');
-    if (!paramCode) return;
 
-    const upperCode = paramCode.toUpperCase();
-    setCode(upperCode);
+    if (paramCode) {
+      const upperCode = paramCode.toUpperCase();
+      setCode(upperCode);
 
-    if (user) {
-      doRedeem(upperCode);
-    } else {
-      setPendingRedeem(true);
-      setShowLogin(true);
+      if (user) {
+        doRedeem(upperCode);
+      } else {
+        localStorage.setItem(PENDING_CODE_KEY, upperCode);
+        setPendingRedeem(true);
+        setShowLogin(true);
+      }
+      return;
+    }
+
+    // Sin ?code= en la URL: puede ser que volvamos de confirmar el correo
+    // con un canje que quedó pendiente de la visita anterior.
+    const pending = localStorage.getItem(PENDING_CODE_KEY);
+    if (pending && user) {
+      localStorage.removeItem(PENDING_CODE_KEY);
+      setCode(pending);
+      doRedeem(pending);
     }
   }, []);
 
@@ -35,7 +53,8 @@ const RedeemLicense = ({ onRedeemed }) => {
     setLoading(true);
     try {
       await licenseService.redeem(codeToRedeem);
-      await refreshLicense();
+      await refreshLicenses();
+      localStorage.removeItem(PENDING_CODE_KEY);
       toast.success('¡Código activado! Ya tienes acceso.');
       setCode('');
 

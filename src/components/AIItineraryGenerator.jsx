@@ -279,7 +279,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
                 </>
               ) : (
                 <>
-                  <i className="fas fa-sparkles"></i>
+                  <i className="fas fa-wand-magic-sparkles"></i>
                   <span>Generar Itinerario</span>
                 </>
               )}

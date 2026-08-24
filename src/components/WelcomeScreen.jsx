@@ -18,7 +18,7 @@ import { profileService } from '../services/profileService';
 import { licenseService } from '../services/licenseService';
 
 const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel }) => {
-  const { user, profile, license, refreshLicense } = useAuth();
+  const { user, profile, licenses, refreshLicenses } = useAuth();
   const toast = useToast();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,9 +161,19 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
     setShowLogin(true);
   };
 
-  // Cupo disponible vía licencia de agencia para un tipo de acción dado
-  const hasLicenseQuota = (quotaType) =>
-    license?.quota_type === quotaType && license.quota_remaining > 0;
+  // Cupo disponible vía licencia de agencia para un tipo de acción dado.
+  // Puede haber hasta una licencia activa por tipo (trips y ai_generations
+  // no compiten entre sí). /licenses/my ya filtra por vigencia y cupo
+  // restante, pero se revalida acá también por si el estado quedó viejo.
+  const findActiveLicense = (quotaType) =>
+    licenses.find(
+      (l) =>
+        l.quota_type === quotaType &&
+        l.quota_remaining > 0 &&
+        (!l.expires_at || new Date(l.expires_at) > new Date())
+    );
+
+  const hasLicenseQuota = (quotaType) => !!findActiveLicense(quotaType);
 
   const handleStartCreate = () => {
     if (!user) {
@@ -231,7 +241,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       await profileService.incrementTripCount(user.id);
       if (hasLicenseQuota('trips')) {
         await licenseService.consumeQuota('trips');
-        await refreshLicense();
+        await refreshLicenses();
       }
 
       toast.success('¡Viaje creado exitosamente!');
@@ -281,7 +291,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       await profileService.incrementAIUsage(user.id);
       if (hasLicenseQuota('ai_generations')) {
         await licenseService.consumeQuota('ai_generations');
-        await refreshLicense();
+        await refreshLicenses();
       }
 
       // Crear el viaje
@@ -355,7 +365,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           await profileService.incrementTripCount(user.id);
           if (hasLicenseQuota('trips')) {
             await licenseService.consumeQuota('trips');
-            await refreshLicense();
+            await refreshLicenses();
           }
 
           console.log('✅ Trip created manually (fallback):', trip);
@@ -429,10 +439,13 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
             <PlansSection onStartFree={handleStartFree} onLogin={handleTravelerLogin} />
           )}
 
-          {/* Canje de licencia de agencia: para cualquiera que aún no tenga una activa */}
-          {!license && profile?.role !== 'agency_admin' && !showCreateForm && (
-            <RedeemLicense onRedeemed={loadTrips} />
-          )}
+          {/* Canje de licencia de agencia: mientras le quede al menos un tipo
+              de cupo por activar (trips y ai_generations no compiten) */}
+          {profile?.role !== 'agency_admin' &&
+            !showCreateForm &&
+            ['trips', 'ai_generations'].some((t) => !licenses.some((l) => l.quota_type === t)) && (
+              <RedeemLicense onRedeemed={loadTrips} />
+            )}
         </div>
 
         {/* Sección agencias: propuesta de valor + acceso, solo para visitantes sin cuenta */}
@@ -579,7 +592,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
                 onClick={handleOpenAIGenerator}
                 className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <i className="fas fa-sparkles"></i>
+                <i className="fas fa-wand-magic-sparkles"></i>
                 <span>Generar con IA</span>
               </button>
               <button

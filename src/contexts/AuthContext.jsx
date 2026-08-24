@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [license, setLicense] = useState(null);
+  const [licenses, setLicenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
-        setLicense(null);
+        setLicenses([]);
         setLoading(false);
       }
     });
@@ -63,16 +63,16 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-    refreshLicense();
+    refreshLicenses();
   };
 
-  const refreshLicense = async () => {
+  const refreshLicenses = async () => {
     try {
       const active = await licenseService.getMine();
-      setLicense(active);
+      setLicenses(active || []);
     } catch (error) {
-      // No romper el flujo de auth por esto -- simplemente queda sin licencia.
-      console.error('Error fetching license:', error);
+      // No romper el flujo de auth por esto -- simplemente queda sin licencias.
+      console.error('Error fetching licenses:', error);
     }
   };
 
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       setSession(null);
       setUser(null);
       setProfile(null);
-      setLicense(null);
+      setLicenses([]);
     }
     return { error };
   };
@@ -133,8 +133,8 @@ export const AuthProvider = ({ children }) => {
     session,
     user,
     profile,
-    license,
-    refreshLicense,
+    licenses,
+    refreshLicenses,
     loading,
     isPasswordRecovery,
     signUp,

@@ -65,8 +65,8 @@ export const licenseService = {
   },
 
   async getMine() {
-    const { license } = await callAPI('/licenses/my');
-    return license;
+    const { licenses } = await callAPI('/licenses/my');
+    return licenses;
   },
 
   // Consumo de cupo: RPC directo a Postgres (no pasa por el backend, no

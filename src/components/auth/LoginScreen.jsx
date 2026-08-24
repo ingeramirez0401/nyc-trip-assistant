@@ -75,8 +75,10 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
       } else {
         const { error } = await signUp(email, password, { full_name: fullName }, captchaToken);
         if (error) throw error;
-        setMessage('¡Registro exitoso! Por favor revisa tu correo para verificar tu cuenta.');
-        switchMode('login');
+        // No usar switchMode aquí: limpia el mensaje que acabamos de poner.
+        setMode('login');
+        setCaptchaToken(null);
+        setMessage('¡Ya casi! Te enviamos un correo de verificación a ' + email + ' -- abre tu bandeja de entrada (revisa spam también) y haz clic en el link para activar tu cuenta.');
       }
     } catch (err) {
       console.error(err);

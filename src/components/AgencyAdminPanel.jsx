@@ -128,16 +128,20 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     }
   };
 
-  const handleSend = async (licenseId) => {
-    const email = (emailDrafts[licenseId] || '').trim();
+  const handleSend = async (license) => {
+    // El input muestra emailDrafts[id] ?? license.traveler_email como valor
+    // visible -- pero si el admin nunca lo edita, emailDrafts sigue vacío.
+    // Hay que aplicar el mismo fallback acá o "Reenviar" pide un correo que
+    // en realidad ya está ahí, visible en pantalla.
+    const email = (emailDrafts[license.id] ?? license.traveler_email ?? '').trim();
     if (!email) {
       toast.warning('Ingresa el correo del viajero');
       return;
     }
     try {
-      setSendingId(licenseId);
-      const updated = await licenseService.send(licenseId, email);
-      setLicenses((prev) => prev.map((l) => (l.id === licenseId ? updated : l)));
+      setSendingId(license.id);
+      const updated = await licenseService.send(license.id, email);
+      setLicenses((prev) => prev.map((l) => (l.id === license.id ? updated : l)));
       toast.success(`Enviado a ${email}`);
     } catch (error) {
       toast.error('Error al enviar: ' + error.message);
@@ -398,7 +402,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                               className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-full sm:w-44"
                             />
                             <button
-                              onClick={() => handleSend(license.id)}
+                              onClick={() => handleSend(license)}
                               disabled={sendingId === license.id}
                               className="shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition disabled:opacity-50"
                             >

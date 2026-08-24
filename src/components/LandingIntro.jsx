@@ -64,7 +64,7 @@ const LandingIntro = () => {
           </div>
           <div className="absolute -bottom-4 -left-4 bg-white dark:bg-slate-800 rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 border border-slate-100 dark:border-white/10">
             <div className="w-9 h-9 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <i className="fas fa-sparkles text-sm"></i>
+              <i className="fas fa-wand-magic-sparkles text-sm"></i>
             </div>
             <div>
               <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1">Itinerario listo</p>

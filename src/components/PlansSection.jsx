@@ -68,7 +68,7 @@ const PlansSection = ({ onStartFree, onLogin }) => {
           <ul className="space-y-2.5 mb-6 flex-1">
             {VIP_FEATURES.map((feature) => (
               <li key={feature} className="flex items-start gap-2.5 text-sm text-blue-50">
-                <i className="fas fa-sparkles text-amber-300 mt-0.5"></i>
+                <i className="fas fa-wand-magic-sparkles text-amber-300 mt-0.5"></i>
                 <span>{feature}</span>
               </li>
             ))}

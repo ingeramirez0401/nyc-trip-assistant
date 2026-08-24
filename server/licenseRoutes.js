@@ -148,6 +148,30 @@ router.post('/licenses/redeem', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Este código fue enviado a otro correo' });
     }
 
+    // Solo una licencia activa por tipo de cupo a la vez -- evita dejar
+    // cupo huérfano (invisible) y evita que el RPC de consumo, que no
+    // limita a una fila, descuente de dos licencias del mismo tipo a la vez.
+    const { data: sameTypeLicenses, error: sameTypeError } = await supabaseAdmin
+      .from('trippulse_licenses')
+      .select('expires_at')
+      .eq('redeemed_by', req.user.id)
+      .eq('quota_type', license.quota_type)
+      .eq('status', 'redeemed')
+      .gt('quota_remaining', 0);
+
+    if (sameTypeError) throw sameTypeError;
+
+    const now = new Date();
+    const hasActiveSameType = (sameTypeLicenses || []).some(
+      (l) => !l.expires_at || new Date(l.expires_at) > now
+    );
+    if (hasActiveSameType) {
+      const label = license.quota_type === 'trips' ? 'viajes' : 'generaciones con IA';
+      return res.status(409).json({
+        error: `Ya tienes una licencia activa de ${label}. Espera a que se agote o venza antes de canjear otra del mismo tipo.`,
+      });
+    }
+
     const expiresAt = new Date(Date.now() + license.valid_days * 24 * 60 * 60 * 1000).toISOString();
 
     // Guarda de concurrencia optimista: el WHERE incluye el status leído
@@ -187,19 +211,23 @@ router.post('/licenses/redeem', requireAuth, async (req, res) => {
 
 router.get('/licenses/my', requireAuth, async (req, res) => {
   try {
+    // Puede haber hasta una activa por tipo de cupo (trips + ai_generations
+    // a la vez son válidas, no compiten). "Activa" = con cupo restante y sin
+    // vencer -- filtrado acá en vez de con .or() de PostgREST por claridad.
     const { data, error } = await supabaseAdmin
       .from('trippulse_licenses')
       .select('*')
       .eq('redeemed_by', req.user.id)
       .eq('status', 'redeemed')
-      .order('redeemed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .gt('quota_remaining', 0)
+      .order('redeemed_at', { ascending: false });
 
     if (error) throw error;
-    res.json({ license: data || null });
+    const now = new Date();
+    const active = (data || []).filter((l) => !l.expires_at || new Date(l.expires_at) > now);
+    res.json({ licenses: active });
   } catch (error) {
-    console.error('Error obteniendo licencia:', error);
+    console.error('Error obteniendo licencias:', error);
     res.status(500).json({ error: error.message });
   }
 });

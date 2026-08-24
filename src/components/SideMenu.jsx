@@ -4,7 +4,7 @@ import { useToast } from '../contexts/ToastContext';
 import LoginScreen from './auth/LoginScreen';
 
 const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip, onOpenAgencyPanel, hasActiveTrip = true }) => {
-  const { user, profile, license, signOut } = useAuth();
+  const { user, profile, licenses, signOut } = useAuth();
   const toast = useToast();
   const [showLogin, setShowLogin] = useState(false);
 
@@ -48,11 +48,28 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
                       AGENCIA
                     </span>
                   )}
-                  {license && (
-                    <span className="inline-block mt-1 px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] rounded-full font-bold border border-green-500/30">
-                      {license.quota_remaining} {license.quota_type === 'trips' ? 'viajes' : 'gen. IA'} restantes
-                    </span>
-                  )}
+                  {licenses.map((lic) => (
+                    <div
+                      key={lic.id}
+                      className="inline-flex flex-col mt-1.5 px-2.5 py-1.5 bg-green-500/10 border border-green-500/25 rounded-lg"
+                    >
+                      <span className="flex items-center gap-1.5 text-green-400 text-[10px] font-bold">
+                        <i className="fas fa-ticket"></i>
+                        {lic.quota_remaining}/{lic.quota_amount}{' '}
+                        {lic.quota_type === 'trips' ? 'viajes' : 'gen. IA'}
+                      </span>
+                      {lic.expires_at && (
+                        <span className="text-[9px] text-green-400/70 mt-0.5">
+                          Vence el{' '}
+                          {new Date(lic.expires_at).toLocaleDateString('es-CO', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  ))}
               </div>
             </div>
           ) : (

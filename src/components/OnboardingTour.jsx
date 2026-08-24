@@ -12,7 +12,7 @@ const SLIDES = [
     text: 'Crea tus viajes, organiza cada día y guarda tus paradas con mapa y rutas incluidas.',
   },
   {
-    icon: 'fa-sparkles',
+    icon: 'fa-wand-magic-sparkles',
     title: 'Genera con IA',
     text: 'Cuéntale tu destino, tus días y tus intereses — la IA arma el plan completo por ti en segundos.',
   },
