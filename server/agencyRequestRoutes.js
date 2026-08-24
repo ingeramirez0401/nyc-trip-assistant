@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { supabaseAdmin } from './supabaseAuth.js';
 import { sendAgencyRequestEmail } from './email.js';
+import { resolvePublicUrl } from './appUrl.js';
 
 const router = Router();
 
@@ -79,11 +80,10 @@ router.post('/agency-requests', requestLimiter, async (req, res) => {
     if (error) throw error;
 
     if (ADMIN_NOTIFICATION_EMAIL) {
-      const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
       await sendAgencyRequestEmail({
         to: ADMIN_NOTIFICATION_EMAIL,
         request,
-        approveUrl: `${origin}/admin/approve-agency?token=${token}`,
+        approveUrl: `${resolvePublicUrl(req)}/admin/approve-agency?token=${token}`,
       });
     }
 

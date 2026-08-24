@@ -2,6 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { requireAuth, requireAgencyAdmin, supabaseAdmin } from './supabaseAuth.js';
 import { sendLicenseEmail } from './email.js';
+import { resolvePublicUrl } from './appUrl.js';
 
 const router = Router();
 
@@ -77,8 +78,7 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
     if (fetchError || !license) return res.status(404).json({ error: 'Licencia no encontrada' });
     if (license.status === 'redeemed') return res.status(400).json({ error: 'Esta licencia ya fue canjeada' });
 
-    const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
-    const redeemUrl = `${origin}/?code=${license.code}`;
+    const redeemUrl = `${resolvePublicUrl(req)}/?code=${license.code}`;
 
     await sendLicenseEmail({
       to: email,
