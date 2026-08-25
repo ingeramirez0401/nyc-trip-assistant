@@ -50,6 +50,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
         lng: details.lng,
         cat: 'Interés',
         address: details.address,
+        placesImg: placesService.getPhotoUrl(details.photoName),
       });
     } catch (err) {
       console.error('Error getting place details', err);
@@ -62,7 +63,10 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
         onAddPlace({
             ...selectedPlace,
             cat: selectedCategory,
-            img: uploadedImage || selectedPlace.title
+            // Prioridad: foto que el usuario subió > foto real de Google
+            // Places > el título solo (BottomSheet la interpreta como
+            // prompt y genera una imagen aproximada con IA de respaldo).
+            img: uploadedImage || selectedPlace.placesImg || selectedPlace.title
         });
         setSelectedPlace(null);
         setUploadedImage(null);
@@ -180,20 +184,38 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                         </div>
 
                         <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-2xl p-6 text-center transition-colors bg-slate-50 dark:bg-slate-800/30">
-                            {uploadedImage ? (
+                            {uploadedImage || selectedPlace.placesImg ? (
                                 <div className="relative group">
-                                    <img src={uploadedImage} alt="Preview" className="w-full h-48 object-cover rounded-xl shadow-lg" />
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
-                                        <button 
-                                            onClick={() => setUploadedImage(null)}
-                                            className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
-                                        >
-                                            <i className="fas fa-trash-alt mr-2"></i> Eliminar
-                                        </button>
+                                    <img
+                                        src={uploadedImage || selectedPlace.placesImg}
+                                        alt="Preview"
+                                        className="w-full h-48 object-cover rounded-xl shadow-lg"
+                                    />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-xl">
+                                        {uploadedImage ? (
+                                            <button
+                                                onClick={() => setUploadedImage(null)}
+                                                className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
+                                            >
+                                                <i className="fas fa-trash-alt mr-2"></i> Quitar
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="bg-white text-slate-900 px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
+                                            >
+                                                <i className="fas fa-camera mr-2"></i> Cambiar foto
+                                            </button>
+                                        )}
                                     </div>
+                                    {!uploadedImage && (
+                                        <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                                            Foto de Google Places
+                                        </span>
+                                    )}
                                 </div>
                             ) : (
-                                <button 
+                                <button
                                     onClick={() => fileInputRef.current?.click()}
                                     className="w-full py-4 flex flex-col items-center gap-3 text-slate-400 hover:text-slate-600 dark:hover:text-white transition"
                                 >

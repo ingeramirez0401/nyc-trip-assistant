@@ -31,9 +31,16 @@ export const placesService = {
     return predictions;
   },
 
-  // Detalle completo (coordenadas, dirección, ciudad, país) de una
+  // Detalle completo (coordenadas, dirección, ciudad, país, foto) de una
   // sugerencia una vez que el usuario la selecciona.
   async getDetails(placeId) {
     return await callAPI(`/places/details/${encodeURIComponent(placeId)}`);
+  },
+
+  // URL de la foto real del lugar (proxy propio -- Google exige la API key
+  // en cada pedido de foto, no puede ir directo desde el navegador). Ruta
+  // pública, sin bearer token, porque un <img src> no puede mandar uno.
+  getPhotoUrl(photoName) {
+    return photoName ? `/api/places/photo/${photoName}` : null;
   },
 };

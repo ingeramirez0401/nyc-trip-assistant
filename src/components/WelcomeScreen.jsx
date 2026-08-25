@@ -139,6 +139,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         lng: locationData.lng,
         title: locationData.city,
         desc: locationData.address,
+        img: locationData.img,
       }
     });
   };

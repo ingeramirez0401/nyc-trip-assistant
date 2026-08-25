@@ -38,6 +38,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
       lng: locationData.lng,
       title: locationData.name,
       desc: locationData.address,
+      img: locationData.img,
     });
   };
 

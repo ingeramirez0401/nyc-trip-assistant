@@ -71,6 +71,7 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
         city: details.city || details.name,
         country: details.country || '',
         address: details.address,
+        img: placesService.getPhotoUrl(details.photoName),
       });
     } catch (error) {
       console.error('Error getting place details:', error);

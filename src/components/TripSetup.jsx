@@ -61,6 +61,7 @@ const TripSetup = ({ trip, onComplete }) => {
       lng: locationData.lng,
       title: locationData.name,
       desc: locationData.address,
+      img: locationData.img,
     });
   };
 

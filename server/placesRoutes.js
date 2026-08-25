@@ -1,7 +1,18 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { requireAuth } from './supabaseAuth.js';
 
 const router = Router();
+
+// Pública (sin requireAuth): un <img src> normal no puede mandar el
+// Bearer token, y el nombre de foto es un token opaco de Google -- bajo
+// riesgo. Limitada por tasa igual que el resto de rutas públicas del app.
+const photoLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
@@ -69,7 +80,7 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
     const response = await fetch(`https://places.googleapis.com/v1/places/${req.params.placeId}`, {
       headers: {
         'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
-        'X-Goog-FieldMask': 'displayName,formattedAddress,location,addressComponents',
+        'X-Goog-FieldMask': 'displayName,formattedAddress,location,addressComponents,photos',
       },
     });
 
@@ -91,10 +102,43 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
       lng: data.location?.longitude,
       city: cityComponent?.longText || '',
       country: countryComponent?.longText || '',
+      photoName: data.photos?.[0]?.name || null,
     });
   } catch (error) {
     console.error('Error obteniendo detalle de lugar:', error);
     res.status(500).json({ error: 'Error obteniendo el detalle del lugar' });
+  }
+});
+
+// Sirve la foto real de un lugar (proxy: la Photo Media API de Google exige
+// la key en cada pedido, así que no puede ir directo desde el navegador).
+// photoName llega como "places/{placeId}/photos/{photoRef}" -- se usa un
+// wildcard porque trae slashes.
+router.get('/places/photo/*', photoLimiter, async (req, res) => {
+  try {
+    const photoName = req.params[0];
+    if (!photoName || !photoName.startsWith('places/')) {
+      return res.status(400).json({ error: 'photoName inválido' });
+    }
+    if (!GOOGLE_PLACES_API_KEY) {
+      return res.status(503).json({ error: 'Buscador de lugares no configurado' });
+    }
+
+    const response = await fetch(
+      `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=800&key=${GOOGLE_PLACES_API_KEY}`
+    );
+
+    if (!response.ok) {
+      console.error('Google Places photo error:', response.status);
+      return res.status(502).json({ error: 'Error obteniendo la foto del lugar' });
+    }
+
+    res.set('Content-Type', response.headers.get('content-type') || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(Buffer.from(await response.arrayBuffer()));
+  } catch (error) {
+    console.error('Error obteniendo foto de lugar:', error);
+    res.status(500).json({ error: 'Error obteniendo la foto del lugar' });
   }
 });
 
