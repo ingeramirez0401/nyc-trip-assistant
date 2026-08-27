@@ -20,13 +20,16 @@ if (!GOOGLE_PLACES_API_KEY) {
   console.error('⚠️  GOOGLE_PLACES_API_KEY no configurada. Las rutas /api/places/* fallarán.');
 }
 
-// Autocomplete de lugares (ciudades, hoteles, POIs). El biasing por ciudad
-// es opcional: si se manda `city`, prioriza resultados cerca del centro
-// aproximado de esa ciudad (mejor para "busca tu hotel en Roma" que un
-// autocomplete sin contexto geográfico).
+// Autocomplete de lugares (ciudades, hoteles, POIs). El filtro por ciudad
+// es opcional: si se manda `city` y `restrict=true` (default), EXCLUYE
+// resultados fuera de esa ciudad -- tiene sentido dentro de un viaje ya
+// creado (no vas a querer un café de París en tu viaje a Nueva York). Con
+// `restrict=false` el viajero apagó el filtro a propósito ("quiero buscar
+// fuera de la ciudad"): ahí no se manda bias ni restricción, búsqueda
+// global sin sesgo.
 router.get('/places/autocomplete', requireAuth, async (req, res) => {
   try {
-    const { query, city } = req.query;
+    const { query, city, restrict } = req.query;
     if (!query || query.trim().length < 2) {
       return res.json({ predictions: [] });
     }
@@ -34,10 +37,17 @@ router.get('/places/autocomplete', requireAuth, async (req, res) => {
       return res.status(503).json({ error: 'Buscador de lugares no configurado' });
     }
 
+    const restrictToCity = restrict !== 'false';
+    let locationField = {};
+    if (city && restrictToCity) {
+      const circle = await buildCityBias(city);
+      if (circle) locationField = { locationRestriction: circle };
+    }
+
     const body = {
       input: query,
       languageCode: 'es',
-      ...(city && { locationBias: await buildCityBias(city) }),
+      ...locationField,
     };
 
     const response = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
@@ -142,8 +152,9 @@ router.get('/places/photo/*', photoLimiter, async (req, res) => {
   }
 });
 
-// Geocodifica una ciudad para usarla como sesgo geográfico del autocomplete.
-// Cache simple en memoria -- son siempre las mismas ciudades por trip.
+// Geocodifica una ciudad a un círculo de 30km -- se usa como locationRestriction
+// (filtro duro) cuando el viajero deja el toggle "solo en esta ciudad"
+// activado. Cache simple en memoria -- son siempre las mismas ciudades por trip.
 const cityBiasCache = new Map();
 async function buildCityBias(city) {
   if (cityBiasCache.has(city)) return cityBiasCache.get(city);

@@ -10,16 +10,21 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Interés');
+  // Restringe la búsqueda a la ciudad del viaje por default -- dentro de un
+  // viaje ya creado no tiene sentido ofrecer un café de París en un viaje a
+  // Nueva York. El viajero lo puede apagar si de verdad quiere salir de la
+  // ciudad. Sin `city` (no debería pasar dentro de un viaje, pero por si
+  // acaso) no hay nada que restringir.
+  const [restrictToCity, setRestrictToCity] = useState(true);
   const fileInputRef = useRef(null);
 
-  const searchPlaces = async (e) => {
-    e.preventDefault();
+  const runSearch = async (restrict) => {
     if (!query.trim()) return;
 
     setLoading(true);
     setSearchError(null);
     try {
-      const predictions = await placesService.autocomplete(query, city);
+      const predictions = await placesService.autocomplete(query, city, restrict);
       setResults(predictions);
     } catch (err) {
       console.error('Search failed', err);
@@ -27,6 +32,23 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
       setSearchError(err.message || 'Error en la búsqueda');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const searchPlaces = (e) => {
+    e.preventDefault();
+    runSearch(restrictToCity);
+  };
+
+  // Si ya había una búsqueda hecha, alternar el toggle la vuelve a correr
+  // de una vez con el nuevo alcance -- sin esto, el checkbox cambiaría de
+  // estado pero los resultados en pantalla seguirían siendo los viejos
+  // hasta el próximo submit, lo cual se siente roto.
+  const handleToggleRestrict = () => {
+    const next = !restrictToCity;
+    setRestrictToCity(next);
+    if (results.length > 0 || searchError) {
+      runSearch(next);
     }
   };
 
@@ -108,6 +130,21 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                                 autoFocus
                             />
                         </div>
+
+                        {city && (
+                            <label className="flex items-center gap-2.5 mt-3 px-1 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={restrictToCity}
+                                    onChange={handleToggleRestrict}
+                                    className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                                />
+                                <span className="text-sm text-slate-600 dark:text-slate-300">
+                                    Solo en <strong className="text-slate-900 dark:text-white">{city}</strong>
+                                    {!restrictToCity && <span className="text-slate-400 dark:text-slate-500"> (apagado, buscando en todo el mundo)</span>}
+                                </span>
+                            </label>
+                        )}
                     </form>
 
                     <div className="flex-1 overflow-y-auto px-5 pb-5 hide-scrollbar">

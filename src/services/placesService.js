@@ -22,10 +22,12 @@ async function callAPI(path) {
 
 export const placesService = {
   // Devuelve sugerencias { placeId, text } mientras el usuario escribe.
-  // `city` (opcional) sesga los resultados hacia esa ciudad -- clave para
-  // encontrar un hotel/POI específico en vez de resultados genéricos.
-  async autocomplete(query, city) {
-    const params = new URLSearchParams({ query });
+  // `city` (opcional) restringe los resultados a esa ciudad cuando
+  // `restrictToCity` es true (default) -- clave para no ofrecer un café de
+  // París en un viaje a Nueva York. `restrictToCity=false` es el toggle
+  // apagado a propósito: búsqueda global, sin sesgo.
+  async autocomplete(query, city, restrictToCity = true) {
+    const params = new URLSearchParams({ query, restrict: String(restrictToCity) });
     if (city) params.set('city', city);
     const { predictions } = await callAPI(`/places/autocomplete?${params.toString()}`);
     return predictions;
