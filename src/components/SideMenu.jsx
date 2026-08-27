@@ -4,7 +4,7 @@ import { useToast } from '../contexts/ToastContext';
 import LoginScreen from './auth/LoginScreen';
 
 const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip, onOpenAgencyPanel, hasActiveTrip = true }) => {
-  const { user, profile, licenses, signOut } = useAuth();
+  const { user, profile, licenses, signOut, agencyBranding } = useAuth();
   const toast = useToast();
   const [showLogin, setShowLogin] = useState(false);
 
@@ -30,8 +30,18 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
         <div className="p-6 pt-12 border-b border-white/10 bg-gradient-to-br from-slate-800 to-slate-900">
           {user ? (
             <div className="flex items-center gap-3 mb-2">
-               <div className="h-12 w-12 rounded-xl bg-gradient-to-tr from-blue-600 to-purple-500 flex items-center justify-center text-white shadow-lg ring-2 ring-white/10 text-lg font-bold">
-                  {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+               <div
+                 className={`h-12 w-12 rounded-xl flex items-center justify-center text-white shadow-lg ring-2 ring-white/10 text-lg font-bold overflow-hidden ${
+                   agencyBranding
+                     ? 'bg-gradient-to-tr from-[var(--brand-600)] to-[var(--brand-700)]'
+                     : 'bg-gradient-to-tr from-blue-600 to-purple-500'
+                 }`}
+               >
+                  {agencyBranding?.logo_url ? (
+                    <img src={agencyBranding.logo_url} alt={agencyBranding.name} className="w-full h-full object-cover" />
+                  ) : (
+                    profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()
+                  )}
               </div>
               <div className="flex-1 min-w-0">
                   <h1 className="text-sm font-bold text-white tracking-tight truncate">

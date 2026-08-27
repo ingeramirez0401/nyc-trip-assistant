@@ -10,6 +10,23 @@ function generateCode() {
   return crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 8);
 }
 
+// El status 'expired' existe en el schema pero nada lo escribe nunca --
+// no hay cron ni job en este stack. En vez de sumar infraestructura para
+// una transición que el RPC de consumo de cupo ya hace irrelevante (una
+// licencia vencida no se puede seguir usando pase lo que pase), se deriva
+// acá en lectura: si venció, se reporta como 'expired' aunque la columna
+// real siga en 'redeemed'. Solo afecta lo que ve el agency_admin.
+function withEffectiveStatus(license) {
+  if (
+    license.status === 'redeemed' &&
+    license.expires_at &&
+    new Date(license.expires_at) <= new Date()
+  ) {
+    return { ...license, status: 'expired' };
+  }
+  return license;
+}
+
 // ==========================================================
 // Agency admin
 // ==========================================================
@@ -56,7 +73,7 @@ router.get('/agency/licenses', requireAuth, requireAgencyAdmin, async (req, res)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    res.json({ licenses: data });
+    res.json({ licenses: (data || []).map(withEffectiveStatus) });
   } catch (error) {
     console.error('Error listando licencias:', error);
     res.status(500).json({ error: error.message });
@@ -70,7 +87,7 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
 
     const { data: license, error: fetchError } = await supabaseAdmin
       .from('trippulse_licenses')
-      .select('*, trippulse_agencies(name)')
+      .select('*, trippulse_agencies(name, logo_url, primary_color)')
       .eq('id', req.params.id)
       .eq('agency_id', req.agencyId)
       .single();
@@ -85,6 +102,8 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
       agencyName: license.trippulse_agencies?.name || 'Tu agencia de viajes',
       code: license.code,
       redeemUrl,
+      logoUrl: license.trippulse_agencies?.logo_url || null,
+      primaryColor: license.trippulse_agencies?.primary_color || null,
     });
 
     const { data, error } = await supabaseAdmin
@@ -124,6 +143,36 @@ router.post('/agency/licenses/:id/revoke', requireAuth, requireAgencyAdmin, asyn
 // ==========================================================
 // Traveler
 // ==========================================================
+
+// Marca (nombre/logo/color) de la agencia a la que el viajero quedó
+// vinculado al canjear una licencia. RLS de trippulse_agencies solo deja
+// leer vía agency_admin, así que esto pasa por supabaseAdmin -- pero SOLO
+// resuelve la agencia del propio perfil del caller (nunca toma un id por
+// parámetro), para no abrir una forma de enumerar agencias ajenas.
+router.get('/agency/branding', requireAuth, async (req, res) => {
+  try {
+    const { data: profileRow, error: profileError } = await supabaseAdmin
+      .from('trippulse_profiles')
+      .select('agency_id')
+      .eq('id', req.user.id)
+      .single();
+
+    if (profileError) throw profileError;
+    if (!profileRow?.agency_id) return res.json({ branding: null });
+
+    const { data: agency, error: agencyError } = await supabaseAdmin
+      .from('trippulse_agencies')
+      .select('name, logo_url, primary_color')
+      .eq('id', profileRow.agency_id)
+      .single();
+
+    if (agencyError) throw agencyError;
+    res.json({ branding: agency });
+  } catch (error) {
+    console.error('Error obteniendo marca de agencia:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.post('/licenses/redeem', requireAuth, async (req, res) => {
   try {

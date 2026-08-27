@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { licenseService } from '../services/licenseService';
+import { applyBrandTheme, clearBrandTheme } from '../lib/theme';
 
 export const AuthContext = createContext({});
 
@@ -9,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [licenses, setLicenses] = useState([]);
+  const [agencyBranding, setAgencyBranding] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
@@ -38,6 +40,8 @@ export const AuthProvider = ({ children }) => {
       } else {
         setProfile(null);
         setLicenses([]);
+        setAgencyBranding(null);
+        clearBrandTheme();
         setLoading(false);
       }
     });
@@ -46,6 +50,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const fetchProfile = async (userId) => {
+    let profileData = null;
     try {
       const { data, error } = await supabase
         .from('trippulse_profiles')
@@ -56,6 +61,7 @@ export const AuthProvider = ({ children }) => {
       if (error) {
         console.error('Error fetching profile:', error);
       } else {
+        profileData = data;
         setProfile(data);
       }
     } catch (error) {
@@ -64,6 +70,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
     refreshLicenses();
+    refreshAgencyBranding(profileData);
   };
 
   const refreshLicenses = async () => {
@@ -73,6 +80,29 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // No romper el flujo de auth por esto -- simplemente queda sin licencias.
       console.error('Error fetching licenses:', error);
+    }
+  };
+
+  // Marca blanca de la agencia a la que el viajero quedó vinculado al
+  // canjear una licencia (profile.agency_id, ver licenseRoutes.js). El
+  // propio agency_admin no ve su marca reflejada acá -- la edita en
+  // AgencyAdminPanel, no tiene sentido "tematizar" su propia sesión con
+  // ella. Aplicar/limpiar el theme acá (no en cada pantalla) es lo que
+  // hace que el color de marca llegue a toda la app, no solo a WelcomeScreen.
+  const refreshAgencyBranding = async (profileData) => {
+    if (!profileData?.agency_id || profileData.role === 'agency_admin') {
+      setAgencyBranding(null);
+      clearBrandTheme();
+      return;
+    }
+    try {
+      const branding = await licenseService.getMyAgencyBranding();
+      setAgencyBranding(branding);
+      applyBrandTheme(branding?.primary_color);
+    } catch (error) {
+      console.error('Error fetching agency branding:', error);
+      setAgencyBranding(null);
+      clearBrandTheme();
     }
   };
 
@@ -125,6 +155,8 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setProfile(null);
       setLicenses([]);
+      setAgencyBranding(null);
+      clearBrandTheme();
     }
     return { error };
   };
@@ -135,6 +167,8 @@ export const AuthProvider = ({ children }) => {
     profile,
     licenses,
     refreshLicenses,
+    agencyBranding,
+    refreshAgencyBranding: () => refreshAgencyBranding(profile),
     loading,
     isPasswordRecovery,
     signUp,

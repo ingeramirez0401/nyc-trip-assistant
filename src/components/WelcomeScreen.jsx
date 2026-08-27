@@ -18,7 +18,7 @@ import { profileService } from '../services/profileService';
 import { licenseService } from '../services/licenseService';
 
 const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel }) => {
-  const { user, profile, licenses, refreshLicenses } = useAuth();
+  const { user, profile, licenses, refreshLicenses, agencyBranding } = useAuth();
   const toast = useToast();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -422,14 +422,35 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
         
-        {/* Header */}
+        {/* Header -- el logo/color de la agencia (si el viajero llegó vía
+            una licencia) reemplaza el ícono y tiñe el degradé vía las
+            variables --brand-*, que AuthContext ya dejó puestas en :root. */}
         <div className="text-center mb-8 md:mb-12 animate-fade-in-down">
-          <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl md:rounded-[2rem] mx-auto mb-4 md:mb-6 flex items-center justify-center shadow-2xl shadow-blue-900/50 transform rotate-3 hover:rotate-6 transition-transform duration-500 border border-white/10">
-            <i className="fas fa-route text-2xl md:text-4xl text-white"></i>
+          <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-tr from-[var(--brand-600)] to-[var(--brand-700)] rounded-2xl md:rounded-[2rem] mx-auto mb-4 md:mb-6 flex items-center justify-center shadow-2xl shadow-blue-900/50 transform rotate-3 hover:rotate-6 transition-transform duration-500 border border-white/10 overflow-hidden">
+            {agencyBranding?.logo_url ? (
+              <img src={agencyBranding.logo_url} alt={agencyBranding.name} className="w-full h-full object-cover" />
+            ) : (
+              <i className="fas fa-route text-2xl md:text-4xl text-white"></i>
+            )}
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 dark:from-white dark:via-blue-100 dark:to-blue-200 mb-2 md:mb-4 tracking-tight drop-shadow-lg">TripPulse</h1>
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] dark:from-white dark:via-blue-100 dark:to-blue-200 mb-2 md:mb-4 tracking-tight drop-shadow-lg">TripPulse</h1>
           <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">Descubre. Planifica. Vive.</p>
         </div>
+
+        {/* Marca de la agencia que regaló el acceso */}
+        {agencyBranding && (
+          <div
+            className="flex items-center gap-2.5 mb-8 -mt-4 px-4 py-2 rounded-full bg-white dark:bg-white/5 border shadow-sm animate-fade-in-down"
+            style={{ borderColor: /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(agencyBranding.primary_color || '') ? agencyBranding.primary_color : undefined }}
+          >
+            {agencyBranding.logo_url && (
+              <img src={agencyBranding.logo_url} alt={agencyBranding.name} className="w-6 h-6 rounded-full object-cover" />
+            )}
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+              Un regalo de <span className="text-slate-900 dark:text-white">{agencyBranding.name}</span>
+            </span>
+          </div>
+        )}
 
         {/* Landing: hero + propuesta de valor, solo para visitantes sin cuenta */}
         {!user && !showCreateForm && <LandingIntro />}
@@ -591,7 +612,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
               </button>
               <button
                 onClick={handleOpenAIGenerator}
-                className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="flex-[2] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <i className="fas fa-wand-magic-sparkles"></i>
                 <span>Generar con IA</span>
@@ -607,7 +628,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         ) : user ? (
           <button
             onClick={handleStartCreate}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-2xl shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-95 transition-all w-full md:w-auto"
+            className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white px-6 py-3 md:px-8 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-2xl shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-95 transition-all w-full md:w-auto"
           >
             <i className="fas fa-plus-circle mr-2 md:mr-3"></i>
             Crear Nuevo Viaje

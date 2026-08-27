@@ -69,6 +69,11 @@ export const licenseService = {
     return licenses;
   },
 
+  async getMyAgencyBranding() {
+    const { branding } = await callAPI('/agency/branding');
+    return branding;
+  },
+
   // Consumo de cupo: RPC directo a Postgres (no pasa por el backend, no
   // requiere ningún secreto -- solo la sesión propia del usuario, la misma
   // que ya usan tripService/dayService/stopService).

@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { agencyService } from '../services/agencyService';
 import { licenseService } from '../services/licenseService';
+import { storageService } from '../services/storageService';
+import { normalizeSquareLogo, LOGO_REQUIREMENTS_LABEL } from '../lib/imageProcessing';
 import SideMenu from './SideMenu';
 
 const STATUS_LABEL = {
@@ -29,6 +31,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
   const [licenses, setLicenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingBrand, setSavingBrand] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sendingId, setSendingId] = useState(null);
   const [emailDrafts, setEmailDrafts] = useState({});
@@ -65,6 +68,25 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       setLoading(false);
     }
   };
+
+  const handleLogoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite volver a elegir el mismo archivo si algo falla
+    if (!file) return;
+    try {
+      setUploadingLogo(true);
+      const normalized = await normalizeSquareLogo(file);
+      const publicUrl = await storageService.uploadImage(normalized, 'agency-logos');
+      setBrandForm((prev) => ({ ...prev, logo_url: publicUrl }));
+      toast.success('Logo cargado — haz clic en "Guardar marca" para aplicarlo');
+    } catch (error) {
+      toast.error(error.message || 'No se pudo procesar el logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => setBrandForm((prev) => ({ ...prev, logo_url: '' }));
 
   const handleSaveBrand = async (e) => {
     e.preventDefault();
@@ -267,15 +289,34 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    URL del logo
+                    Logo
                   </label>
-                  <input
-                    type="url"
-                    value={brandForm.logo_url}
-                    onChange={(e) => setBrandForm({ ...brandForm, logo_url: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden">
+                      {uploadingLogo ? (
+                        <i className="fas fa-spinner fa-spin text-slate-400"></i>
+                      ) : brandForm.logo_url ? (
+                        <img src={brandForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        <i className="fas fa-image text-slate-300 dark:text-slate-600"></i>
+                      )}
+                    </div>
+                    <label className="flex-1 cursor-pointer px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-300 text-sm font-bold text-center hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                      {uploadingLogo ? 'Subiendo...' : brandForm.logo_url ? 'Cambiar' : 'Subir imagen'}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoSelect} disabled={uploadingLogo} className="hidden" />
+                    </label>
+                    {brandForm.logo_url && !uploadingLogo && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        title="Quitar logo"
+                        className="shrink-0 w-9 h-9 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition flex items-center justify-center"
+                      >
+                        <i className="fas fa-trash-alt text-sm"></i>
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">{LOGO_REQUIREMENTS_LABEL}</p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
@@ -411,7 +452,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                           </>
                         ) : null}
 
-                        {license.status !== 'redeemed' && license.status !== 'revoked' && (
+                        {license.status !== 'redeemed' && license.status !== 'revoked' && license.status !== 'expired' && (
                           <button
                             onClick={() => handleRevoke(license)}
                             className="shrink-0 text-red-500 hover:text-red-600 text-sm font-bold px-3 py-2"

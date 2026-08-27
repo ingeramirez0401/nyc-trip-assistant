@@ -18,9 +18,39 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-// Shell compartido con la identidad visual de la app: banda con gradiente
-// azul→índigo + tarjeta blanca redondeada (mismo estilo que ApproveAgencyScreen).
-function emailShell({ badge, title, bodyHtml }) {
+// Los valores de marca de agencia (logo_url, primary_color) los escribe el
+// agency_admin vía API, sin pasar por el <input type="color"> del panel --
+// nunca confiar en que llegan bien formados antes de meterlos en un style="".
+const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+function safeAccentColor(value) {
+  return typeof value === 'string' && HEX_COLOR_RE.test(value) ? value : null;
+}
+function safeLogoUrl(value) {
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2563eb,#4f46e5)';
+
+// Shell compartido con la identidad visual de la app: banda de color +
+// tarjeta blanca redondeada (mismo estilo que ApproveAgencyScreen). Si la
+// agencia tiene marca propia (logo/color), la banda y el CTA la usan en vez
+// del degradé azul→índigo por defecto de TripPulse.
+function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt }) {
+  const safeColor = safeAccentColor(accentColor);
+  const safeLogo = safeLogoUrl(logoUrl);
+  const headerBg = safeColor || DEFAULT_GRADIENT;
+
+  const headerMark = safeLogo
+    ? `<img src="${escapeHtml(safeLogo)}" alt="${escapeHtml(logoAlt || 'Logo')}" style="max-height:44px;max-width:180px;border-radius:8px;background:#ffffff;padding:4px 8px;margin-bottom:12px;" />`
+    : `<div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.18);display:inline-block;line-height:52px;font-size:24px;margin-bottom:12px;">🧭</div>
+        <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>`;
+
   return `<!DOCTYPE html>
 <html lang="es">
   <head>
@@ -33,9 +63,8 @@ function emailShell({ badge, title, bodyHtml }) {
   </head>
   <body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
     <div style="max-width:520px;margin:0 auto;">
-      <div style="background:linear-gradient(135deg,#2563eb,#4f46e5);border-radius:20px 20px 0 0;padding:32px 24px;text-align:center;">
-        <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.18);display:inline-block;line-height:52px;font-size:24px;margin-bottom:12px;">🧭</div>
-        <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>
+      <div style="background:${headerBg};border-radius:20px 20px 0 0;padding:32px 24px;text-align:center;">
+        ${headerMark}
         ${badge ? `<div style="color:#c7d2fe;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">${badge}</div>` : ''}
       </div>
       <div style="background:#ffffff;border-radius:0 0 20px 20px;padding:32px 24px;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
@@ -48,10 +77,11 @@ function emailShell({ badge, title, bodyHtml }) {
 </html>`;
 }
 
-function ctaButton(href, label) {
+function ctaButton(href, label, accentColor) {
+  const safeColor = safeAccentColor(accentColor);
   return `
     <div style="text-align:center;margin:28px 0 8px;">
-      <a href="${href}" style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+      <a href="${href}" style="background:${safeColor || DEFAULT_GRADIENT};color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
         ${label}
       </a>
     </div>
@@ -64,7 +94,7 @@ const LICENSE_FEATURES = [
   ['📍', 'Guarda tus lugares', 'Fotos, notas y tips, todo en un solo sitio.'],
 ];
 
-export async function sendLicenseEmail({ to, agencyName, code, redeemUrl }) {
+export async function sendLicenseEmail({ to, agencyName, code, redeemUrl, logoUrl, primaryColor }) {
   if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL) {
     throw new Error('SendGrid no está configurado en el servidor');
   }
@@ -89,7 +119,7 @@ export async function sendLicenseEmail({ to, agencyName, code, redeemUrl }) {
       <strong>${safeAgencyName}</strong> te regaló acceso a TripPulse, el planificador con IA
       que arma tu itinerario completo en segundos.
     </p>
-    ${ctaButton(redeemUrl, '✨ Crear mi cuenta y empezar')}
+    ${ctaButton(redeemUrl, '✨ Crear mi cuenta y empezar', primaryColor)}
     <p style="text-align:center;color:#94a3b8;font-size:12px;margin:6px 0 28px;">
       Un clic y ya estás dentro — el botón ya trae tu código, no hace falta copiar nada.
     </p>
@@ -110,6 +140,9 @@ export async function sendLicenseEmail({ to, agencyName, code, redeemUrl }) {
       badge: safeAgencyName,
       title: '¡Tu aventura está a un clic! 🎒',
       bodyHtml,
+      accentColor: primaryColor,
+      logoUrl,
+      logoAlt: agencyName,
     }),
   });
 }

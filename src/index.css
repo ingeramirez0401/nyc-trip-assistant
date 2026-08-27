@@ -7,6 +7,13 @@
   --glass-border: rgba(255, 255, 255, 0.6);
   --glass-blur: blur(24px);
   --shadow-strong: 0 8px 32px -4px rgba(0, 0, 0, 0.15);
+
+  /* Marca blanca: valores por defecto = azul/índigo de TripPulse.
+     src/lib/theme.js los sobreescribe cuando el viajero entra vinculado
+     a una agencia con color propio; si no, quedan estos. */
+  --brand-500: #2563eb;
+  --brand-600: #2563eb;
+  --brand-700: #4f46e5;
 }
 
 body {
