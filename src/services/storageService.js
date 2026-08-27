@@ -11,17 +11,26 @@ export const storageService = {
   async uploadImage(file, folder = 'stops') {
     try {
       console.log('📤 Uploading image:', file.name, file.type, file.size);
-      
+
       // Generar nombre único para el archivo
       const fileExt = file.name.split('.').pop().toLowerCase();
       const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       console.log('📝 File path:', fileName);
 
+      // El storage self-hosted de este proyecto no procesa bien el
+      // multipart/form-data que storage-js arma automáticamente cuando le
+      // pasas un File/Blob directo (guarda el sobre multipart entero como
+      // si fuera el archivo, mal etiquetado como application/json -- rompe
+      // cualquier <img>). Pasar un ArrayBuffer en cambio fuerza a storage-js
+      // a mandar el body binario crudo con el content-type explícito, que
+      // sí funciona en este backend. Ver diagnóstico 2026-08-27.
+      const arrayBuffer = await file.arrayBuffer();
+
       // Subir archivo con configuración simplificada
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(fileName, file, {
+        .upload(fileName, arrayBuffer, {
           cacheControl: '3600',
           upsert: false,
           contentType: file.type
@@ -64,16 +73,17 @@ export const storageService = {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
       const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: mimeType });
 
       // Determinar extensión
       const ext = mimeType.split('/')[1];
       const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
 
-      // Subir blob
+      // Subir el Uint8Array directo (no un Blob) -- mismo motivo que en
+      // uploadImage: storage-js solo manda content-type explícito y body
+      // binario crudo cuando el body NO es instanceof Blob/File.
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(fileName, blob, {
+        .upload(fileName, byteArray, {
           contentType: mimeType,
           cacheControl: '3600',
           upsert: false

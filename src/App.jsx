@@ -13,16 +13,26 @@ import ResetPasswordScreen from './components/auth/ResetPasswordScreen';
 import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useAuth } from './hooks/useAuth';
+import { useAppRoute } from './hooks/useAppRoute';
+import { useToast } from './contexts/ToastContext';
+import { tripService } from './services/tripService';
 import { testConnection } from './lib/supabase';
 
 function App() {
+  // Navegación real basada en URL (home / agencia / viaje) -- ver
+  // useAppRoute.js. currentTrip sigue siendo el objeto completo del viaje
+  // (lo necesitan useSupabaseItinerary y los hijos); la URL solo carga el
+  // id, así que se resuelve por fetch cuando no coincide con lo que ya
+  // está en memoria (ver efecto más abajo).
+  const [route, navigate] = useAppRoute();
+  const toast = useToast();
+
   // App State Management
   const [currentTrip, setCurrentTrip] = useState(() => {
     const saved = localStorage.getItem('currentTrip');
     return saved ? JSON.parse(saved) : null;
   });
-  const [setupMode, setSetupMode] = useState(false);
-  const [showAgencyPanel, setShowAgencyPanel] = useState(false);
+  const [resolvingTrip, setResolvingTrip] = useState(false);
   const [activeDayId, setActiveDayId] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -83,12 +93,13 @@ function App() {
   const handleSelectTrip = (trip) => {
     setCurrentTrip(trip);
     localStorage.setItem('currentTrip', JSON.stringify(trip));
+    navigate({ screen: 'trip', tripId: trip.id });
   };
 
   const handleCreateTrip = (trip) => {
     setCurrentTrip(trip);
     localStorage.setItem('currentTrip', JSON.stringify(trip));
-    setSetupMode(true);
+    navigate({ screen: 'trip-setup', tripId: trip.id });
   };
 
   const handleExitTrip = () => {
@@ -96,7 +107,41 @@ function App() {
     localStorage.removeItem('currentTrip');
     setActiveDayId(null);
     setSelectedStop(null);
+    navigate({ screen: 'home' });
   };
+
+  // Resuelve currentTrip contra la URL: si el viaje activo en memoria no
+  // coincide con el id de la ruta (deep link directo, refresh, o volver
+  // atrás/adelante), lo trae por id. Cubre el mismo caso que antes cubría
+  // el localStorage de currentTrip, pero ahora la URL manda.
+  useEffect(() => {
+    if (route.screen !== 'trip' && route.screen !== 'trip-setup') return;
+    if (currentTrip?.id === route.tripId) return;
+
+    let cancelled = false;
+    setResolvingTrip(true);
+    tripService
+      .getById(route.tripId)
+      .then((trip) => {
+        if (cancelled) return;
+        setCurrentTrip(trip);
+        localStorage.setItem('currentTrip', JSON.stringify(trip));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('No se pudo cargar el viaje desde la URL:', err);
+        toast.error('No se encontró ese viaje o ya no tienes acceso a él.');
+        navigate({ screen: 'home' }, { replace: true });
+      })
+      .finally(() => {
+        if (!cancelled) setResolvingTrip(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.screen, route.tripId]);
 
   // Al cerrar sesión, salir del viaje activo -- si no, useSupabaseItinerary
   // sigue corriendo con hooks trip-scoped después de que la sesión ya no
@@ -109,7 +154,7 @@ function App() {
   }, [user]);
 
   const handleSetupComplete = async () => {
-    setSetupMode(false);
+    navigate({ screen: 'trip', tripId: currentTrip.id });
     await refreshData();
   };
 
@@ -194,11 +239,18 @@ function App() {
     return <ResetPasswordScreen />;
   }
 
+  // Volver de la agencia adonde estaba antes: a su viaje si tenía uno
+  // cargado en memoria, o a home si no -- mismo comportamiento que había
+  // antes de esto ser una ruta real, solo que ahora también sobrevive un
+  // refresh o el botón atrás/adelante del navegador.
+  const closeAgencyPanel = () =>
+    navigate(currentTrip ? { screen: 'trip', tripId: currentTrip.id } : { screen: 'home' });
+
   // Show Agency Admin Panel if requested (works with or without a trip selected)
-  if (showAgencyPanel) {
+  if (route.screen === 'agency') {
     return (
       <AgencyAdminPanel
-        onClose={() => setShowAgencyPanel(false)}
+        onClose={closeAgencyPanel}
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
       />
@@ -206,20 +258,34 @@ function App() {
   }
 
   // Show Welcome Screen if no trip selected
-  if (!currentTrip) {
+  if (route.screen === 'home') {
     return (
       <WelcomeScreen
         onSelectTrip={handleSelectTrip}
         onCreateTrip={handleCreateTrip}
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
-        onOpenAgencyPanel={() => setShowAgencyPanel(true)}
+        onOpenAgencyPanel={() => navigate({ screen: 'agency' })}
       />
     );
   }
 
+  // Viaje aún no resuelto contra la URL (deep link directo o refresh) --
+  // antes de esto, se veía "Cargando..." solo mientras useSupabaseItinerary
+  // no tenía días; ahora también puede faltar el viaje mismo.
+  if (resolvingTrip || !currentTrip || currentTrip.id !== route.tripId) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white font-medium">Cargando viaje...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show Setup Screen if in setup mode
-  if (setupMode) {
+  if (route.screen === 'trip-setup') {
     return <TripSetup trip={currentTrip} onComplete={handleSetupComplete} />;
   }
 
@@ -298,7 +364,7 @@ function App() {
         toggleTheme={toggleTheme}
         onOpenList={() => setIsListOpen(true)}
         onExitTrip={handleExitTrip}
-        onOpenAgencyPanel={() => setShowAgencyPanel(true)}
+        onOpenAgencyPanel={() => navigate({ screen: 'agency' })}
       />
 
       {/* ITINERARY LIST OVERLAY */}
