@@ -47,6 +47,15 @@ function App() {
   // Geolocalización en tiempo real (solo si está habilitada)
   const { location: userLocation, error: geoError } = useGeolocation(gpsEnabled);
 
+  // geoError se capturaba pero nunca se mostraba en ningún lado -- si el
+  // GPS fallaba (permiso denegado, timeout, lo que sea muy común en iOS
+  // Safari si Configuración > Privacidad > Ubicación está apagado para
+  // Safari), el botón de GPS simplemente no hacía nada, sin ninguna pista
+  // de por qué. Ahora al menos se ve el motivo real.
+  useEffect(() => {
+    if (geoError) toast.error(geoError);
+  }, [geoError]);
+
   // Efecto para aplicar la clase 'dark' al html tag
   useEffect(() => {
     if (isDarkMode) {

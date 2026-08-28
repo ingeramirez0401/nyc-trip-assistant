@@ -61,10 +61,12 @@ export const useGeolocation = (enabled = false, options = {}) => {
       ...options
     };
 
-    // Obtener posición inicial con manejo de permisos explícito
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
-
-    // Seguir actualizando la posición
+    // Un solo watchPosition -- ya entrega la primera lectura apenas hay
+    // permiso, igual que getCurrentPosition. Tener las dos llamadas activas
+    // a la vez (como estaba antes) le pide a iOS Safari dos sesiones de
+    // localización simultáneas con enableHighAccuracy, y ahí es donde
+    // CoreLocation se pone errático -- no es solo redundante, es la causa
+    // más probable de "en iOS no anda bien".
     const watchId = navigator.geolocation.watchPosition(
       handleSuccess,
       handleError,
