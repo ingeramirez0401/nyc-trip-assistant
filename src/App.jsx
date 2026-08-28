@@ -10,6 +10,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import TripSetup from './components/TripSetup';
 import AgencyAdminPanel from './components/AgencyAdminPanel';
 import ResetPasswordScreen from './components/auth/ResetPasswordScreen';
+import LocationPermissionHelp from './components/LocationPermissionHelp';
 import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useAuth } from './hooks/useAuth';
@@ -45,16 +46,33 @@ function App() {
   const [gpsEnabled, setGpsEnabled] = useState(false);
 
   // Geolocalización en tiempo real (solo si está habilitada)
-  const { location: userLocation, error: geoError } = useGeolocation(gpsEnabled);
+  const { location: userLocation, error: geoError, errorCode: geoErrorCode, permissionState: geoPermissionState, retry: retryGeolocation } = useGeolocation(gpsEnabled);
+  const [showLocationHelp, setShowLocationHelp] = useState(false);
 
   // geoError se capturaba pero nunca se mostraba en ningún lado -- si el
   // GPS fallaba (permiso denegado, timeout, lo que sea muy común en iOS
   // Safari si Configuración > Privacidad > Ubicación está apagado para
   // Safari), el botón de GPS simplemente no hacía nada, sin ninguna pista
-  // de por qué. Ahora al menos se ve el motivo real.
+  // de por qué. Permiso denegado es el único caso donde un toast no basta
+  // -- necesita instrucciones paso a paso para arreglarlo, así que abre el
+  // panel de ayuda en vez de un mensaje que desaparece solo. Los demás
+  // errores (timeout, posición no disponible) sí son solo un toast: suelen
+  // resolverse solos en el siguiente intento.
   useEffect(() => {
-    if (geoError) toast.error(geoError);
-  }, [geoError]);
+    if (!geoError) return;
+    if (geoErrorCode === 'PERMISSION_DENIED') {
+      setShowLocationHelp(true);
+    } else {
+      toast.error(geoError);
+    }
+  }, [geoError, geoErrorCode]);
+
+  // Cierra el panel de ayuda solo si el reintento realmente funcionó --
+  // sin esto, un "reintentar" exitoso dejaba el panel abierto tapando el
+  // mapa aunque el GPS ya estuviera andando.
+  useEffect(() => {
+    if (userLocation && showLocationHelp) setShowLocationHelp(false);
+  }, [userLocation]);
 
   // Efecto para aplicar la clase 'dark' al html tag
   useEffect(() => {
@@ -183,6 +201,13 @@ function App() {
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
   const handleCenterOnUser = () => {
+    // Si ya sabemos que el permiso está denegado (Permissions API), ni
+    // intentamos -- vamos directo a las instrucciones en vez de dejar que
+    // el usuario espere un timeout para enterarse de lo mismo.
+    if (geoPermissionState === 'denied') {
+      setShowLocationHelp(true);
+      return;
+    }
     if (!gpsEnabled) {
       setGpsEnabled(true);
       setTimeout(() => {
@@ -196,6 +221,10 @@ function App() {
   };
 
   const toggleGPS = () => {
+    if (!gpsEnabled && geoPermissionState === 'denied') {
+      setShowLocationHelp(true);
+      return;
+    }
     setGpsEnabled(!gpsEnabled);
   };
 
@@ -481,6 +510,17 @@ function App() {
           onAddPlace={handleAddPlace}
           onClose={() => setIsSearchOpen(false)}
           city={trip?.city || currentTrip?.city}
+        />
+      )}
+
+      {/* AYUDA DE PERMISO DE UBICACIÓN */}
+      {showLocationHelp && (
+        <LocationPermissionHelp
+          onRetry={() => {
+            setGpsEnabled(true);
+            retryGeolocation();
+          }}
+          onClose={() => setShowLocationHelp(false)}
         />
       )}
 
