@@ -6,6 +6,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
   const toast = useToast();
   const [imgSrc, setImgSrc] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showFullHours, setShowFullHours] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -196,6 +197,15 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                             )}
                         </div>
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white leading-tight mb-1 drop-shadow-sm">{place.title}</h2>
+                        {place.placeRating != null && (
+                            <p className="text-slate-700 dark:text-slate-300 text-sm font-bold flex items-center gap-1.5 mb-1">
+                                <i className="fas fa-star text-amber-400"></i>
+                                {place.placeRating.toFixed(1)}
+                                {place.placeRatingCount != null && (
+                                    <span className="text-slate-400 dark:text-slate-500 font-medium">({place.placeRatingCount.toLocaleString('es')})</span>
+                                )}
+                            </p>
+                        )}
                         <p className="text-slate-600 dark:text-slate-400 text-sm flex items-center gap-2">
                             <i className="fas fa-map-pin text-amber-500 dark:text-amber-400"></i> {place.address || city}
                         </p>
@@ -209,24 +219,44 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
             
             {/* Action Bar */}
             <div className="flex gap-3">
-                 <button 
+                 <button
                     onClick={handleVisitToggle}
-                    className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${isVisited 
-                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                    className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${isVisited
+                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                         : 'bg-slate-100 dark:bg-white text-slate-900 hover:bg-slate-200 dark:hover:bg-slate-100'}`}
                 >
                     <i className={`fas ${isVisited ? 'fa-check-circle' : 'fa-circle'}`}></i>
                     {isVisited ? 'Completado' : 'Marcar Visitado'}
                 </button>
-                 <a 
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=transit`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 bg-slate-800 dark:bg-slate-800 text-white border border-slate-700 dark:border-white/10 py-3.5 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 flex items-center justify-center gap-2"
-                >
-                    <i className="fas fa-location-arrow text-blue-400"></i>
-                    <span>Ir Ahora</span>
-                </a>
+                {/* Sin origin: Google Maps usa la ubicación en vivo del
+                    dispositivo al abrir el link -- más confiable que
+                    mandarle nuestro propio GPS (puede estar apagado o
+                    desactualizado). Caminando y en auto son los dos modos
+                    que un viajero decide de entrada; dentro de Maps puede
+                    cambiar a transporte público si quiere. */}
+                <div className="flex-1 flex rounded-xl overflow-hidden border border-slate-700 dark:border-white/10 shadow-lg">
+                    <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=walking`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Ir caminando"
+                        className="flex-1 bg-slate-800 text-white py-3.5 hover:bg-slate-700 transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                    >
+                        <i className="fas fa-person-walking text-blue-400"></i>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">A pie</span>
+                    </a>
+                    <div className="w-px bg-white/10"></div>
+                    <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=driving`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Ir en auto"
+                        className="flex-1 bg-slate-800 text-white py-3.5 hover:bg-slate-700 transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                    >
+                        <i className="fas fa-car text-blue-400"></i>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">En auto</span>
+                    </a>
+                </div>
             </div>
 
             {/* Info Cards */}
@@ -250,6 +280,54 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                     </div>
                 </div>
             </div>
+
+            {/* Información práctica de Google Places -- solo si el lugar vino
+                de una búsqueda (lugares a mano o generados con IA no tienen
+                estos datos, la sección simplemente no aparece). */}
+            {(place.placeHours?.length > 0 || place.placePhone || place.placeWebsite) && (
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5 divide-y divide-slate-200 dark:divide-white/5 overflow-hidden">
+                    {place.placeHours?.length > 0 && (
+                        <button
+                            onClick={() => setShowFullHours((v) => !v)}
+                            className="w-full text-left p-4 flex items-start gap-3"
+                        >
+                            <i className="fas fa-clock text-purple-500 dark:text-purple-400 mt-0.5"></i>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Horario</div>
+                                {showFullHours ? (
+                                    <div className="space-y-0.5">
+                                        {place.placeHours.map((line, i) => (
+                                            <p
+                                                key={i}
+                                                className={`text-sm ${i === (new Date().getDay() + 6) % 7 ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                                            >
+                                                {line}
+                                            </p>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                        {place.placeHours[(new Date().getDay() + 6) % 7]}
+                                    </p>
+                                )}
+                            </div>
+                            <i className={`fas fa-chevron-down text-xs text-slate-400 mt-1.5 transition-transform ${showFullHours ? 'rotate-180' : ''}`}></i>
+                        </button>
+                    )}
+                    {place.placePhone && (
+                        <a href={`tel:${place.placePhone}`} className="p-4 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition">
+                            <i className="fas fa-phone text-emerald-500 dark:text-emerald-400"></i>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{place.placePhone}</span>
+                        </a>
+                    )}
+                    {place.placeWebsite && (
+                        <a href={place.placeWebsite} target="_blank" rel="noreferrer" className="p-4 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition">
+                            <i className="fas fa-globe text-blue-500 dark:text-blue-400"></i>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">Sitio web</span>
+                        </a>
+                    )}
+                </div>
+            )}
 
             {/* Secondary Actions */}
             <div className="pt-4 border-t border-slate-200 dark:border-white/5">

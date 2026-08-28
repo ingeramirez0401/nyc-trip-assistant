@@ -1,49 +1,73 @@
 import React from 'react';
 
-const DaySelector = ({ days, activeDayId, onSelectDay }) => {
+// Rediseño: antes cada pestaña mostraba día + título + puntitos por parada
+// -- no escalaba (viajes largos se volvían una fila interminable de texto)
+// y los puntos no comunicaban nada legible. Ahora: pestañas compactas
+// (solo el número) que se expanden con el título + progreso SOLO la
+// activa, más un botón aparte para abrir el itinerario completo -- leer
+// el itinerario de verdad vive en ItineraryList (pantalla completa, ya
+// scrollea bien), no hace falta que el mapa intente mostrarlo también.
+// De paso: el original leía `day.day_number` pero el dato real llega como
+// `day.dayNumber` (ver useSupabaseItinerary.js) -- el número de día nunca
+// se estaba pintando.
+const DaySelector = ({ days, activeDayId, onSelectDay, visited = {}, onOpenList }) => {
+  const hasOverflow = days.length > 5;
+
   return (
     <div className="absolute top-24 left-0 right-0 z-[450] px-4 animate-fade-in-down pointer-events-none">
-        <div className="glass-panel p-1.5 rounded-2xl overflow-hidden shadow-2xl mx-auto max-w-lg bg-slate-900/80 backdrop-blur-xl border-white/10 pointer-events-auto">
-            <div className="flex overflow-x-auto gap-1.5 hide-scrollbar snap-x px-0.5">
-                {days.map((day) => {
-                    const isActive = day.id === activeDayId;
-                    return (
-                        <button
-                            key={day.id}
-                            onClick={() => onSelectDay(day.id)}
-                            className={`flex-shrink-0 px-4 py-2.5 rounded-xl transition-all duration-300 flex flex-col items-center justify-center min-w-[72px] snap-center relative overflow-hidden group
-                                ${isActive 
-                                    ? 'bg-slate-900 text-white shadow-lg scale-100' 
-                                    : 'bg-transparent text-slate-500 hover:bg-slate-100'
-                                }
-                            `}
-                        >
-                            {/* Active Indicator Background Effect */}
-                            {isActive && (
-                                <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950 z-0"></div>
-                            )}
+      <div className="mx-auto max-w-lg flex items-center gap-2 pointer-events-auto">
+        <div className="relative flex-1 min-w-0">
+          {hasOverflow && (
+            <>
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-slate-900/90 to-transparent z-10 rounded-l-2xl" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-slate-900/90 to-transparent z-10 rounded-r-2xl" />
+            </>
+          )}
+          <div className="p-1.5 rounded-2xl overflow-x-auto overflow-y-hidden shadow-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 hide-scrollbar">
+            <div className="flex gap-1.5 snap-x w-max">
+              {days.map((day) => {
+                const isActive = day.id === activeDayId;
+                const total = day.stops.length;
+                const done = day.stops.filter((s) => visited[s.id]).length;
 
-                            <span className={`text-[9px] uppercase font-bold tracking-wider mb-0.5 z-10 transition-colors ${isActive ? 'text-slate-300' : 'text-slate-400'}`}>
-                                {day.day_number}
-                            </span>
-                            <span className={`text-sm font-bold whitespace-nowrap z-10 leading-none ${isActive ? 'text-white' : 'text-slate-700'}`}>
-                                {day.title}
-                            </span>
-                            
-                            {/* Dots Indicator */}
-                            <div className="flex gap-0.5 mt-1.5 z-10 h-1">
-                                {day.stops.slice(0, 3).map((_, i) => (
-                                    <div key={i} className={`w-1 h-1 rounded-full transition-all ${isActive ? 'bg-amber-400' : 'bg-slate-300 group-hover:bg-slate-400'}`} />
-                                ))}
-                                {day.stops.length > 3 && (
-                                    <div className={`w-1 h-1 rounded-full ${isActive ? 'bg-slate-600' : 'bg-slate-200'}`} />
-                                )}
-                            </div>
-                        </button>
-                    );
-                })}
+                return (
+                  <button
+                    key={day.id}
+                    onClick={() => onSelectDay(day.id)}
+                    className={`shrink-0 rounded-xl transition-all duration-300 flex items-center snap-center ${
+                      isActive
+                        ? 'bg-white text-slate-900 gap-2 pl-3.5 pr-4 py-2 shadow-lg'
+                        : 'bg-transparent text-slate-400 hover:bg-white/10 hover:text-white w-11 h-11 justify-center'
+                    }`}
+                  >
+                    <span className={`font-black leading-none ${isActive ? 'text-lg' : 'text-sm'}`}>{day.dayNumber}</span>
+                    {isActive && (
+                      <span className="flex flex-col items-start leading-tight max-w-[110px]">
+                        <span className="text-xs font-bold truncate w-full">{day.title}</span>
+                        {total > 0 && (
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            {done}/{total} visitado{total !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
+          </div>
         </div>
+
+        {onOpenList && (
+          <button
+            onClick={onOpenList}
+            title="Ver itinerario completo del día"
+            className="shrink-0 w-11 h-11 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center shadow-2xl hover:bg-slate-800 active:scale-95 transition-all"
+          >
+            <i className="fas fa-list-ul"></i>
+          </button>
+        )}
+      </div>
     </div>
   );
 };

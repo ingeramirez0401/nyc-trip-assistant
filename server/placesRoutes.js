@@ -70,6 +70,11 @@ router.get('/places/autocomplete', requireAuth, async (req, res) => {
       .map((s) => ({
         placeId: s.placePrediction.placeId,
         text: s.placePrediction.text?.text || '',
+        // Google ya los manda sin FieldMask extra en este endpoint -- se
+        // usan en el cliente solo para elegir un ícono representativo por
+        // resultado (restaurante, museo, parque...) en vez del mismo pin
+        // genérico para todo.
+        types: s.placePrediction.types || [],
       }));
 
     res.json({ predictions });
@@ -87,10 +92,12 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
       return res.status(503).json({ error: 'Buscador de lugares no configurado' });
     }
 
-    const response = await fetch(`https://places.googleapis.com/v1/places/${req.params.placeId}`, {
+    const response = await fetch(`https://places.googleapis.com/v1/places/${req.params.placeId}?languageCode=es`, {
       headers: {
         'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
-        'X-Goog-FieldMask': 'displayName,formattedAddress,location,addressComponents,photos',
+        'X-Goog-FieldMask':
+          'displayName,formattedAddress,location,addressComponents,photos,' +
+          'rating,userRatingCount,nationalPhoneNumber,websiteUri,regularOpeningHours.weekdayDescriptions',
       },
     });
 
@@ -113,6 +120,11 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
       city: cityComponent?.longText || '',
       country: countryComponent?.longText || '',
       photoName: data.photos?.[0]?.name || null,
+      rating: data.rating ?? null,
+      ratingCount: data.userRatingCount ?? null,
+      phone: data.nationalPhoneNumber || null,
+      website: data.websiteUri || null,
+      hours: data.regularOpeningHours?.weekdayDescriptions || null,
     });
   } catch (error) {
     console.error('Error obteniendo detalle de lugar:', error);

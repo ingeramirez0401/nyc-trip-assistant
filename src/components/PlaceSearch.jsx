@@ -1,6 +1,42 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { categories } from '../data/categories';
 import { placesService } from '../services/placesService';
+
+// Ícono + color representativo por tipo de lugar de Google -- para que la
+// lista de resultados no se vea con el mismo pin genérico repetido para
+// todo. Google manda varios `types` por resultado, se usa el primero que
+// reconocemos; si no reconocemos ninguno, cae al pin genérico.
+const GOOGLE_TYPE_STYLE = {
+  restaurant: { icon: 'fa-utensils', color: '#dc2626' },
+  cafe: { icon: 'fa-mug-hot', color: '#92400e' },
+  bar: { icon: 'fa-martini-glass', color: '#a855f7' },
+  night_club: { icon: 'fa-martini-glass', color: '#a855f7' },
+  museum: { icon: 'fa-building-columns', color: '#6366f1' },
+  art_gallery: { icon: 'fa-palette', color: '#ec4899' },
+  park: { icon: 'fa-tree', color: '#22c55e' },
+  tourist_attraction: { icon: 'fa-camera', color: '#06b6d4' },
+  lodging: { icon: 'fa-bed', color: '#f59e0b' },
+  shopping_mall: { icon: 'fa-bag-shopping', color: '#7c3aed' },
+  store: { icon: 'fa-bag-shopping', color: '#7c3aed' },
+  church: { icon: 'fa-place-of-worship', color: '#78716c' },
+  hindu_temple: { icon: 'fa-place-of-worship', color: '#78716c' },
+  mosque: { icon: 'fa-place-of-worship', color: '#78716c' },
+  synagogue: { icon: 'fa-place-of-worship', color: '#78716c' },
+  stadium: { icon: 'fa-baseball', color: '#f97316' },
+  amusement_park: { icon: 'fa-star', color: '#f59e0b' },
+  zoo: { icon: 'fa-paw', color: '#22c55e' },
+  aquarium: { icon: 'fa-fish', color: '#0ea5e9' },
+  movie_theater: { icon: 'fa-film', color: '#db2777' },
+  spa: { icon: 'fa-spa', color: '#10b981' },
+  gym: { icon: 'fa-dumbbell', color: '#f97316' },
+};
+const DEFAULT_TYPE_STYLE = { icon: 'fa-map-pin', color: '#64748b' };
+const styleForTypes = (types) => {
+  for (const t of types || []) {
+    if (GOOGLE_TYPE_STYLE[t]) return GOOGLE_TYPE_STYLE[t];
+  }
+  return DEFAULT_TYPE_STYLE;
+};
 
 const PlaceSearch = ({ onAddPlace, onClose, city }) => {
   const [query, setQuery] = useState('');
@@ -35,22 +71,30 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
     }
   };
 
+  // Autobúsqueda: en móvil "presiona Enter para buscar" no es un patrón que
+  // el usuario espere (el teclado ni siempre muestra esa tecla). Se busca
+  // sola 550ms después de que el usuario deja de escribir -- y de una vez
+  // reacciona a cambiar el toggle "Solo en {ciudad}" sin necesitar código
+  // aparte para eso.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setSearchError(null);
+      return;
+    }
+    const handle = setTimeout(() => runSearch(restrictToCity), 550);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, restrictToCity, city]);
+
+  // Enter sigue funcionando para quien prefiera no esperar el debounce.
   const searchPlaces = (e) => {
     e.preventDefault();
     runSearch(restrictToCity);
   };
 
-  // Si ya había una búsqueda hecha, alternar el toggle la vuelve a correr
-  // de una vez con el nuevo alcance -- sin esto, el checkbox cambiaría de
-  // estado pero los resultados en pantalla seguirían siendo los viejos
-  // hasta el próximo submit, lo cual se siente roto.
-  const handleToggleRestrict = () => {
-    const next = !restrictToCity;
-    setRestrictToCity(next);
-    if (results.length > 0 || searchError) {
-      runSearch(next);
-    }
-  };
+  const handleToggleRestrict = () => setRestrictToCity((prev) => !prev);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -73,6 +117,11 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
         cat: 'Interés',
         address: details.address,
         placesImg: placesService.getPhotoUrl(details.photoName),
+        placeRating: details.rating,
+        placeRatingCount: details.ratingCount,
+        placePhone: details.phone,
+        placeWebsite: details.website,
+        placeHours: details.hours,
       });
     } catch (err) {
       console.error('Error getting place details', err);
@@ -119,26 +168,40 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
             {!selectedPlace ? (
                 <>
                     <form onSubmit={searchPlaces} className="p-5">
-                        <div className="relative">
-                            <i className="fas fa-search absolute left-4 top-4 text-slate-400"></i>
-                            <input 
-                                type="text" 
-                                placeholder="Ej: Central Park, Empire State..." 
-                                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-500 shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                        <div className="relative group">
+                            <i className={`fas fa-search absolute left-4 top-4.5 transition-colors ${loading ? 'text-blue-500' : 'text-slate-400 group-focus-within:text-blue-500'}`}></i>
+                            <input
+                                type="text"
+                                placeholder="Ej: Central Park, Empire State..."
+                                className="w-full pl-11 pr-11 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-inner focus:ring-0 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all"
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 autoFocus
                             />
+                            {query && (
+                                <button
+                                    type="button"
+                                    onClick={() => setQuery('')}
+                                    className="absolute right-3 top-3 w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+                                >
+                                    <i className="fas fa-times text-xs"></i>
+                                </button>
+                            )}
                         </div>
 
                         {city && (
-                            <label className="flex items-center gap-2.5 mt-3 px-1 cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={restrictToCity}
-                                    onChange={handleToggleRestrict}
-                                    className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
-                                />
+                            // onClick en el <label>, no solo en el switch -- un <div> custom no
+                            // hereda el reenvío de clic que un <input> nativo sí tiene dentro de
+                            // <label>, así que tocar el texto no hacía nada sin esto.
+                            <label
+                                onClick={handleToggleRestrict}
+                                className="flex items-center gap-2.5 mt-3.5 px-1 cursor-pointer select-none"
+                            >
+                                <div
+                                    className={`w-9 h-5 rounded-full shrink-0 p-0.5 transition-colors ${restrictToCity ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                >
+                                    <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${restrictToCity ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                                </div>
                                 <span className="text-sm text-slate-600 dark:text-slate-300">
                                     Solo en <strong className="text-slate-900 dark:text-white">{city}</strong>
                                     {!restrictToCity && <span className="text-slate-400 dark:text-slate-500"> (apagado, buscando en todo el mundo)</span>}
@@ -148,6 +211,10 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                     </form>
 
                     <div className="flex-1 overflow-y-auto px-5 pb-5 hide-scrollbar">
+                        {query.trim().length > 0 && query.trim().length < 2 && (
+                            <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-6">Sigue escribiendo...</p>
+                        )}
+
                         {loading && (
                             <div className="py-12 text-center text-slate-500">
                                 <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-blue-500 animate-spin mx-auto mb-4"></div>
@@ -162,30 +229,41 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                             </div>
                         )}
 
-                        {!loading && !searchError && results.length === 0 && query && (
+                        {!loading && !searchError && results.length === 0 && query.trim().length >= 2 && (
                             <div className="py-12 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5 border-dashed mx-2">
                                 <i className="fas fa-map-signs text-3xl mb-3 opacity-50"></i>
                                 <p>No encontramos lugares con ese nombre.</p>
+                                {restrictToCity && city && (
+                                    <p className="text-xs mt-1.5 opacity-75">Prueba apagando &quot;Solo en {city}&quot; para buscar en todo el mundo.</p>
+                                )}
                             </div>
                         )}
 
-                        <div className="flex flex-col gap-3">
-                            {results.map((prediction) => (
-                                <button
-                                    key={prediction.placeId}
-                                    onClick={() => handleSelectPlace(prediction)}
-                                    className="text-left p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all flex items-start gap-4 group active:scale-[0.98]"
-                                >
-                                    <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition shadow-lg">
-                                        <i className="fas fa-map-pin"></i>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                                            {prediction.text}
-                                        </h3>
-                                    </div>
-                                </button>
-                            ))}
+                        <div className="flex flex-col gap-2.5">
+                            {results.map((prediction, i) => {
+                                const style = styleForTypes(prediction.types);
+                                return (
+                                    <button
+                                        key={prediction.placeId}
+                                        onClick={() => handleSelectPlace(prediction)}
+                                        style={{ animationDelay: `${i * 40}ms` }}
+                                        className="text-left p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 hover:border-blue-500/40 hover:shadow-md transition-all flex items-center gap-3.5 group active:scale-[0.98] animate-fade-in-down"
+                                    >
+                                        <div
+                                            className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-lg transition-transform group-hover:scale-110"
+                                            style={{ backgroundColor: `${style.color}1a`, color: style.color }}
+                                        >
+                                            <i className={`fas ${style.icon}`}></i>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                                {prediction.text}
+                                            </h3>
+                                        </div>
+                                        <i className="fas fa-chevron-right ml-auto text-slate-300 dark:text-slate-600 text-xs group-hover:text-blue-500 transition"></i>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </>

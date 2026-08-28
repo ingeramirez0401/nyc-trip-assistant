@@ -50,6 +50,11 @@ export const useSupabaseItinerary = (tripId) => {
               time: stop.time,
               address: stop.address,
               isVisited: stop.is_visited,
+              placeRating: stop.place_rating,
+              placeRatingCount: stop.place_rating_count,
+              placePhone: stop.place_phone,
+              placeWebsite: stop.place_website,
+              placeHours: stop.place_hours,
             })),
           };
         })
@@ -113,6 +118,11 @@ export const useSupabaseItinerary = (tripId) => {
         tip: stopData.tip,
         time: stopData.time,
         address: stopData.address,
+        placeRating: stopData.placeRating,
+        placeRatingCount: stopData.placeRatingCount,
+        placePhone: stopData.placePhone,
+        placeWebsite: stopData.placeWebsite,
+        placeHours: stopData.placeHours,
       });
 
       // Recargar datos

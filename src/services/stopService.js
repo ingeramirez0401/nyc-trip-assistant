@@ -51,6 +51,14 @@ export const stopService = {
         address: stopData.address || null,
         order_index: count || 0,
         is_visited: false,
+        // Solo presentes cuando el lugar vino de una búsqueda de Google
+        // Places -- lugares agregados a mano o generados con IA quedan
+        // NULL, la UI ya lo maneja mostrando esta sección solo si hay dato.
+        place_rating: stopData.placeRating ?? null,
+        place_rating_count: stopData.placeRatingCount ?? null,
+        place_phone: stopData.placePhone || null,
+        place_website: stopData.placeWebsite || null,
+        place_hours: stopData.placeHours || null,
       }])
       .select()
       .single();

@@ -458,10 +458,12 @@ function App() {
       )}
 
       {/* DAY SELECTOR */}
-      <DaySelector 
-        days={days} 
-        activeDayId={activeDayId} 
-        onSelectDay={setActiveDayId} 
+      <DaySelector
+        days={days}
+        activeDayId={activeDayId}
+        onSelectDay={setActiveDayId}
+        visited={visited}
+        onOpenList={() => setIsListOpen(true)}
       />
 
       {/* SEARCH MODAL */}
