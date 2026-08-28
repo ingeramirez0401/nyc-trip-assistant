@@ -161,14 +161,22 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (!error) {
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      setLicenses([]);
-      setAgencyBranding(null);
-      clearBrandTheme();
-    }
+    // Limpiar el estado local SIEMPRE, incluso si supabase.auth.signOut()
+    // falla -- si falla es casi siempre porque el token ya estaba
+    // inválido/expirado en el servidor (AuthApiError / "session not
+    // found"), lo cual significa que la sesión YA no era válida de todos
+    // modos. Antes, con el `if (!error)`, ese caso dejaba a el usuario
+    // atrapado viéndose logueado sin ninguna forma de salir -- el botón de
+    // cerrar sesión no hacía nada visible. El estado local es la fuente de
+    // verdad de "¿la UI me muestra como logueado?", y debe reflejar
+    // "cerrado" apenas el usuario lo pide, haya podido el servidor revocar
+    // el token o no.
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setLicenses([]);
+    setAgencyBranding(null);
+    clearBrandTheme();
     return { error };
   };
 

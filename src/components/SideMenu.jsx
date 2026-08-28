@@ -10,7 +10,13 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
 
   const handleSignOut = async () => {
     if (await toast.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-      await signOut();
+      const { error } = await signOut();
+      // signOut() ya limpia la sesión local pase lo que pase -- esto es
+      // solo un aviso de que el servidor no pudo revocar el token (típico
+      // si ya estaba vencido), no algo que bloquee salir.
+      if (error) {
+        console.warn('signOut server-side error (sesión local ya se cerró igual):', error);
+      }
       onClose();
     }
   };
