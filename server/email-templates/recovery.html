@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>TripPulse</title>
+  </head>
+  <body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <div style="max-width:520px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#2563eb,#4f46e5);border-radius:20px 20px 0 0;padding:32px 24px;text-align:center;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.18);display:inline-block;line-height:52px;font-size:24px;margin-bottom:12px;">🔑</div>
+        <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>
+      </div>
+      <div style="background:#ffffff;border-radius:0 0 20px 20px;padding:32px 24px;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+        <h1 style="margin:0 0 16px;font-size:19px;color:#0f172a;">Restablece tu contraseña 🔐</h1>
+        <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+          Alguien (esperamos que hayas sido tú) pidió restablecer la contraseña de tu cuenta en
+          <strong>TripPulse</strong>. Crea una nueva contraseña con el botón de abajo.
+        </p>
+        <div style="text-align:center;margin:28px 0 8px;">
+          <a href="{{ .ConfirmationURL }}" style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+            🔑 Crear nueva contraseña
+          </a>
+        </div>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin:6px 0 28px;">
+          Este link expira pronto por seguridad -- si ya venció, pide uno nuevo desde la app.
+        </p>
+        <div style="border-top:1px solid #f1f5f9;padding-top:20px;">
+          <p style="margin:0;color:#64748b;font-size:13px;line-height:1.6;">
+            <strong style="color:#0f172a;">¿No pediste este cambio?</strong><br />
+            Puedes ignorar este correo con tranquilidad -- tu contraseña actual sigue siendo válida y
+            nadie puede cambiarla sin acceder a este link.
+          </p>
+        </div>
+        <p style="color:#94a3b8;font-size:11px;margin-top:20px;text-align:center;">
+          ¿El botón no funciona? Copia y pega este link en tu navegador:<br />
+          <span style="color:#475569;word-break:break-all;">{{ .ConfirmationURL }}</span>
+        </p>
+      </div>
+      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">TripPulse · Planifica, explora y disfruta cada momento</p>
+    </div>
+  </body>
+</html>

@@ -134,9 +134,10 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  const resetPassword = async (email) => {
+  const resetPassword = async (email, captchaToken) => {
     return await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/`,
+      ...(captchaToken && { captchaToken }),
     });
   };
 

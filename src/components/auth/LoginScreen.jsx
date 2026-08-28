@@ -75,10 +75,23 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
     e.preventDefault();
     setError(null);
     setMessage(null);
+
+    // GoTrue exige captcha en /auth/v1/recover igual que en login/signup
+    // (mismo GOTRUE_SECURITY_CAPTCHA_SECRET a nivel de servidor) -- pero
+    // este formulario nunca renderizaba el widget, así que el request
+    // llegaba sin token y GoTrue lo rechazaba con "captcha verification
+    // process failed" pase lo que pase, sin importar qué escribiera el
+    // usuario.
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      setError('Por favor completa la verificación de seguridad.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const { error } = await resetPassword(email);
+      const { error } = await resetPassword(email, captchaToken);
       if (error) throw error;
+      setCaptchaToken(null);
       setMessage('Si ese correo tiene una cuenta, te enviamos instrucciones para restablecer tu contraseña.');
     } catch (err) {
       setError(err.message || 'Ha ocurrido un error');
@@ -236,6 +249,17 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                   />
                 </div>
               </div>
+
+              {HCAPTCHA_SITE_KEY && (
+                <div className="flex justify-center pt-1">
+                  <HCaptcha
+                    sitekey={HCAPTCHA_SITE_KEY}
+                    onVerify={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken(null)}
+                    theme="dark"
+                  />
+                </div>
+              )}
 
               {error && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">

@@ -212,6 +212,11 @@ app.get('/email-templates/confirmation.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'email-templates', 'confirmation.html'));
 });
 
+app.get('/email-templates/recovery.html', (req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'email-templates', 'recovery.html'));
+});
+
 // En producción, el mismo proceso sirve el build estático de Vite.
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));
