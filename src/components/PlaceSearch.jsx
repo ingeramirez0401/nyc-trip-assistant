@@ -169,7 +169,14 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                 <>
                     <form onSubmit={searchPlaces} className="p-5">
                         <div className="relative group">
-                            <i className={`fas fa-search absolute left-4 top-4.5 transition-colors ${loading ? 'text-blue-500' : 'text-slate-400 group-focus-within:text-blue-500'}`}></i>
+                            {/* top-4.5 no existe en la escala de Tailwind -- se
+                                ignora en silencio y el ícono queda sin posición
+                                vertical real. top-1/2 -translate-y-1/2 es el
+                                patrón que ya usa el resto de la app (ver
+                                LoginScreen.jsx) para centrar de verdad sin
+                                depender de un valor fijo que se descuadra si
+                                cambia el padding del input. */}
+                            <i className={`fas fa-search absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${loading ? 'text-blue-500' : 'text-slate-400 group-focus-within:text-blue-500'}`}></i>
                             <input
                                 type="text"
                                 placeholder="Ej: Central Park, Empire State..."
@@ -182,7 +189,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                                 <button
                                     type="button"
                                     onClick={() => setQuery('')}
-                                    className="absolute right-3 top-3 w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 transition"
                                 >
                                     <i className="fas fa-times text-xs"></i>
                                 </button>

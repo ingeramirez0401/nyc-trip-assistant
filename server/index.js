@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { requireAuth } from './supabaseAuth.js';
 import licenseRoutes from './licenseRoutes.js';
-import placesRoutes from './placesRoutes.js';
+import placesRoutes, { verifyPlaceLocation } from './placesRoutes.js';
 import agencyRequestRoutes from './agencyRequestRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +23,16 @@ if (!OPENAI_API_KEY) {
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 const app = express();
+
+// En producción esto corre detrás de Traefik (ver docker-compose.yml) --
+// sin esto, Express no confía en el header X-Forwarded-For que pone
+// Traefik, y express-rate-limit no puede resolver la IP real de cada
+// usuario para contar sus límites (tira ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// en cada request). `1` = confiar exactamente un salto de proxy (Traefik),
+// no toda la cadena -- evita que un cliente falsifique su propio
+// X-Forwarded-For para saltarse el rate limit.
+app.set('trust proxy', 1);
+
 app.use(express.json());
 
 app.use('/api', licenseRoutes);
@@ -131,6 +141,29 @@ IMPORTANTE:
     if (!itinerary.days || !Array.isArray(itinerary.days)) {
       throw new Error('Formato de itinerario inválido');
     }
+
+    // GPT puede alucinar coordenadas que caen en la calle equivocada aunque
+    // el nombre del lugar sea real -- se corrigen contra Google Places antes
+    // de que lleguen al mapa del viajero. Corre en paralelo (no una por una)
+    // para no sumarle una latencia grande a una respuesta que ya tarda por
+    // el propio llamado a GPT-4o; mejor esfuerzo, un lugar que Places no
+    // encuentre se queda con las coordenadas originales de la IA.
+    await Promise.all(
+      itinerary.days.flatMap((day) =>
+        (Array.isArray(day.stops) ? day.stops : []).map(async (stop) => {
+          const verified = await verifyPlaceLocation({
+            title: stop.title,
+            address: stop.address,
+            city,
+            country,
+          });
+          if (verified) {
+            stop.lat = verified.lat;
+            stop.lng = verified.lng;
+          }
+        })
+      )
+    );
 
     res.json(itinerary);
   } catch (error) {

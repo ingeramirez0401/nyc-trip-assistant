@@ -199,4 +199,37 @@ async function buildCityBias(city) {
   }
 }
 
+// Corrige las coordenadas de un lugar generado por IA contra el lugar real
+// en Google Places -- GPT puede "alucinar" un lat/lng que cae en la calle
+// equivocada aunque el nombre y la dirección que dio sean correctos. Solo
+// se pide `location` (el SKU más barato de Places): lo único que hace
+// falta corregir es el pin, no el resto de los datos que ya generó GPT.
+// Mejor esfuerzo -- si Places no encuentra el lugar, el caller debe seguir
+// usando las coordenadas originales de la IA en vez de fallar.
+export async function verifyPlaceLocation({ title, address, city, country }) {
+  if (!GOOGLE_PLACES_API_KEY) return null;
+  try {
+    const textQuery = [title, address, city, country].filter(Boolean).join(', ');
+    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+        'X-Goog-FieldMask': 'places.location',
+      },
+      body: JSON.stringify({ textQuery, pageSize: 1 }),
+    });
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const location = data.places?.[0]?.location;
+    if (!location) return null;
+
+    return { lat: location.latitude, lng: location.longitude };
+  } catch (error) {
+    console.error('Error verificando ubicación con Places:', error);
+    return null;
+  }
+}
+
 export default router;
