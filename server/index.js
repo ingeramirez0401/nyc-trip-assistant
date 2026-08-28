@@ -201,6 +201,17 @@ app.post('/api/ai/optimize-route', async (req, res) => {
   }
 });
 
+// Plantilla de correo de confirmación con la marca de TripPulse, para que
+// GoTrue (Supabase Auth) la use en vez de su template plano por defecto.
+// GoTrue la pide por HTTP GET server-to-server -- ver
+// GOTRUE_MAILER_TEMPLATES_CONFIRMATION en la config de Supabase (fuera de
+// este repo). Debe ir ANTES del catch-all del SPA, si no éste la intercepta
+// y devuelve index.html en vez del template.
+app.get('/email-templates/confirmation.html', (req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'email-templates', 'confirmation.html'));
+});
+
 // En producción, el mismo proceso sirve el build estático de Vite.
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));

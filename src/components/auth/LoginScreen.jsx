@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useAuth } from '../../hooks/useAuth';
+
+const RESEND_COOLDOWN_S = 45;
 
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
 
@@ -9,11 +11,13 @@ const HEADER_COPY = {
     login: { title: 'Bienvenido de nuevo', subtitle: 'Ingresa para acceder a tus viajes guardados' },
     signup: { title: 'Crea tu cuenta', subtitle: 'Únete para crear y compartir itinerarios increíbles' },
     forgot: { title: 'Recupera tu contraseña', subtitle: 'Te enviaremos instrucciones a tu correo' },
+    'check-email': { title: 'Revisa tu correo', subtitle: 'Un paso más y ya puedes entrar' },
   },
   agency: {
     login: { title: 'Acceso de tu agencia', subtitle: 'Ingresa con el correo de tu cuenta ya aprobada' },
     signup: { title: 'Activa tu cuenta de agencia', subtitle: 'Usa el mismo correo con el que aprobamos tu solicitud' },
     forgot: { title: 'Recupera tu contraseña', subtitle: 'Te enviaremos instrucciones a tu correo' },
+    'check-email': { title: 'Revisa tu correo', subtitle: 'Un paso más y ya puedes entrar' },
   },
 };
 
@@ -27,10 +31,38 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
 
-  const { signIn, signUp, resetPassword } = useAuth();
+  const { signIn, signUp, resetPassword, resendConfirmation } = useAuth();
   const isLogin = mode === 'login';
   const isForgot = mode === 'forgot';
+  const isCheckEmail = mode === 'check-email';
+
+  // Cuenta regresiva del botón "Reenviar" -- evita que el usuario lo
+  // martille y choque con el rate limit de envío de GoTrue.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  const handleResend = async () => {
+    setError(null);
+    setMessage(null);
+    setResending(true);
+    try {
+      const { error } = await resendConfirmation(pendingEmail);
+      if (error) throw error;
+      setMessage('Correo reenviado. Revisa tu bandeja de entrada (y spam).');
+      setResendCooldown(RESEND_COOLDOWN_S);
+    } catch (err) {
+      setError(err.message || 'No se pudo reenviar el correo. Intenta de nuevo en un momento.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   const switchMode = (newMode) => {
     setMode(newMode);
@@ -75,10 +107,10 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
       } else {
         const { error } = await signUp(email, password, { full_name: fullName }, captchaToken);
         if (error) throw error;
-        // No usar switchMode aquí: limpia el mensaje que acabamos de poner.
-        setMode('login');
         setCaptchaToken(null);
-        setMessage('¡Ya casi! Te enviamos un correo de verificación a ' + email + ' -- abre tu bandeja de entrada (revisa spam también) y haz clic en el link para activar tu cuenta.');
+        setPendingEmail(email);
+        setMode('check-email');
+        setResendCooldown(RESEND_COOLDOWN_S);
       }
     } catch (err) {
       console.error(err);
@@ -111,7 +143,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <i className={`fas ${isAgency ? 'fa-building' : 'fa-route'} text-3xl text-white`}></i>
+              <i className={`fas ${isCheckEmail ? 'fa-envelope-circle-check' : isAgency ? 'fa-building' : 'fa-route'} text-3xl text-white`}></i>
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">{headerCopy.title}</h2>
             <p className="text-slate-400 text-sm">{headerCopy.subtitle}</p>
@@ -122,8 +154,73 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
             )}
           </div>
 
-          {/* Forgot password form */}
-          {isForgot ? (
+          {/* Revisa tu correo -- pantalla dedicada post-signup, con reenvío
+              real (supabase.auth.resend). Antes esto era un mensajito verde
+              arriba del formulario de login, fácil de perder y sin forma
+              de reenviar si nunca llegaba. */}
+          {isCheckEmail ? (
+            <div className="space-y-5">
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center">
+                <p className="text-sm text-slate-200">
+                  Te enviamos un link de confirmación a
+                </p>
+                <p className="text-white font-bold break-all mt-1">{pendingEmail}</p>
+              </div>
+
+              <div className="flex items-start gap-3 text-slate-400 text-xs">
+                <i className="fas fa-circle-info mt-0.5 shrink-0"></i>
+                <p>
+                  Ábrelo para activar tu cuenta. Si no lo ves en unos minutos, revisa la carpeta de
+                  spam o promociones -- a veces llega ahí la primera vez.
+                </p>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                  <p className="text-sm text-red-300">{error}</p>
+                </div>
+              )}
+
+              {message && (
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-check-circle text-green-400 mt-0.5"></i>
+                  <p className="text-sm text-green-300">{message}</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending || resendCooldown > 0}
+                className="w-full bg-slate-800 border border-white/10 text-white font-bold py-3.5 rounded-xl hover:bg-slate-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {resending ? (
+                  <>
+                    <i className="fas fa-circle-notch fa-spin"></i>
+                    Reenviando...
+                  </>
+                ) : resendCooldown > 0 ? (
+                  `Reenviar en ${resendCooldown}s`
+                ) : (
+                  <>
+                    <i className="fas fa-paper-plane"></i>
+                    Reenviar correo
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-sm">
+                <button
+                  type="button"
+                  onClick={() => switchMode('login')}
+                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                >
+                  <i className="fas fa-arrow-left mr-1"></i> Volver a iniciar sesión
+                </button>
+              </p>
+            </div>
+          ) : isForgot ? (
             <form onSubmit={handleForgotSubmit} className="space-y-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Correo Electrónico</label>

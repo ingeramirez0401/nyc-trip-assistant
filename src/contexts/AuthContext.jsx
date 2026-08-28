@@ -140,6 +140,16 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  // Reenvía el correo de confirmación de signup -- para la pantalla
+  // "revisa tu correo" cuando el usuario dice que nunca le llegó.
+  const resendConfirmation = async (email) => {
+    return await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    });
+  };
+
   const updatePassword = async (newPassword) => {
     const result = await supabase.auth.updateUser({ password: newPassword });
     if (!result.error) {
@@ -176,6 +186,7 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     signOut,
     resetPassword,
+    resendConfirmation,
     updatePassword,
   };
 

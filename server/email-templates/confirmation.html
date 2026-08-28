@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>TripPulse</title>
+  </head>
+  <body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <div style="max-width:520px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#2563eb,#4f46e5);border-radius:20px 20px 0 0;padding:32px 24px;text-align:center;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.18);display:inline-block;line-height:52px;font-size:24px;margin-bottom:12px;">🧭</div>
+        <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>
+      </div>
+      <div style="background:#ffffff;border-radius:0 0 20px 20px;padding:32px 24px;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+        <h1 style="margin:0 0 16px;font-size:19px;color:#0f172a;">¡Ya casi! Confirma tu correo 📬</h1>
+        <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+          {{ if .Data.full_name }}Hola {{ .Data.full_name }}, creaste{{ else }}Creaste{{ end }}
+          una cuenta en <strong>TripPulse</strong>. Confirma tu correo para empezar a planear tu viaje.
+        </p>
+        <div style="text-align:center;margin:28px 0 8px;">
+          <a href="{{ .ConfirmationURL }}" style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+            ✨ Confirmar mi correo
+          </a>
+        </div>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin:6px 0 28px;">
+          Un clic y ya está — no hace falta hacer nada más.
+        </p>
+        <div style="border-top:1px solid #f1f5f9;padding-top:20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+            <tr>
+              <td style="width:32px;vertical-align:top;font-size:20px;padding-top:1px;">🗺️</td>
+              <td style="vertical-align:top;">
+                <p style="margin:0;font-weight:700;color:#0f172a;font-size:14px;">Arma tu itinerario</p>
+                <p style="margin:2px 0 0;color:#64748b;font-size:13px;">Día por día, con mapa y rutas listas.</p>
+              </td>
+            </tr>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+            <tr>
+              <td style="width:32px;vertical-align:top;font-size:20px;padding-top:1px;">🤖</td>
+              <td style="vertical-align:top;">
+                <p style="margin:0;font-weight:700;color:#0f172a;font-size:14px;">Generación con IA</p>
+                <p style="margin:2px 0 0;color:#64748b;font-size:13px;">Cuéntale tus gustos y arma el plan en segundos.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p style="color:#94a3b8;font-size:11px;margin-top:20px;text-align:center;">
+          ¿El botón no funciona? Copia y pega este link en tu navegador:<br />
+          <span style="color:#475569;word-break:break-all;">{{ .ConfirmationURL }}</span>
+        </p>
+        <p style="color:#cbd5e1;font-size:10px;margin-top:16px;text-align:center;">
+          Si no creaste esta cuenta, puedes ignorar este correo.
+        </p>
+      </div>
+      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">TripPulse · Planifica, explora y disfruta cada momento</p>
+    </div>
+  </body>
+</html>
