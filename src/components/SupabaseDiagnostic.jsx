@@ -277,7 +277,7 @@ const SupabaseDiagnostic = () => {
   };
 
   return (
-    <div className="fixed inset-0 h-screen w-screen overflow-y-auto bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-4 z-[9999]">
+    <div className="fixed inset-0 overflow-y-auto bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-4 z-[9999]">
       <div className="max-w-4xl mx-auto pb-20">
         <h1 className="text-3xl font-bold mb-2 text-center">🔧 Supabase Diagnostic</h1>
         <p className="text-gray-400 text-center mb-6">Herramienta de diagnóstico para conexión con Supabase</p>

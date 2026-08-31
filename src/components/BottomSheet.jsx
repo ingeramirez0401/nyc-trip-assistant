@@ -76,7 +76,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
   return (
     <div 
       className={`fixed bottom-0 left-0 right-0 z-[1000] overflow-hidden shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.5)] flex flex-col transition-all duration-500 cubic-bezier(0.19, 1, 0.22, 1) 
-        ${isExpanded ? 'h-[90vh] rounded-t-[32px]' : 'h-[140px] rounded-t-[24px]'}
+        ${isExpanded ? 'h-[90dvh] rounded-t-[32px]' : 'h-[140px] rounded-t-[24px]'}
         bg-white dark:bg-slate-900/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/10`}
     >
       {/* Toggle Handle */}
@@ -215,7 +215,11 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-6 space-y-6 pb-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+        {/* pb-[calc(3rem+env(...))]: el pb-12 de antes (3rem) + lo que
+            agregue la franja del gesto de inicio en iPhones con
+            viewport-fit=cover -- en dispositivos sin eso, env() resuelve
+            a 0 y no cambia nada. */}
+        <div className="p-6 space-y-6 pb-[calc(3rem+env(safe-area-inset-bottom))] bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
             
             {/* Action Bar */}
             <div className="flex gap-3">

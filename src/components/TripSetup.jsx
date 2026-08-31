@@ -109,7 +109,7 @@ const TripSetup = ({ trip, onComplete }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 md:bg-gradient-to-br md:from-slate-900 md:via-blue-900 md:to-slate-900 overflow-y-auto transition-colors duration-300">
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 py-12">
+      <div className="min-h-dvh flex flex-col items-center justify-center p-4 md:p-6 py-12">
         
         {/* Header */}
         <div className="text-center mb-6 md:mb-8 animate-fade-in-down">

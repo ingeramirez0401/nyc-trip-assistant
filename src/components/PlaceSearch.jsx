@@ -147,7 +147,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
 
   return (
     <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-down transition-colors duration-300">
+        <div className="bg-white dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85dvh] animate-fade-in-down transition-colors duration-300">
             
             <div className="p-5 border-b border-slate-200 dark:border-white/10 flex items-center gap-4 bg-slate-50 dark:bg-white/5">
                 <button onClick={() => {

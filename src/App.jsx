@@ -359,9 +359,17 @@ function App() {
   }
 
   // Main App UI
+  // h-dvh, no h-screen (= 100vh fijo): en Safari/Chrome móvil la barra de
+  // direcciones se muestra/oculta según el scroll, y 100vh se calcula
+  // contra el viewport SIN esa barra (el más alto posible) -- el resultado
+  // real termina siendo más alto que lo que en verdad se ve en pantalla.
+  // Con overflow-hidden en este contenedor, ese excedente no es "hay que
+  // scrollear" -- es contenido directamente inalcanzable, cortado. dvh
+  // (dynamic viewport height, Tailwind 3.4+) se recalcula solo cuando la
+  // barra del navegador cambia de tamaño.
   return (
-    <div className={`h-screen w-screen overflow-hidden relative ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
-      
+    <div className={`h-dvh w-screen overflow-hidden relative ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+
       {/* MAPA */}
       <MapComponent 
         baseLocation={baseLocation}
@@ -375,8 +383,12 @@ function App() {
         gpsEnabled={gpsEnabled}
       />
 
-      {/* HEADER CONTROLS */}
-      <div className="absolute top-6 left-4 z-[500]">
+      {/* HEADER CONTROLS -- top-[calc(1.5rem+env(...))]: el top-6 (1.5rem) de
+          antes + lo que agregue el notch/Dynamic Island en iPhone si esto
+          corre en modo standalone (apple-mobile-web-app-capable ya está
+          activado en index.html). En dispositivos sin eso, env() resuelve
+          a 0 y queda igual que antes. */}
+      <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-4 z-[500]">
         <button 
           onClick={() => setIsMenuOpen(true)}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
@@ -385,8 +397,8 @@ function App() {
         </button>
       </div>
 
-      <div className="absolute top-6 right-4 z-[500]">
-        <button 
+      <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] right-4 z-[500]">
+        <button
           onClick={toggleTheme}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
         >

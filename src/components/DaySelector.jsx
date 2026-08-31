@@ -42,8 +42,14 @@ const DaySelector = ({ days, activeDayId, onSelectDay, visited = {}, onOpenList 
                   >
                     <span className={`font-black leading-none ${isActive ? 'text-lg' : 'text-sm'}`}>{day.dayNumber}</span>
                     {isActive && (
-                      <span className="flex flex-col items-start leading-tight max-w-[110px]">
-                        <span className="text-xs font-bold truncate w-full">{day.title}</span>
+                      // line-clamp-2, no truncate (1 línea) -- con 110px y
+                      // una sola línea, un título de viaje normal ("Recorrido
+                      // histórico por el centro de la ciudad") quedaba
+                      // cortado casi por completo. 2 líneas + un poco más de
+                      // ancho muestra bastante más sin que la pastilla se
+                      // vuelva enorme (sigue siendo solo la pestaña activa).
+                      <span className="flex flex-col items-start leading-tight max-w-[150px]">
+                        <span className="text-xs font-bold line-clamp-2 w-full">{day.title}</span>
                         {total > 0 && (
                           <span className="text-[10px] text-slate-500 font-medium">
                             {done}/{total} visitado{total !== 1 ? 's' : ''}

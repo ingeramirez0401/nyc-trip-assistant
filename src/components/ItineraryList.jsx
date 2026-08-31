@@ -48,8 +48,17 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
                                     </div>
                                 </div>
 
-                                {/* Card */}
-                                <div className="flex-1 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-2xl p-4 active:scale-[0.99] transition-all hover:shadow-md dark:hover:bg-slate-800 dark:hover:border-white/10">
+                                {/* Card -- min-w-0 es necesario acá: sin él, un
+                                    hijo flex-1 no se encoge por debajo del
+                                    ancho de su propio contenido (default
+                                    min-width:auto de flexbox), así que un
+                                    título largo empujaba toda la fila a
+                                    desbordarse horizontalmente en vez de
+                                    hacer wrap -- el min-w-0 del div de texto
+                                    de más adentro no alcanzaba porque este
+                                    contenedor, un nivel arriba, nunca se
+                                    dejaba encoger. */}
+                                <div className="flex-1 min-w-0 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-2xl p-4 active:scale-[0.99] transition-all hover:shadow-md dark:hover:bg-slate-800 dark:hover:border-white/10">
                                     <div className="flex gap-4">
                                         {/* Image Thumbnail */}
                                         <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">

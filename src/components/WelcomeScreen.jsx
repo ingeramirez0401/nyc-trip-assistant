@@ -399,7 +399,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
     <div className="fixed inset-0 bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 overflow-y-auto transition-colors duration-300">
       {/* Account Menu Button */}
       {user && (
-        <div className="absolute top-6 left-6 z-50">
+        <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-6 z-50">
           <button
             onClick={() => setIsMenuOpen(true)}
             title="Mi cuenta"
@@ -411,7 +411,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       )}
 
       {/* Theme Toggle Button */}
-      <div className="absolute top-6 right-6 z-50 flex gap-3">
+      <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] right-6 z-50 flex gap-3">
         <button
           onClick={toggleTheme}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
@@ -420,7 +420,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         </button>
       </div>
 
-      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+      <div className="min-h-dvh flex flex-col items-center justify-center p-6">
         
         {/* Header -- el logo/color de la agencia (si el viajero llegó vía
             una licencia) reemplaza el ícono y tiñe el degradé vía las

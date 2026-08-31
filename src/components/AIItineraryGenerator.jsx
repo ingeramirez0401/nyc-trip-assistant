@@ -79,7 +79,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
 
   return (
     <div className="fixed inset-0 z-[3000] bg-white dark:bg-slate-900 md:bg-black/80 md:backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full md:w-full md:max-w-xl md:rounded-3xl shadow-2xl overflow-hidden border-none md:border md:border-slate-200 dark:md:border-white/10 flex flex-col h-full md:h-auto md:max-h-[85vh]">
+      <div className="bg-white dark:bg-slate-900 w-full md:w-full md:max-w-xl md:rounded-3xl shadow-2xl overflow-hidden border-none md:border md:border-slate-200 dark:md:border-white/10 flex flex-col h-full md:h-auto md:max-h-[85dvh]">
         
         {/* Header */}
         <div className="p-6 border-b border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 shrink-0 safe-top">
