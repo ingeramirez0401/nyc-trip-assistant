@@ -162,9 +162,13 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     }
     try {
       setSendingId(license.id);
-      const updated = await licenseService.send(license.id, email);
+      const { license: updated, accountCreated } = await licenseService.send(license.id, email);
       setLicenses((prev) => prev.map((l) => (l.id === license.id ? updated : l)));
-      toast.success(`Enviado a ${email}`);
+      toast.success(
+        accountCreated
+          ? `Cuenta creada y licencia activada para ${email}`
+          : `Licencia activada para ${email}`
+      );
     } catch (error) {
       toast.error('Error al enviar: ' + error.message);
     } finally {

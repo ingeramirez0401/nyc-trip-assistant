@@ -123,9 +123,9 @@ const ApproveAgencyScreen = () => {
             <i className="fas fa-circle-check text-4xl text-green-500 mb-4"></i>
             <p className="text-slate-900 dark:text-white font-bold mb-2">Agencia activada</p>
             <p className="text-slate-500 dark:text-slate-400 text-sm">
-              {result.alreadyRegistered
-                ? 'El contacto ya puede iniciar sesión y administrar su panel de agencia.'
-                : 'El contacto aún no se ha registrado -- en cuanto cree su cuenta con ese mismo correo, quedará activado automáticamente como administrador de agencia.'}
+              {result.accountCreated
+                ? 'Creamos su cuenta y le enviamos un correo con su acceso (correo + contraseña) e instrucciones para iniciar sesión.'
+                : 'El contacto ya tenía cuenta en TripPulse -- le avisamos por correo que ahora administra su agencia.'}
             </p>
           </div>
         )}

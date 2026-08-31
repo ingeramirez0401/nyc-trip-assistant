@@ -2,9 +2,10 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { supabaseAdmin } from './supabaseAuth.js';
-import { sendAgencyRequestEmail } from './email.js';
+import { sendAgencyRequestEmail, sendAgencyWelcomeEmail } from './email.js';
 import { resolvePublicUrl } from './appUrl.js';
 import { verifyCaptcha } from './captcha.js';
+import { findOrCreateAccount } from './userProvisioning.js';
 
 const router = Router();
 
@@ -158,32 +159,20 @@ router.post('/agency-requests/by-token/:token/approve', tokenLimiter, async (req
 
     if (agencyError) throw agencyError;
 
-    const { data: existingProfile } = await supabaseAdmin
+    // La cuenta se crea (o se detecta si ya existía) de una vez, en vez de
+    // dejarla pendiente hasta que el contacto se autoregistre -- ese salto
+    // manual era el punto de fricción real: si el contacto nunca completaba
+    // el registro, la agencia quedaba "aprobada" pero sin nadie que pudiera
+    // entrar.
+    const account = await findOrCreateAccount(request.contact_email, {
+      fullName: request.contact_name,
+    });
+
+    const { error: promoteError } = await supabaseAdmin
       .from('trippulse_profiles')
-      .select('id')
-      .eq('email', request.contact_email)
-      .maybeSingle();
-
-    let alreadyRegistered = false;
-    let finalAgency = agency;
-
-    if (existingProfile) {
-      const { error: promoteError } = await supabaseAdmin
-        .from('trippulse_profiles')
-        .update({ role: 'agency_admin', agency_id: agency.id })
-        .eq('id', existingProfile.id);
-      if (promoteError) throw promoteError;
-      alreadyRegistered = true;
-    } else {
-      const { data: updatedAgency, error: pendingError } = await supabaseAdmin
-        .from('trippulse_agencies')
-        .update({ pending_admin_email: request.contact_email })
-        .eq('id', agency.id)
-        .select()
-        .single();
-      if (pendingError) throw pendingError;
-      finalAgency = updatedAgency;
-    }
+      .update({ role: 'agency_admin', agency_id: agency.id })
+      .eq('id', account.userId);
+    if (promoteError) throw promoteError;
 
     const { error: updateRequestError } = await supabaseAdmin
       .from('trippulse_agency_requests')
@@ -191,7 +180,21 @@ router.post('/agency-requests/by-token/:token/approve', tokenLimiter, async (req
       .eq('id', request.id);
     if (updateRequestError) throw updateRequestError;
 
-    res.json({ agency: finalAgency, alreadyRegistered });
+    try {
+      await sendAgencyWelcomeEmail({
+        to: request.contact_email,
+        agencyName: request.agency_name,
+        password: account.password,
+        loginUrl: `${resolvePublicUrl(req)}/`,
+      });
+    } catch (emailError) {
+      // La cuenta y el rol ya quedaron activos -- que falle el envío del
+      // correo de bienvenida no debe reportarse como si la aprobación
+      // hubiera fallado (el admin ya vería "aprobada" del lado de Supabase).
+      console.error('Error enviando correo de bienvenida a agencia:', emailError);
+    }
+
+    res.json({ agency, accountCreated: account.created });
   } catch (error) {
     console.error('Error aprobando solicitud de agencia:', error);
     res.status(500).json({ error: 'Error al aprobar la solicitud' });

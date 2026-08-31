@@ -437,6 +437,31 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">Descubre. Planifica. Vive.</p>
         </div>
 
+        {/* CTA inmediata, pegada al hero -- antes el único login/registro
+            funcional vivía en PlansSection, después de todo el bloque de
+            marketing de LandingIntro. En mobile eso significaba varios
+            scrolls antes de ver cómo entrar. Esto no reemplaza PlansSection
+            (sigue con el detalle de planes más abajo), solo adelanta la
+            acción para quien ya sabe lo que quiere hacer. */}
+        {!user && !showCreateForm && (
+          <div className="flex flex-col sm:flex-row gap-3 mb-10 md:mb-14 animate-fade-in-down w-full max-w-xs sm:max-w-none justify-center">
+            <button
+              onClick={handleStartFree}
+              className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white px-8 py-3.5 rounded-xl font-bold text-base shadow-2xl shadow-blue-900/40 hover:shadow-blue-900/60 active:scale-95 transition-all"
+            >
+              <i className="fas fa-rocket mr-2"></i>
+              Crear cuenta gratis
+            </button>
+            <button
+              onClick={handleTravelerLogin}
+              className={`px-8 py-3.5 rounded-xl font-bold text-base border transition-all active:scale-95 ${isDarkMode ? 'bg-white/5 border-white/20 text-white hover:bg-white/10' : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'}`}
+            >
+              <i className="fas fa-right-to-bracket mr-2"></i>
+              Iniciar sesión
+            </button>
+          </div>
+        )}
+
         {/* Marca de la agencia que regaló el acceso */}
         {agencyBranding && (
           <div

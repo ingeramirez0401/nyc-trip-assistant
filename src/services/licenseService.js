@@ -41,11 +41,10 @@ export const licenseService = {
   },
 
   async send(licenseId, email) {
-    const { license } = await callAPI(`/agency/licenses/${licenseId}/send`, {
+    return callAPI(`/agency/licenses/${licenseId}/send`, {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
-    return license;
   },
 
   async revoke(licenseId) {

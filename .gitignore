@@ -32,3 +32,6 @@ dist-ssr
 # OS
 Thumbs.db
 .DS_Store
+
+# gbrain local machine context (per-machine source pin)
+.gbrain-source

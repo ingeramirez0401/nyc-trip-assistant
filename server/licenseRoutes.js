@@ -1,13 +1,81 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import { requireAuth, requireAgencyAdmin, supabaseAdmin } from './supabaseAuth.js';
-import { sendLicenseEmail } from './email.js';
+import { sendTravelerWelcomeEmail, sendLicenseActivatedEmail } from './email.js';
 import { resolvePublicUrl } from './appUrl.js';
+import { findOrCreateAccount } from './userProvisioning.js';
 
 const router = Router();
 
 function generateCode() {
   return crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 8);
+}
+
+// Núcleo compartido de "canjear esta licencia para este usuario", usado
+// tanto por el canje manual (/licenses/redeem, el viajero pone un código)
+// como por el envío desde el panel de agencia (donde ahora el canje ya no
+// depende de que el viajero haga nada -- ver /agency/licenses/:id/send).
+// Devuelve { ok:false, status, error } en vez de lanzar para los casos
+// esperados (cupo duplicado, carrera de canje) y deja que el caller decida
+// cómo responder.
+async function redeemLicenseAtomic({ license, userId, userEmail, extraFields = {}, selfService = false }) {
+  // Solo una licencia activa por tipo de cupo a la vez -- evita dejar cupo
+  // huérfano (invisible) y evita que el RPC de consumo, que no limita a una
+  // fila, descuente de dos licencias del mismo tipo a la vez.
+  const { data: sameTypeLicenses, error: sameTypeError } = await supabaseAdmin
+    .from('trippulse_licenses')
+    .select('expires_at')
+    .eq('redeemed_by', userId)
+    .eq('quota_type', license.quota_type)
+    .eq('status', 'redeemed')
+    .gt('quota_remaining', 0);
+
+  if (sameTypeError) throw sameTypeError;
+
+  const now = new Date();
+  const hasActiveSameType = (sameTypeLicenses || []).some(
+    (l) => !l.expires_at || new Date(l.expires_at) > now
+  );
+  if (hasActiveSameType) {
+    const label = license.quota_type === 'trips' ? 'viajes' : 'generaciones con IA';
+    const error = selfService
+      ? `Ya tienes una licencia activa de ${label}. Espera a que se agote o venza antes de canjear otra del mismo tipo.`
+      : `Este usuario ya tiene una licencia activa de ${label}. Debe agotarse o vencer antes de activar otra del mismo tipo.`;
+    return { ok: false, status: 409, error };
+  }
+
+  const expiresAt = new Date(Date.now() + license.valid_days * 24 * 60 * 60 * 1000).toISOString();
+
+  // Guarda de concurrencia optimista: el WHERE incluye el status leído
+  // arriba, así que si dos requests canjean la misma licencia a la vez,
+  // solo el primero afecta una fila -- el segundo recibe 0 filas.
+  const { data: updatedLicense, error: updateError } = await supabaseAdmin
+    .from('trippulse_licenses')
+    .update({
+      status: 'redeemed',
+      redeemed_by: userId,
+      redeemed_at: new Date().toISOString(),
+      expires_at: expiresAt,
+      traveler_email: license.traveler_email || userEmail,
+      ...extraFields,
+    })
+    .eq('id', license.id)
+    .eq('status', license.status)
+    .select()
+    .single();
+
+  if (updateError || !updatedLicense) {
+    return { ok: false, status: 409, error: 'Esta licencia acaba de cambiar de estado, intenta de nuevo' };
+  }
+
+  const { error: profileError } = await supabaseAdmin
+    .from('trippulse_profiles')
+    .update({ agency_id: license.agency_id })
+    .eq('id', userId);
+
+  if (profileError) throw profileError;
+
+  return { ok: true, license: updatedLicense };
 }
 
 // El status 'expired' existe en el schema pero nada lo escribe nunca --
@@ -84,6 +152,9 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'email es requerido' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Email inválido' });
+    }
 
     const { data: license, error: fetchError } = await supabaseAdmin
       .from('trippulse_licenses')
@@ -94,27 +165,55 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
 
     if (fetchError || !license) return res.status(404).json({ error: 'Licencia no encontrada' });
     if (license.status === 'redeemed') return res.status(400).json({ error: 'Esta licencia ya fue canjeada' });
+    if (license.status === 'revoked') return res.status(400).json({ error: 'Esta licencia fue revocada' });
 
-    const redeemUrl = `${resolvePublicUrl(req)}/?code=${license.code}`;
+    const agencyName = license.trippulse_agencies?.name || 'Tu agencia de viajes';
+    const logoUrl = license.trippulse_agencies?.logo_url || null;
+    const primaryColor = license.trippulse_agencies?.primary_color || null;
+    const loginUrl = `${resolvePublicUrl(req)}/`;
 
-    await sendLicenseEmail({
-      to: email,
-      agencyName: license.trippulse_agencies?.name || 'Tu agencia de viajes',
-      code: license.code,
-      redeemUrl,
-      logoUrl: license.trippulse_agencies?.logo_url || null,
-      primaryColor: license.trippulse_agencies?.primary_color || null,
+    // Antes "enviar" solo mandaba un código y dejaba el canje en manos del
+    // viajero -- si nunca completaba signup+canje, la licencia quedaba
+    // "enviada" para siempre sin que nadie viera el cupo activo (el reporte
+    // real que motivó este cambio). Ahora la cuenta se crea/detecta y la
+    // licencia se canjea acá mismo, de una vez: "enviar" YA es "activar".
+    const account = await findOrCreateAccount(email);
+
+    const result = await redeemLicenseAtomic({
+      license,
+      userId: account.userId,
+      userEmail: email,
+      extraFields: { sent_at: new Date().toISOString() },
     });
 
-    const { data, error } = await supabaseAdmin
-      .from('trippulse_licenses')
-      .update({ traveler_email: email, status: 'sent', sent_at: new Date().toISOString() })
-      .eq('id', req.params.id)
-      .select()
-      .single();
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
+    }
 
-    if (error) throw error;
-    res.json({ license: data });
+    if (account.created) {
+      await sendTravelerWelcomeEmail({
+        to: email,
+        agencyName,
+        password: account.password,
+        loginUrl,
+        quotaType: license.quota_type,
+        quotaAmount: license.quota_amount,
+        logoUrl,
+        primaryColor,
+      });
+    } else {
+      await sendLicenseActivatedEmail({
+        to: email,
+        agencyName,
+        loginUrl,
+        quotaType: license.quota_type,
+        quotaAmount: license.quota_amount,
+        logoUrl,
+        primaryColor,
+      });
+    }
+
+    res.json({ license: result.license, accountCreated: account.created });
   } catch (error) {
     console.error('Error enviando licencia:', error);
     res.status(500).json({ error: error.message });
@@ -197,61 +296,17 @@ router.post('/licenses/redeem', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Este código fue enviado a otro correo' });
     }
 
-    // Solo una licencia activa por tipo de cupo a la vez -- evita dejar
-    // cupo huérfano (invisible) y evita que el RPC de consumo, que no
-    // limita a una fila, descuente de dos licencias del mismo tipo a la vez.
-    const { data: sameTypeLicenses, error: sameTypeError } = await supabaseAdmin
-      .from('trippulse_licenses')
-      .select('expires_at')
-      .eq('redeemed_by', req.user.id)
-      .eq('quota_type', license.quota_type)
-      .eq('status', 'redeemed')
-      .gt('quota_remaining', 0);
-
-    if (sameTypeError) throw sameTypeError;
-
-    const now = new Date();
-    const hasActiveSameType = (sameTypeLicenses || []).some(
-      (l) => !l.expires_at || new Date(l.expires_at) > now
-    );
-    if (hasActiveSameType) {
-      const label = license.quota_type === 'trips' ? 'viajes' : 'generaciones con IA';
-      return res.status(409).json({
-        error: `Ya tienes una licencia activa de ${label}. Espera a que se agote o venza antes de canjear otra del mismo tipo.`,
-      });
+    const result = await redeemLicenseAtomic({
+      license,
+      userId: req.user.id,
+      userEmail: req.user.email,
+      selfService: true,
+    });
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
     }
 
-    const expiresAt = new Date(Date.now() + license.valid_days * 24 * 60 * 60 * 1000).toISOString();
-
-    // Guarda de concurrencia optimista: el WHERE incluye el status leído
-    // arriba, así que si dos requests canjean el mismo código a la vez,
-    // solo el primero afecta una fila -- el segundo recibe 0 filas.
-    const { data: updatedLicense, error: updateError } = await supabaseAdmin
-      .from('trippulse_licenses')
-      .update({
-        status: 'redeemed',
-        redeemed_by: req.user.id,
-        redeemed_at: new Date().toISOString(),
-        expires_at: expiresAt,
-        traveler_email: license.traveler_email || req.user.email,
-      })
-      .eq('id', license.id)
-      .eq('status', license.status)
-      .select()
-      .single();
-
-    if (updateError || !updatedLicense) {
-      return res.status(409).json({ error: 'Este código acaba de ser canjeado, intenta con otro' });
-    }
-
-    const { error: profileError } = await supabaseAdmin
-      .from('trippulse_profiles')
-      .update({ agency_id: license.agency_id })
-      .eq('id', req.user.id);
-
-    if (profileError) throw profileError;
-
-    res.json({ license: updatedLicense });
+    res.json({ license: result.license });
   } catch (error) {
     console.error('Error canjeando licencia:', error);
     res.status(500).json({ error: error.message });
