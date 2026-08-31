@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { agencyService } from '../services/agencyService';
@@ -34,7 +34,14 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sendingId, setSendingId] = useState(null);
+  const [resendingId, setResendingId] = useState(null);
   const [emailDrafts, setEmailDrafts] = useState({});
+  // Por licencia: null (sin chequear), 'checking', 'exists' o 'new' -- se
+  // llena con debounce mientras el admin escribe el correo, para que sepa
+  // de antemano si "Enviar" le va a crear cuenta nueva o solo activarle la
+  // licencia a una que ya tiene.
+  const [emailChecks, setEmailChecks] = useState({});
+  const emailCheckTimers = useRef({});
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [brandForm, setBrandForm] = useState({ name: '', logo_url: '', primary_color: '' });
@@ -42,6 +49,13 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
 
   useEffect(() => {
     loadAll();
+  }, []);
+
+  useEffect(() => {
+    // Copia local porque el cleanup corre después del unmount, cuando el
+    // ref ya podría estar en otro objeto.
+    const timers = emailCheckTimers.current;
+    return () => Object.values(timers).forEach(clearTimeout);
   }, []);
 
   const loadAll = async () => {
@@ -173,6 +187,37 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       toast.error('Error al enviar: ' + error.message);
     } finally {
       setSendingId(null);
+    }
+  };
+
+  const handleEmailChange = (license, value) => {
+    setEmailDrafts({ ...emailDrafts, [license.id]: value });
+    setEmailChecks((prev) => ({ ...prev, [license.id]: null }));
+
+    clearTimeout(emailCheckTimers.current[license.id]);
+    const trimmed = value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
+
+    emailCheckTimers.current[license.id] = setTimeout(async () => {
+      setEmailChecks((prev) => ({ ...prev, [license.id]: 'checking' }));
+      try {
+        const exists = await licenseService.checkEmail(trimmed);
+        setEmailChecks((prev) => ({ ...prev, [license.id]: exists ? 'exists' : 'new' }));
+      } catch {
+        setEmailChecks((prev) => ({ ...prev, [license.id]: null }));
+      }
+    }, 400);
+  };
+
+  const handleResend = async (license) => {
+    try {
+      setResendingId(license.id);
+      await licenseService.resend(license.id);
+      toast.success(`Correo reenviado a ${license.traveler_email}`);
+    } catch (error) {
+      toast.error('Error al reenviar: ' + error.message);
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -439,13 +484,28 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                       <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
                         {license.status === 'unused' || license.status === 'sent' ? (
                           <>
-                            <input
-                              type="email"
-                              placeholder="email@viajero.com"
-                              value={emailDrafts[license.id] ?? license.traveler_email ?? ''}
-                              onChange={(e) => setEmailDrafts({ ...emailDrafts, [license.id]: e.target.value })}
-                              className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-full sm:w-44"
-                            />
+                            <div className="flex flex-col gap-1">
+                              <input
+                                type="email"
+                                placeholder="email@viajero.com"
+                                value={emailDrafts[license.id] ?? license.traveler_email ?? ''}
+                                onChange={(e) => handleEmailChange(license, e.target.value)}
+                                className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-full sm:w-44"
+                              />
+                              {emailChecks[license.id] === 'checking' && (
+                                <span className="text-[11px] text-slate-400">Verificando...</span>
+                              )}
+                              {emailChecks[license.id] === 'exists' && (
+                                <span className="text-[11px] text-blue-500 dark:text-blue-400 font-semibold">
+                                  <i className="fas fa-circle-check mr-1"></i>Ya tiene cuenta
+                                </span>
+                              )}
+                              {emailChecks[license.id] === 'new' && (
+                                <span className="text-[11px] text-slate-400">
+                                  <i className="fas fa-user-plus mr-1"></i>Se creará cuenta nueva
+                                </span>
+                              )}
+                            </div>
                             <button
                               onClick={() => handleSend(license)}
                               disabled={sendingId === license.id}
@@ -455,6 +515,17 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                             </button>
                           </>
                         ) : null}
+
+                        {license.status === 'redeemed' && license.traveler_email && (
+                          <button
+                            onClick={() => handleResend(license)}
+                            disabled={resendingId === license.id}
+                            title="Reenviar el correo de acceso por si se perdió"
+                            className="shrink-0 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-white/20 transition disabled:opacity-50"
+                          >
+                            {resendingId === license.id ? 'Reenviando...' : 'Reenviar acceso'}
+                          </button>
+                        )}
 
                         {license.status !== 'redeemed' && license.status !== 'revoked' && license.status !== 'expired' && (
                           <button

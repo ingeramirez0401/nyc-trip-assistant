@@ -54,6 +54,15 @@ export const licenseService = {
     return license;
   },
 
+  async resend(licenseId) {
+    return callAPI(`/agency/licenses/${licenseId}/resend`, { method: 'POST' });
+  },
+
+  async checkEmail(email) {
+    const { exists } = await callAPI(`/agency/check-email?email=${encodeURIComponent(email)}`);
+    return exists;
+  },
+
   // ---- Viajero ----
   async redeem(code) {
     const { license } = await callAPI('/licenses/redeem', {

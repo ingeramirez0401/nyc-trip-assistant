@@ -477,6 +477,32 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           </div>
         )}
 
+        {/* Estado de licencia activa -- antes esto solo se veía dentro del
+            menú lateral (había que abrirlo para notarlo), que fue parte del
+            problema real: un viajero con licencia activada no tenía forma
+            de confirmarlo de un vistazo al entrar. Ahora se ve de una vez
+            en la pantalla principal, apenas hay sesión. */}
+        {user && profile?.role !== 'agency_admin' && licenses.length > 0 && !showCreateForm && (
+          <div className="flex flex-wrap justify-center gap-2 mb-8 -mt-2 animate-fade-in-down">
+            {licenses.map((lic) => (
+              <div
+                key={lic.id}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/25 shadow-sm"
+              >
+                <i className="fas fa-ticket text-green-600 dark:text-green-400 text-sm"></i>
+                <span className="text-xs font-bold text-green-700 dark:text-green-400">
+                  {lic.quota_remaining}/{lic.quota_amount} {lic.quota_type === 'trips' ? 'viajes' : 'gen. IA'}
+                </span>
+                {lic.expires_at && (
+                  <span className="text-[11px] text-green-600/70 dark:text-green-400/60">
+                    · vence {new Date(lic.expires_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Landing: hero + propuesta de valor, solo para visitantes sin cuenta */}
         {!user && !showCreateForm && <LandingIntro />}
 

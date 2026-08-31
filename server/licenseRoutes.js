@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { requireAuth, requireAgencyAdmin, supabaseAdmin } from './supabaseAuth.js';
 import { sendTravelerWelcomeEmail, sendLicenseActivatedEmail } from './email.js';
 import { resolvePublicUrl } from './appUrl.js';
-import { findOrCreateAccount } from './userProvisioning.js';
+import { findOrCreateAccount, accountExists } from './userProvisioning.js';
 
 const router = Router();
 
@@ -216,6 +216,61 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
     res.json({ license: result.license, accountCreated: account.created });
   } catch (error) {
     console.error('Error enviando licencia:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Deja que el panel de agencia le avise al admin, mientras escribe el
+// correo, si esa persona ya tiene cuenta -- para que sepa de antemano si
+// "enviar" va a crearle cuenta nueva o solo a activarle la licencia.
+router.get('/agency/check-email', requireAuth, requireAgencyAdmin, async (req, res) => {
+  try {
+    const email = (req.query.email || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Email inválido' });
+    }
+    const exists = await accountExists(email);
+    res.json({ exists });
+  } catch (error) {
+    console.error('Error verificando email:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reenvía el aviso de "tu licencia está activa" a una licencia ya canjeada
+// -- por si el correo original se perdió. No genera una contraseña nueva ni
+// vuelve a canjear nada (ya está canjeada); si el viajero perdió una
+// contraseña temporal, el mismo correo lo dirige a "olvidé mi contraseña".
+router.post('/agency/licenses/:id/resend', requireAuth, requireAgencyAdmin, async (req, res) => {
+  try {
+    const { data: license, error: fetchError } = await supabaseAdmin
+      .from('trippulse_licenses')
+      .select('*, trippulse_agencies(name, logo_url, primary_color)')
+      .eq('id', req.params.id)
+      .eq('agency_id', req.agencyId)
+      .single();
+
+    if (fetchError || !license) return res.status(404).json({ error: 'Licencia no encontrada' });
+    if (license.status !== 'redeemed') {
+      return res.status(400).json({ error: 'Esta licencia todavía no está canjeada' });
+    }
+    if (!license.traveler_email) {
+      return res.status(400).json({ error: 'Esta licencia no tiene un correo asociado' });
+    }
+
+    await sendLicenseActivatedEmail({
+      to: license.traveler_email,
+      agencyName: license.trippulse_agencies?.name || 'Tu agencia de viajes',
+      loginUrl: `${resolvePublicUrl(req)}/`,
+      quotaType: license.quota_type,
+      quotaAmount: license.quota_amount,
+      logoUrl: license.trippulse_agencies?.logo_url || null,
+      primaryColor: license.trippulse_agencies?.primary_color || null,
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error reenviando acceso:', error);
     res.status(500).json({ error: error.message });
   }
 });
