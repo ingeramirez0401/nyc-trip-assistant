@@ -440,7 +440,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
             {agencyBranding?.logo_url ? (
               <img src={agencyBranding.logo_url} alt={agencyBranding.name} className="w-full h-full object-cover" />
             ) : (
-              <i className="fas fa-route text-2xl md:text-4xl text-white"></i>
+              <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
             )}
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] dark:from-white dark:via-blue-100 dark:to-blue-200 mb-2 md:mb-4 tracking-tight drop-shadow-lg">TripPulse</h1>

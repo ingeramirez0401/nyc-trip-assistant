@@ -13,8 +13,10 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
         {/* Header -- pt-14 en vez de py-5 cuando offlineNotice: ConnectivityBanner
             (fixed top-0, ~32px) vive fuera de este árbol y esta lista
             también es fixed inset-0, así que sin este espacio extra el
-            banner tapa el título del día. */}
-        <div className={`px-6 border-b border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between ${offlineNotice ? 'pt-14 pb-5' : 'py-5'}`}>
+            banner tapa el título del día. Suma env(safe-area-inset-top) en
+            los dos casos -- instalada como PWA en iPhone, este header es
+            frecuentemente lo primero que se ve y el notch se lo comía. */}
+        <div className={`px-6 border-b border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between pb-5 ${offlineNotice ? 'pt-[calc(3.5rem+env(safe-area-inset-top))]' : 'pt-[calc(1.25rem+env(safe-area-inset-top))]'}`}>
             <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">Día {activeDay.dayNumber}</h2>
                 <p className="text-sm text-blue-500 dark:text-blue-400 font-medium">{activeDay.title}</p>

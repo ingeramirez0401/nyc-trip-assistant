@@ -57,7 +57,7 @@ const LandingIntro = () => {
         <div className="relative">
           <div className="rounded-3xl overflow-hidden shadow-2xl aspect-[4/3]">
             <img
-              src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80"
+              src="/images/landing-hero.jpg"
               alt="Un viaje por carretera entre paisajes de piedra roja"
               className="w-full h-full object-cover"
             />

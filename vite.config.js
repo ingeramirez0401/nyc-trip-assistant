@@ -18,7 +18,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: null,
-      includeAssets: ['trippulse-logo.svg'],
+      includeAssets: ['icons/favicon-48.png'],
       manifest: {
         name: 'TripPulse',
         short_name: 'TripPulse',
@@ -52,7 +52,7 @@ export default defineConfig({
         // viaje en sí (trips/days/stops) NO pasan por Workbox, tienen su
         // propio espejo en IndexedDB (ver lib/offlineDb.js), porque son
         // lecturas con filtros/RLS por usuario, no URLs GET estables.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg}'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {

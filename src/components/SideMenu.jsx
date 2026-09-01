@@ -33,7 +33,7 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
       <div className={`fixed top-0 left-0 bottom-0 w-[280px] z-[2001] bg-slate-900/95 backdrop-blur-2xl border-r border-white/10 shadow-2xl transition-transform duration-300 ease-out flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         
         {/* Header - User Profile or Brand */}
-        <div className="p-6 pt-12 border-b border-white/10 bg-gradient-to-br from-slate-800 to-slate-900">
+        <div className="p-6 border-b border-white/10 bg-gradient-to-br from-slate-800 to-slate-900" style={{ paddingTop: 'calc(3rem + env(safe-area-inset-top))' }}>
           {user ? (
             <div className="flex items-center gap-3 mb-2">
                <div
@@ -90,8 +90,8 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
             </div>
           ) : (
             <div className="flex items-center gap-3 mb-2">
-               <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg ring-2 ring-white/10">
-                  <i className="fas fa-route"></i>
+               <div className="h-10 w-10 rounded-xl shadow-lg ring-2 ring-white/10 overflow-hidden">
+                  <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
               </div>
               <div>
                   <h1 className="text-xl font-bold text-white tracking-tight">TripPulse</h1>

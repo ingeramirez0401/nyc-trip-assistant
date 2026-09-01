@@ -266,7 +266,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     <div className="fixed inset-0 z-[1500] bg-slate-50 dark:bg-slate-900 overflow-y-auto">
       {/* Header band */}
       <div className="bg-gradient-to-br from-blue-600 to-indigo-600 pb-16">
-        <div className="max-w-4xl mx-auto px-6 pt-8 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between" style={{ paddingTop: 'calc(2rem + env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center text-white">
               <i className="fas fa-building text-lg"></i>
