@@ -1,36 +1,54 @@
 import { supabase } from '../lib/supabase';
+import { offlineDb } from '../lib/offlineDb';
+import { assertOnline, withOfflineFallback } from '../lib/connectivity';
 
 // =====================================================
 // STOPS (Paradas/Sitios a visitar)
 // =====================================================
 
 export const stopService = {
-  // Obtener todas las paradas de un día
+  // Obtener todas las paradas de un día -- sin señal, cae a la copia local.
   async getByDayId(dayId) {
-    const { data, error } = await supabase
-      .from('trippulse_stops')
-      .select('*')
-      .eq('day_id', dayId)
-      .order('order_index', { ascending: true });
-    
-    if (error) throw error;
-    return data;
+    return withOfflineFallback(
+      async () => {
+        const { data, error } = await supabase
+          .from('trippulse_stops')
+          .select('*')
+          .eq('day_id', dayId)
+          .order('order_index', { ascending: true });
+
+        if (error) throw error;
+        await offlineDb.stops.bulkPut(data);
+        return data;
+      },
+      async () => {
+        const cached = await offlineDb.stops.where('day_id').equals(dayId).toArray();
+        return cached.sort((a, b) => a.order_index - b.order_index);
+      }
+    );
   },
 
   // Obtener una parada específica
   async getById(id) {
-    const { data, error } = await supabase
-      .from('trippulse_stops')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
+    return withOfflineFallback(
+      async () => {
+        const { data, error } = await supabase
+          .from('trippulse_stops')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+        await offlineDb.stops.put(data);
+        return data;
+      },
+      () => offlineDb.stops.get(id)
+    );
   },
 
   // Crear una nueva parada
   async create(stopData) {
+    assertOnline('agregar una parada');
     // Obtener el siguiente order_index
     const { count } = await supabase
       .from('trippulse_stops')
@@ -69,6 +87,7 @@ export const stopService = {
 
   // Actualizar una parada
   async update(id, stopData) {
+    assertOnline('guardar cambios en la parada');
     const updateData = {};
     
     if (stopData.title !== undefined) updateData.title = stopData.title;
@@ -95,6 +114,7 @@ export const stopService = {
 
   // Actualizar solo la imagen
   async updateImage(id, imageUrl) {
+    assertOnline('actualizar la foto');
     const { data, error } = await supabase
       .from('trippulse_stops')
       .update({ img: imageUrl })
@@ -108,6 +128,7 @@ export const stopService = {
 
   // Toggle estado de visitado
   async toggleVisited(id) {
+    assertOnline('marcar esta parada como visitada');
     // Primero obtener el estado actual
     const { data: currentStop } = await supabase
       .from('trippulse_stops')
@@ -128,6 +149,7 @@ export const stopService = {
 
   // Eliminar una parada
   async delete(id) {
+    assertOnline('eliminar la parada');
     const { error } = await supabase
       .from('trippulse_stops')
       .delete()
@@ -139,6 +161,7 @@ export const stopService = {
 
   // Reordenar paradas (actualizar order_index de múltiples paradas)
   async reorder(dayId, stopsWithNewOrder) {
+    assertOnline('reordenar las paradas');
     // stopsWithNewOrder es un array de { id, orderIndex }
     const updates = stopsWithNewOrder.map(stop => 
       supabase

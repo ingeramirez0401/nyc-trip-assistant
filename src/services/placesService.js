@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase';
+import { assertOnline } from '../lib/connectivity';
 
 async function callAPI(path) {
+  assertOnline('buscar lugares');
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {

@@ -1,6 +1,14 @@
 import { supabase } from '../lib/supabase';
+import { assertOnline } from '../lib/connectivity';
 
+// Único choke point de este servicio -- un solo assertOnline acá cubre
+// generate/list/send/revoke/resend/checkEmail/redeem/getMine/branding de
+// una vez. Ninguna de estas llamadas tiene fallback local (a diferencia de
+// trips/days/stops), así que bloquear antes de intentar da un mensaje
+// claro en vez de un error de red crudo -- el resultado final (sin datos)
+// es el mismo de cualquier forma.
 async function callAPI(path, options = {}) {
+  assertOnline('usar el servicio de licencias');
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
@@ -86,6 +94,7 @@ export const licenseService = {
   // requiere ningún secreto -- solo la sesión propia del usuario, la misma
   // que ya usan tripService/dayService/stopService).
   async consumeQuota(quotaType) {
+    assertOnline('usar tu licencia');
     const { data, error } = await supabase.rpc('trippulse_consume_license_quota', {
       p_quota_type: quotaType,
     });

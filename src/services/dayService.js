@@ -1,36 +1,54 @@
 import { supabase } from '../lib/supabase';
+import { offlineDb } from '../lib/offlineDb';
+import { assertOnline, withOfflineFallback } from '../lib/connectivity';
 
 // =====================================================
 // DAYS (Días del itinerario)
 // =====================================================
 
 export const dayService = {
-  // Obtener todos los días de un viaje
+  // Obtener todos los días de un viaje -- sin señal, cae a la copia local.
   async getByTripId(tripId) {
-    const { data, error } = await supabase
-      .from('trippulse_days')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('day_number', { ascending: true });
-    
-    if (error) throw error;
-    return data;
+    return withOfflineFallback(
+      async () => {
+        const { data, error } = await supabase
+          .from('trippulse_days')
+          .select('*')
+          .eq('trip_id', tripId)
+          .order('day_number', { ascending: true });
+
+        if (error) throw error;
+        await offlineDb.days.bulkPut(data);
+        return data;
+      },
+      async () => {
+        const cached = await offlineDb.days.where('trip_id').equals(tripId).toArray();
+        return cached.sort((a, b) => a.day_number - b.day_number);
+      }
+    );
   },
 
   // Obtener un día específico
   async getById(id) {
-    const { data, error } = await supabase
-      .from('trippulse_days')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
+    return withOfflineFallback(
+      async () => {
+        const { data, error } = await supabase
+          .from('trippulse_days')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+        await offlineDb.days.put(data);
+        return data;
+      },
+      () => offlineDb.days.get(id)
+    );
   },
 
   // Crear un nuevo día
   async create(dayData) {
+    assertOnline('agregar un día al itinerario');
     const { data, error } = await supabase
       .from('trippulse_days')
       .insert([{
@@ -48,6 +66,7 @@ export const dayService = {
 
   // Crear múltiples días a la vez
   async createMultiple(tripId, daysData) {
+    assertOnline('crear los días del itinerario');
     const days = daysData.map((day, index) => ({
       trip_id: tripId,
       day_number: day.dayNumber || index + 1,
@@ -66,6 +85,7 @@ export const dayService = {
 
   // Actualizar un día
   async update(id, dayData) {
+    assertOnline('guardar cambios en el día');
     const { data, error } = await supabase
       .from('trippulse_days')
       .update({
@@ -83,6 +103,7 @@ export const dayService = {
 
   // Eliminar un día (CASCADE eliminará paradas)
   async delete(id) {
+    assertOnline('eliminar el día');
     const { error } = await supabase
       .from('trippulse_days')
       .delete()

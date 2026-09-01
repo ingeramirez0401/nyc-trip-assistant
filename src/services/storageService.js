@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { assertOnline } from '../lib/connectivity';
 
 // =====================================================
 // STORAGE (Almacenamiento de imágenes)
@@ -9,6 +10,7 @@ const BUCKET_NAME = 'trippulse-trip-images';
 export const storageService = {
   // Subir una imagen desde un archivo File
   async uploadImage(file, folder = 'stops') {
+    assertOnline('subir una foto');
     try {
       console.log('📤 Uploading image:', file.name, file.type, file.size);
 
@@ -58,6 +60,7 @@ export const storageService = {
 
   // Subir imagen desde base64 (data URL)
   async uploadBase64Image(base64String, folder = 'stops') {
+    assertOnline('subir una foto');
     try {
       // Extraer el tipo MIME y los datos
       const matches = base64String.match(/^data:(.+);base64,(.+)$/);

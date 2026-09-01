@@ -1,35 +1,54 @@
 import { supabase } from '../lib/supabase';
+import { offlineDb } from '../lib/offlineDb';
+import { assertOnline, withOfflineFallback } from '../lib/connectivity';
 
 // =====================================================
 // TRIPS (Viajes/Ciudades)
 // =====================================================
 
 export const tripService = {
-  // Obtener todos los viajes
+  // Obtener todos los viajes -- sin señal, cae a la última copia local
+  // (ver withOfflineFallback en lib/connectivity.js).
   async getAll() {
-    const { data, error } = await supabase
-      .from('trippulse_trips')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
+    return withOfflineFallback(
+      async () => {
+        const { data, error } = await supabase
+          .from('trippulse_trips')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        await offlineDb.trips.bulkPut(data);
+        return data;
+      },
+      async () => {
+        const cached = await offlineDb.trips.toArray();
+        return cached.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+    );
   },
 
   // Obtener un viaje por ID
   async getById(id) {
-    const { data, error } = await supabase
-      .from('trippulse_trips')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
+    return withOfflineFallback(
+      async () => {
+        const { data, error } = await supabase
+          .from('trippulse_trips')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+        await offlineDb.trips.put(data);
+        return data;
+      },
+      () => offlineDb.trips.get(id)
+    );
   },
 
   // Crear un nuevo viaje
   async create(tripData) {
+    assertOnline('crear un viaje nuevo');
     try {
       // Helper para limpiar strings vacíos a null
       const cleanString = (str) => {
@@ -94,6 +113,7 @@ export const tripService = {
 
   // Actualizar un viaje
   async update(id, tripData) {
+    assertOnline('guardar cambios en el viaje');
     const { data, error } = await supabase
       .from('trippulse_trips')
       .update({
@@ -116,6 +136,7 @@ export const tripService = {
 
   // Eliminar un viaje (CASCADE eliminará días y paradas)
   async delete(id) {
+    assertOnline('eliminar el viaje');
     const { error } = await supabase
       .from('trippulse_trips')
       .delete()

@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { licenseService } from '../services/licenseService';
 import { applyBrandTheme, clearBrandTheme } from '../lib/theme';
+import { assertOnline } from '../lib/connectivity';
+import { clearOfflineDb } from '../lib/offlineDb';
 
 export const AuthContext = createContext({});
 
@@ -107,6 +109,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUp = async (email, password, metadata = {}, captchaToken) => {
+    assertOnline('registrarte');
     return await supabase.auth.signUp({
       email,
       password,
@@ -119,6 +122,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signIn = async (email, password, captchaToken) => {
+    assertOnline('iniciar sesión');
     return await supabase.auth.signInWithPassword({
       email,
       password,
@@ -129,12 +133,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signInWithGoogle = async () => {
+    assertOnline('iniciar sesión con Google');
     return await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
   };
 
   const resetPassword = async (email, captchaToken) => {
+    assertOnline('recuperar tu contraseña');
     return await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/`,
       ...(captchaToken && { captchaToken }),
@@ -144,6 +150,7 @@ export const AuthProvider = ({ children }) => {
   // Reenvía el correo de confirmación de signup -- para la pantalla
   // "revisa tu correo" cuando el usuario dice que nunca le llegó.
   const resendConfirmation = async (email) => {
+    assertOnline('reenviar el correo de confirmación');
     return await supabase.auth.resend({
       type: 'signup',
       email,
@@ -152,6 +159,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updatePassword = async (newPassword) => {
+    assertOnline('actualizar tu contraseña');
     const result = await supabase.auth.updateUser({ password: newPassword });
     if (!result.error) {
       setIsPasswordRecovery(false);
@@ -177,6 +185,10 @@ export const AuthProvider = ({ children }) => {
     setLicenses([]);
     setAgencyBranding(null);
     clearBrandTheme();
+    // El espejo offline vive en el dispositivo, no atado a una cuenta --
+    // dejarlo entre sesiones filtraría el itinerario de este usuario al
+    // siguiente que inicie sesión en un dispositivo compartido.
+    clearOfflineDb().catch((err) => console.error('Error limpiando datos offline:', err));
     return { error };
   };
 

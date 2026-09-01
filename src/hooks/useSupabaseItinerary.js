@@ -3,8 +3,11 @@ import { tripService } from '../services/tripService';
 import { dayService } from '../services/dayService';
 import { stopService } from '../services/stopService';
 import { storageService } from '../services/storageService';
+import { useToast } from '../contexts/ToastContext';
+import { notifyActionError } from '../lib/connectivity';
 
 export const useSupabaseItinerary = (tripId) => {
+  const toast = useToast();
   const [trip, setTrip] = useState(null);
   const [days, setDays] = useState([]);
   const [visited, setVisited] = useState({});
@@ -101,6 +104,7 @@ export const useSupabaseItinerary = (tripId) => {
       setVisited(prev => ({ ...prev, [stopId]: !prev[stopId] }));
     } catch (err) {
       console.error('Error toggling visited:', err);
+      notifyActionError(toast, err, 'Error al marcar la parada');
     }
   };
 

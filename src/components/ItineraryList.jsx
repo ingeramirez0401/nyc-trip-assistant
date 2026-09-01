@@ -2,22 +2,36 @@ import React from 'react';
 import { useToast } from '../contexts/ToastContext';
 import { getCategoryIcon } from '../data/categories';
 
-const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onToggleVisited, onDelete, onEdit }) => {
+// offlineNotice: true cuando esta lista reemplaza al mapa por falta de
+// señal (ver App.jsx) en vez de abrirse como overlay -- no tiene sentido
+// "cerrar" hacia un mapa que tampoco va a cargar, así que el botón de
+// cerrar se cambia por un aviso fijo del motivo.
+const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onToggleVisited, onDelete, onEdit, offlineNotice = false }) => {
   const toast = useToast();
   return (
     <div className="fixed inset-0 z-[1500] bg-slate-50 dark:bg-slate-900 flex flex-col animate-fade-in transition-colors duration-300">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between">
+        {/* Header -- pt-14 en vez de py-5 cuando offlineNotice: ConnectivityBanner
+            (fixed top-0, ~32px) vive fuera de este árbol y esta lista
+            también es fixed inset-0, así que sin este espacio extra el
+            banner tapa el título del día. */}
+        <div className={`px-6 border-b border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between ${offlineNotice ? 'pt-14 pb-5' : 'py-5'}`}>
             <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">Día {activeDay.dayNumber}</h2>
                 <p className="text-sm text-blue-500 dark:text-blue-400 font-medium">{activeDay.title}</p>
             </div>
-            <button 
-                onClick={onClose}
-                className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/20 transition active:scale-95"
-            >
-                <i className="fas fa-times"></i>
-            </button>
+            {offlineNotice ? (
+                <span className="text-xs font-bold px-3 py-2 rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center gap-1.5 shrink-0">
+                    <i className="fas fa-triangle-exclamation"></i>
+                    <span className="hidden sm:inline">Mapa sin señal</span>
+                </span>
+            ) : (
+                <button
+                    onClick={onClose}
+                    className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/20 transition active:scale-95"
+                >
+                    <i className="fas fa-times"></i>
+                </button>
+            )}
         </div>
 
         {/* Content */}

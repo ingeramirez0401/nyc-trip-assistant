@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { profileService } from '../services/profileService';
 import { licenseService } from '../services/licenseService';
+import { notifyActionError } from '../lib/connectivity';
 
 const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel }) => {
   const { user, profile, licenses, refreshLicenses, agencyBranding } = useAuth();
@@ -259,7 +260,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         hint: error.hint,
         code: error.code,
       });
-      toast.error(`Error al crear el viaje: ${error.message}`);
+      notifyActionError(toast, error, 'Error al crear el viaje');
     }
   };
 
@@ -347,6 +348,15 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
     } catch (error) {
       console.error('❌ Error generando itinerario:', error);
+
+      // Sin señal, ofrecer "crearlo manual" es una salida falsa -- esa
+      // ruta también necesita red (tripService.create) y fallaría por lo
+      // mismo. Se corta acá con el aviso claro en vez del diálogo de
+      // fallback que solo iba a repetir el problema.
+      if (error.isOfflineError) {
+        toast.warning(error.message);
+        return;
+      }
 
       // Fallback manual
       if (await toast.confirm('Hubo un problema al generar el itinerario con IA. ¿Deseas crear el viaje manualmente y configurarlo tú mismo?')) {
