@@ -72,6 +72,11 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
         country: details.country || '',
         address: details.address,
         img: placesService.getPhotoUrl(details.photoName),
+        // placeId se guarda junto con el viaje (base_location_place_id) --
+        // sin él no hay forma de volver a pedirle a Google los datos en
+        // vivo (rating, teléfono, horario) del hotel/base más adelante
+        // (ver App.jsx handleBaseClick y useSupabaseItinerary.js).
+        placeId: prediction.placeId,
       });
     } catch (error) {
       console.error('Error getting place details:', error);

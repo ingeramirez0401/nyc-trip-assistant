@@ -104,6 +104,7 @@ function MapInner({
   activeDay,
   selectedStop,
   onStopClick,
+  onBaseClick,
   userLocation,
   visited,
   isDarkMode,
@@ -150,9 +151,13 @@ function MapInner({
         />
       )}
 
-      {/* Base Marker */}
-      <AdvancedMarker position={{ lat: baseLocation.lat, lng: baseLocation.lng }}>
-        <div className="w-12 h-12 bg-amber-500 rounded-full border-4 border-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center justify-center text-slate-900 text-xl animate-pulse">
+      {/* Base Marker -- clickeable: aunque el hotel/base ya se eligió al
+          crear el viaje y no se puede marcar visitado/editar/borrar como
+          una parada normal, el viajero sí quiere poder consultarlo de
+          nuevo (dirección, teléfono, horario) sin tener que recordarlo de
+          memoria -- ver App.jsx handleBaseClick. */}
+      <AdvancedMarker position={{ lat: baseLocation.lat, lng: baseLocation.lng }} onClick={onBaseClick} zIndex={20}>
+        <div className="w-12 h-12 bg-amber-500 rounded-full border-4 border-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center justify-center text-slate-900 text-xl animate-pulse cursor-pointer">
           <i className="fas fa-bed"></i>
         </div>
       </AdvancedMarker>

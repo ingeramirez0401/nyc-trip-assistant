@@ -65,6 +65,7 @@ export const tripService = {
         base_location_title: cleanString(tripData.baseLocation?.title),
         base_location_desc: cleanString(tripData.baseLocation?.desc),
         base_location_img: cleanString(tripData.baseLocation?.img),
+        base_location_place_id: cleanString(tripData.baseLocation?.placeId),
         user_id: tripData.user_id || null, // Add user_id association
       };
       
@@ -125,6 +126,7 @@ export const tripService = {
         base_location_title: tripData.baseLocation?.title,
         base_location_desc: tripData.baseLocation?.desc,
         base_location_img: tripData.baseLocation?.img,
+        base_location_place_id: tripData.baseLocation?.placeId,
       })
       .eq('id', id)
       .select()

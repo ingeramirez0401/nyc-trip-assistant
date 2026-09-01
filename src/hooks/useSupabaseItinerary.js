@@ -90,6 +90,11 @@ export const useSupabaseItinerary = (tripId) => {
     title: trip.base_location_title || trip.city,
     desc: trip.base_location_desc || 'Base de Operaciones',
     img: trip.base_location_img || null,
+    // placeId puede faltar en viajes creados antes de esta columna -- el
+    // marcador del hotel en el mapa sigue siendo clickeable igual, solo
+    // que sin datos en vivo de Google Places para mostrar (ver App.jsx
+    // handleBaseClick).
+    placeId: trip.base_location_place_id || null,
   } : {
     lat: 40.7592,
     lng: -73.9846,

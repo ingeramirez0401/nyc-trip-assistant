@@ -1,38 +1,73 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { useToast } from '../contexts/ToastContext';
+import { useHybridPlaceImage } from '../hooks/useHybridPlaceImage';
 
-const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDelete, onUpdateImage, onEdit, city = "travel destination" }) => {
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80';
+
+// Umbral en px para que un arrastre del handle cuente como gesto (no como
+// tap accidental) -- por debajo de esto, el click normal de toggleExpand
+// sigue funcionando solo.
+const DRAG_THRESHOLD = 60;
+
+const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDelete, onUpdateImage, onEdit, city = "travel destination", readOnly = false }) => {
   const toast = useToast();
-  const [imgSrc, setImgSrc] = useState(null);
+  const hybridImgSrc = useHybridPlaceImage(place?.img, place?.id, city);
+  const [uploadedPreview, setUploadedPreview] = useState(null);
+  const imgSrc = uploadedPreview || hybridImgSrc || FALLBACK_IMG;
   const [isExpanded, setIsExpanded] = useState(false);
   const [showFullHours, setShowFullHours] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Preview local de la subida manual (independiente de la estrategia
+  // híbrida) -- se limpia al cambiar de lugar para no arrastrar la foto
+  // subida de un lugar anterior.
   useEffect(() => {
-    if (place) {
-        let url;
+    setUploadedPreview(null);
+  }, [place?.id]);
 
-        // Estrategia Híbrida:
-        // 1. Si tenemos una URL real (Unsplash o data:image), la usamos directamente.
-        // 2. Si solo tenemos una palabra clave (lugares nuevos), usamos IA para generar una referencia.
-        if (place.img && (place.img.startsWith('http') || place.img.startsWith('data:image'))) {
-            url = place.img;
-            setImgSrc(url); // Actualizar inmediatamente si es URL o base64
-        } else if (place.img) {
-            const query = encodeURIComponent(`${place.img} in ${city} photorealistic 4k`);
-            url = `https://image.pollinations.ai/prompt/${query}?width=800&height=600&nologo=true&seed=${place.id}`;
-            // Cargar imagen generada con validación
-            const img = new Image();
-            img.onload = () => setImgSrc(url);
-            img.onerror = () => setImgSrc('https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80');
-            img.src = url;
-        } else {
-            // Fallback si no hay imagen
-            setImgSrc('https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80');
+  // --- Gesto de arrastre del handle: arriba expande, abajo colapsa/cierra ---
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(null);
+
+  const handleDragStart = (e) => {
+    dragStartY.current = e.clientY;
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMove = (e) => {
+      if (dragStartY.current == null) return;
+      setDragY(e.clientY - dragStartY.current);
+    };
+
+    const handleEnd = () => {
+      if (dragStartY.current != null) {
+        const delta = dragY;
+        if (isExpanded) {
+          if (delta > DRAG_THRESHOLD) setIsExpanded(false);
+        } else if (delta < -DRAG_THRESHOLD) {
+          setIsExpanded(true);
+        } else if (delta > DRAG_THRESHOLD) {
+          onClose();
         }
-    }
-  }, [place, place?.img, city]); // Escuchar cambios en place.img y city
+      }
+      dragStartY.current = null;
+      setIsDragging(false);
+      setDragY(0);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleEnd);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleEnd);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging, dragY, isExpanded]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -40,7 +75,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
         const reader = new FileReader();
         reader.onload = (event) => {
             const dataUrl = event.target.result;
-            setImgSrc(dataUrl);
+            setUploadedPreview(dataUrl);
             if (onUpdateImage) {
                 onUpdateImage(place.id, dataUrl);
             }
@@ -57,6 +92,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
   };
 
   const handleVisitToggle = () => {
+    if (readOnly || !onToggleVisited) return;
     const newVal = !isVisited;
     onToggleVisited(place.id);
     if (newVal) {
@@ -72,16 +108,37 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
   if (!place) return null;
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
+  // Solo se sigue el dedo visualmente al arrastrar hacia abajo (colapsar o
+  // cerrar) -- arrastrar hacia arriba para expandir sigue funcionando por
+  // umbral, sin animación en vivo, ya que la hoja tendría que crecer (no
+  // trasladarse) y eso ya lo cubre la transición de altura al soltar.
+  const liveDragOffset = isDragging ? Math.max(0, dragY) : 0;
 
   return (
-    <div 
-      className={`fixed bottom-0 left-0 right-0 z-[1000] overflow-hidden shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.5)] flex flex-col transition-all duration-500 cubic-bezier(0.19, 1, 0.22, 1) 
-        ${isExpanded ? 'h-[90dvh] rounded-t-[32px]' : 'h-[140px] rounded-t-[24px]'}
-        bg-white dark:bg-slate-900/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/10`}
-    >
-      {/* Toggle Handle */}
-      <div 
+    <>
+      {/* Backdrop -- click fuera de la hoja la cierra. Sin oscurecer de
+          más en modo compacto (el mapa de fondo sigue siendo el
+          protagonista); oscurece como un modal real solo cuando está
+          expandida. */}
+      <div
+        className={`fixed inset-0 z-[999] transition-opacity duration-300 ${isExpanded ? 'bg-black/50 backdrop-blur-sm' : 'bg-transparent'}`}
+        onClick={onClose}
+      />
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-[1000] overflow-hidden shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.5)] flex flex-col
+          ${isDragging ? '' : 'transition-all duration-500 cubic-bezier(0.19, 1, 0.22, 1)'}
+          ${isExpanded ? 'h-[90dvh] rounded-t-[32px]' : 'h-[140px] rounded-t-[24px]'}
+          bg-white dark:bg-slate-900/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/10`}
+        style={liveDragOffset ? { transform: `translateY(${liveDragOffset}px)` } : undefined}
+      >
+      {/* Toggle Handle -- también el asa de arrastre: arriba expande, abajo
+          colapsa (si está expandida) o cierra del todo (si ya está
+          compacta), imitando el gesto que cualquier bottom sheet nativo ya
+          te enseñó a esperar. */}
+      <div
         onClick={toggleExpand}
+        onPointerDown={handleDragStart}
+        style={{ touchAction: 'none' }}
         className="w-full h-8 flex justify-center items-center shrink-0 cursor-pointer active:bg-black/5 dark:active:bg-white/5 transition"
       >
         <div className="w-12 h-1.5 bg-slate-200 dark:bg-white/20 rounded-full"></div>
@@ -125,15 +182,17 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
             <p className="text-slate-500 dark:text-slate-400 text-sm truncate">{place.tip}</p>
         </div>
 
-        <button 
-            onClick={(e) => {
-                e.stopPropagation();
-                handleVisitToggle();
-            }}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 shadow-lg border ${isVisited ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-        >
-            <i className={`fas ${isVisited ? 'fa-check' : 'fa-check'} text-lg`}></i>
-        </button>
+        {!readOnly && (
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleVisitToggle();
+                }}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 shadow-lg border ${isVisited ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+            >
+                <i className={`fas ${isVisited ? 'fa-check' : 'fa-check'} text-lg`}></i>
+            </button>
+        )}
       </div>
 
       {/* Expanded View Content */}
@@ -160,13 +219,15 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
             
             {/* Top Actions */}
             <div className="absolute top-2 right-4 flex gap-3 z-10">
-                <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-black/60 transition active:scale-95"
-                >
-                    <i className="fas fa-camera"></i>
-                </button>
-                <button 
+                {!readOnly && (
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-black/60 transition active:scale-95"
+                    >
+                        <i className="fas fa-camera"></i>
+                    </button>
+                )}
+                <button
                     onClick={onClose}
                     className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-black/60 transition active:scale-95"
                 >
@@ -223,15 +284,17 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
             
             {/* Action Bar */}
             <div className="flex gap-3">
-                 <button
-                    onClick={handleVisitToggle}
-                    className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${isVisited
-                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                        : 'bg-slate-100 dark:bg-white text-slate-900 hover:bg-slate-200 dark:hover:bg-slate-100'}`}
-                >
-                    <i className={`fas ${isVisited ? 'fa-check-circle' : 'fa-circle'}`}></i>
-                    {isVisited ? 'Completado' : 'Marcar Visitado'}
-                </button>
+                 {!readOnly && (
+                     <button
+                        onClick={handleVisitToggle}
+                        className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${isVisited
+                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                            : 'bg-slate-100 dark:bg-white text-slate-900 hover:bg-slate-200 dark:hover:bg-slate-100'}`}
+                    >
+                        <i className={`fas ${isVisited ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                        {isVisited ? 'Completado' : 'Marcar Visitado'}
+                    </button>
+                 )}
                 {/* Sin origin: Google Maps usa la ubicación en vivo del
                     dispositivo al abrir el link -- más confiable que
                     mandarle nuestro propio GPS (puede estar apagado o
@@ -333,33 +396,38 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                 </div>
             )}
 
-            {/* Secondary Actions */}
-            <div className="pt-4 border-t border-slate-200 dark:border-white/5">
-                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-4">Gestión</div>
-                <div className="grid grid-cols-2 gap-3">
-                    {onEdit && (
-                        <button 
-                            onClick={() => onEdit(place)}
-                            className="bg-slate-50 dark:bg-slate-800 text-blue-500 dark:text-blue-400 py-3 rounded-xl font-semibold text-sm border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2"
-                        >
-                            <i className="fas fa-edit"></i>
-                            <span>Editar Datos</span>
-                        </button>
-                    )}
-                    {onDelete && (
-                        <button 
-                            onClick={handleDelete}
-                            className="bg-slate-50 dark:bg-slate-800 text-red-500 dark:text-red-400 py-3 rounded-xl font-semibold text-sm border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2"
-                        >
-                            <i className="fas fa-trash-alt"></i>
-                            <span>Eliminar</span>
-                        </button>
-                    )}
+            {/* Secondary Actions -- oculta del todo en modo lectura (hotel
+                base): sin Editar/Eliminar que mostrar, un encabezado
+                "Gestión" vacío no aporta nada. */}
+            {!readOnly && (onEdit || onDelete) && (
+                <div className="pt-4 border-t border-slate-200 dark:border-white/5">
+                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-4">Gestión</div>
+                    <div className="grid grid-cols-2 gap-3">
+                        {onEdit && (
+                            <button
+                                onClick={() => onEdit(place)}
+                                className="bg-slate-50 dark:bg-slate-800 text-blue-500 dark:text-blue-400 py-3 rounded-xl font-semibold text-sm border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-edit"></i>
+                                <span>Editar Datos</span>
+                            </button>
+                        )}
+                        {onDelete && (
+                            <button
+                                onClick={handleDelete}
+                                className="bg-slate-50 dark:bg-slate-800 text-red-500 dark:text-red-400 py-3 rounded-xl font-semibold text-sm border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-trash-alt"></i>
+                                <span>Eliminar</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

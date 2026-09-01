@@ -1,77 +1,95 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
-// Rediseño: antes cada pestaña mostraba día + título + puntitos por parada
-// -- no escalaba (viajes largos se volvían una fila interminable de texto)
-// y los puntos no comunicaban nada legible. Ahora: pestañas compactas
-// (solo el número) que se expanden con el título + progreso SOLO la
-// activa, más un botón aparte para abrir el itinerario completo -- leer
-// el itinerario de verdad vive en ItineraryList (pantalla completa, ya
-// scrollea bien), no hace falta que el mapa intente mostrarlo también.
-// De paso: el original leía `day.day_number` pero el dato real llega como
-// `day.dayNumber` (ver useSupabaseItinerary.js) -- el número de día nunca
-// se estaba pintando.
+// Segundo rediseño. El primero (pestaña activa que crece con título +
+// progreso inline, ver git blame) tenía dos problemas reales que el
+// usuario reportó probándolo en dispositivo:
+// 1. Al crecer, la pestaña activa empujaba el resto de la fila -- si el
+//    viajero pasaba al día 2, el círculo del día 1 podía terminar tapado
+//    por el degradado de fade del borde izquierdo sin forma fácil de
+//    volver a verlo/tocarlo.
+// 2. El título dentro de esa pestaña vivía en un ancho fijo de 150px con
+//    line-clamp-2 -- un título largo se leía diminuto y cortado.
+// Ahora: todos los círculos de día son del MISMO tamaño siempre (activo o
+// no), así que la fila nunca cambia de ancho por día -- el día 1 sigue
+// exactamente donde estaba sin importar cuál esté activo, y un
+// scrollIntoView automático centra el día activo en vez de dejar que el
+// viajero lo busque a mano. El título del día activo se muestra aparte,
+// en su propia píldora de ancho completo (una sola línea con ellipsis en
+// vez de 2 líneas diminutas). De paso, se posiciona con
+// env(safe-area-inset-top) igual que los botones de menú/modo oscuro de
+// App.jsx (que antes usaba `top-24` fijo) -- en un dispositivo con notch
+// esos botones bajan por el safe-area pero este selector no lo hacía, así
+// que en pantallas con notch terminaban chocando.
 const DaySelector = ({ days, activeDayId, onSelectDay, visited = {}, onOpenList }) => {
   const hasOverflow = days.length > 5;
+  const activeBtnRef = useRef(null);
+
+  const activeDay = days.find((d) => d.id === activeDayId);
+  const total = activeDay ? activeDay.stops.length : 0;
+  const done = activeDay ? activeDay.stops.filter((s) => visited[s.id]).length : 0;
+
+  useEffect(() => {
+    activeBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, [activeDayId]);
 
   return (
-    <div className="absolute top-24 left-0 right-0 z-[450] px-4 animate-fade-in-down pointer-events-none">
-      <div className="mx-auto max-w-lg flex items-center gap-2 pointer-events-auto">
-        <div className="relative flex-1 min-w-0">
-          {hasOverflow && (
-            <>
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-slate-900/90 to-transparent z-10 rounded-l-2xl" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-slate-900/90 to-transparent z-10 rounded-r-2xl" />
-            </>
-          )}
-          <div className="p-1.5 rounded-2xl overflow-x-auto overflow-y-hidden shadow-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 hide-scrollbar">
-            <div className="flex gap-1.5 snap-x w-max">
-              {days.map((day) => {
-                const isActive = day.id === activeDayId;
-                const total = day.stops.length;
-                const done = day.stops.filter((s) => visited[s.id]).length;
-
-                return (
-                  <button
-                    key={day.id}
-                    onClick={() => onSelectDay(day.id)}
-                    className={`shrink-0 rounded-xl transition-all duration-300 flex items-center snap-center ${
-                      isActive
-                        ? 'bg-white text-slate-900 gap-2 pl-3.5 pr-4 py-2 shadow-lg'
-                        : 'bg-transparent text-slate-400 hover:bg-white/10 hover:text-white w-11 h-11 justify-center'
-                    }`}
-                  >
-                    <span className={`font-black leading-none ${isActive ? 'text-lg' : 'text-sm'}`}>{day.dayNumber}</span>
-                    {isActive && (
-                      // line-clamp-2, no truncate (1 línea) -- con 110px y
-                      // una sola línea, un título de viaje normal ("Recorrido
-                      // histórico por el centro de la ciudad") quedaba
-                      // cortado casi por completo. 2 líneas + un poco más de
-                      // ancho muestra bastante más sin que la pastilla se
-                      // vuelva enorme (sigue siendo solo la pestaña activa).
-                      <span className="flex flex-col items-start leading-tight max-w-[150px]">
-                        <span className="text-xs font-bold line-clamp-2 w-full">{day.title}</span>
-                        {total > 0 && (
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            {done}/{total} visitado{total !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+    <div className="absolute top-[calc(5rem+env(safe-area-inset-top))] left-0 right-0 z-[450] px-4 animate-fade-in-down pointer-events-none">
+      <div className="mx-auto max-w-lg pointer-events-auto flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-0">
+            {hasOverflow && (
+              <>
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-slate-900/90 to-transparent z-10 rounded-l-2xl" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-slate-900/90 to-transparent z-10 rounded-r-2xl" />
+              </>
+            )}
+            <div className="p-1.5 rounded-2xl overflow-x-auto overflow-y-hidden shadow-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 hide-scrollbar">
+              <div className="flex gap-1.5 snap-x w-max">
+                {days.map((day) => {
+                  const isActive = day.id === activeDayId;
+                  return (
+                    <button
+                      key={day.id}
+                      ref={isActive ? activeBtnRef : null}
+                      onClick={() => onSelectDay(day.id)}
+                      className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center snap-center font-black text-sm transition-all duration-300 ${
+                        isActive
+                          ? 'bg-white text-slate-900 shadow-lg scale-110'
+                          : 'bg-transparent text-slate-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {day.dayNumber}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
+
+          {onOpenList && (
+            <button
+              onClick={onOpenList}
+              title="Ver itinerario completo del día"
+              className="shrink-0 w-9 h-9 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center shadow-2xl hover:bg-slate-800 active:scale-95 transition-all"
+            >
+              <i className="fas fa-list-ul text-sm"></i>
+            </button>
+          )}
         </div>
 
-        {onOpenList && (
-          <button
-            onClick={onOpenList}
-            title="Ver itinerario completo del día"
-            className="shrink-0 w-11 h-11 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center shadow-2xl hover:bg-slate-800 active:scale-95 transition-all"
-          >
-            <i className="fas fa-list-ul"></i>
-          </button>
+        {/* Título del día activo, aparte de los círculos -- así puede usar
+            todo el ancho disponible en vez de los 150px cramped de antes,
+            y una sola línea con ellipsis se lee mejor que dos líneas
+            diminutas cortadas. */}
+        {activeDay && (
+          <div className="rounded-xl px-3.5 py-1.5 bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-lg flex items-center gap-2 min-w-0">
+            <span className="text-xs font-bold text-white truncate min-w-0">{activeDay.title}</span>
+            {total > 0 && (
+              <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-auto">
+                {done}/{total} visitado{total !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>

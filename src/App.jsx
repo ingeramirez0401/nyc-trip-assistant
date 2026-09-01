@@ -19,7 +19,13 @@ import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { useToast } from './contexts/ToastContext';
 import { notifyActionError } from './lib/connectivity';
 import { tripService } from './services/tripService';
+import { placesService } from './services/placesService';
 import { testConnection } from './lib/supabase';
+
+// Id sintético para distinguir "estamos mostrando el hotel/base" de una
+// parada real del itinerario -- ningún stop real puede tener este id (ver
+// stopService.create, que siempre usa el uuid que genera Supabase).
+const BASE_LOCATION_ID = 'base-location';
 
 function App() {
   // Navegación real basada en URL (home / agencia / viaje) -- ver
@@ -207,6 +213,50 @@ function App() {
 
   const handleStopClick = (stop) => {
     setSelectedStop(stop);
+  };
+
+  // Tocar el marcador del hotel/base abre el mismo BottomSheet que una
+  // parada normal, pero en modo lectura (BASE_LOCATION_ID marca ese caso
+  // en el JSX de abajo): sin marcar visitado/editar/borrar, el hotel no es
+  // una parada del itinerario, es el punto de referencia del viaje entero.
+  // Se abre de inmediato con lo que ya tenemos (título/dirección/coords) y,
+  // si el viaje guardó un placeId de Google (viajes creados desde que se
+  // agregó esta función -- los anteriores no lo tienen), se completa en
+  // segundo plano con rating/teléfono/horario reales.
+  const handleBaseClick = async () => {
+    if (!baseLocation) return;
+    const hotelPlace = {
+      id: BASE_LOCATION_ID,
+      title: baseLocation.title,
+      cat: 'Hotel',
+      lat: baseLocation.lat,
+      lng: baseLocation.lng,
+      address: baseLocation.desc,
+      img: baseLocation.img,
+      tip: 'Tu punto base durante este viaje.',
+    };
+    setSelectedStop(hotelPlace);
+
+    if (baseLocation.placeId) {
+      try {
+        const details = await placesService.getDetails(baseLocation.placeId);
+        setSelectedStop((prev) =>
+          prev?.id === BASE_LOCATION_ID
+            ? {
+                ...prev,
+                address: details.address || prev.address,
+                placeRating: details.rating,
+                placeRatingCount: details.ratingCount,
+                placePhone: details.phone,
+                placeWebsite: details.website,
+                placeHours: details.hours,
+              }
+            : prev
+        );
+      } catch (err) {
+        console.error('No se pudo obtener el detalle del hotel desde Places:', err);
+      }
+    }
   };
 
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
@@ -401,6 +451,7 @@ function App() {
           activeDay={activeDay}
           selectedStop={selectedStop}
           onStopClick={handleStopClick}
+          onBaseClick={handleBaseClick}
           userLocation={userLocation}
           visited={visited}
           isDarkMode={isDarkMode}
@@ -529,16 +580,19 @@ function App() {
         </button>
       </div>
 
-      {/* BOTTOM SHEET DETAIL */}
-      <BottomSheet 
-        place={selectedStop} 
-        isOpen={!!selectedStop} 
+      {/* BOTTOM SHEET DETAIL -- readOnly cuando lo abierto es el hotel/base
+          (BASE_LOCATION_ID), no una parada real: sin marcar visitado,
+          editar ni borrar, ver handleBaseClick más arriba. */}
+      <BottomSheet
+        place={selectedStop}
+        isOpen={!!selectedStop}
         onClose={() => setSelectedStop(null)}
-        isVisited={selectedStop ? !!visited[selectedStop.id] : false}
-        onToggleVisited={toggleVisited}
-        onDelete={handleDeleteStop}
-        onUpdateImage={handleUpdateImage}
-        onEdit={handleEditPlace}
+        isVisited={selectedStop && selectedStop.id !== BASE_LOCATION_ID ? !!visited[selectedStop.id] : false}
+        onToggleVisited={selectedStop?.id === BASE_LOCATION_ID ? undefined : toggleVisited}
+        onDelete={selectedStop?.id === BASE_LOCATION_ID ? undefined : handleDeleteStop}
+        onUpdateImage={selectedStop?.id === BASE_LOCATION_ID ? undefined : handleUpdateImage}
+        onEdit={selectedStop?.id === BASE_LOCATION_ID ? undefined : handleEditPlace}
+        readOnly={selectedStop?.id === BASE_LOCATION_ID}
         city={trip?.city || currentTrip?.city}
       />
 

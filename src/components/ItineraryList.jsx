@@ -1,6 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
 import { getCategoryIcon } from '../data/categories';
+import { useHybridPlaceImage } from '../hooks/useHybridPlaceImage';
+
+// Miniatura de cada parada: si hay una foto real (de Google Places, subida
+// a mano, o generada por IA vía la estrategia híbrida) se muestra tal
+// cual; si no, en vez de un ícono genérico de cámara (que además terminaba
+// siendo LO MISMO para cualquier parada sin foto, sin distinguir un museo
+// de un restaurante) se usa un ícono + degradado según la categoría real de
+// la parada -- mismo criterio de color que ya usa el pin del mapa
+// (ver getCategoryIcon / MapComponent.jsx).
+function StopThumbnail({ stop }) {
+  const resolvedSrc = useHybridPlaceImage(stop.img, stop.id);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [resolvedSrc]);
+  const category = getCategoryIcon(stop.cat);
+  const showImg = resolvedSrc && !failed;
+
+  return (
+    <div
+      className="w-16 h-16 rounded-xl overflow-hidden shrink-0"
+      style={!showImg ? { background: `linear-gradient(135deg, ${category.color}33, ${category.color}0d)` } : undefined}
+    >
+      {showImg ? (
+        <img
+          src={resolvedSrc}
+          className="w-full h-full object-cover"
+          alt={stop.title}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <i className={`fas ${category.icon} text-xl`} style={{ color: category.color }}></i>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // offlineNotice: true cuando esta lista reemplaza al mapa por falta de
 // señal (ver App.jsx) en vez de abrirse como overlay -- no tiene sentido
@@ -77,23 +113,7 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
                                 <div className="flex-1 min-w-0 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-2xl p-4 active:scale-[0.99] transition-all hover:shadow-md dark:hover:bg-slate-800 dark:hover:border-white/10">
                                     <div className="flex gap-4">
                                         {/* Image Thumbnail */}
-                                        <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
-                                            {stop.img ? (
-                                                <img 
-                                                    src={stop.img} 
-                                                    className="w-full h-full object-cover" 
-                                                    alt={stop.title}
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=80';
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500">
-                                                    <i className="fas fa-image"></i>
-                                                </div>
-                                            )}
-                                        </div>
+                                        <StopThumbnail stop={stop} />
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
