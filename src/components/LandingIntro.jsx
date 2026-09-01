@@ -24,11 +24,15 @@ const LandingIntro = () => {
       <div className="grid lg:grid-cols-2 gap-10 items-center mb-14">
         {/* Texto */}
         <div className="text-center lg:text-left">
-          <p className="text-blue-600 dark:text-blue-300 font-bold uppercase tracking-widest text-xs md:text-sm mb-3">
-            Planificación de viajes con IA
-          </p>
-          <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
-            Deja que la IA arme tu itinerario perfecto
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-600/10 dark:bg-blue-500/15 border border-blue-600/20 dark:border-blue-500/25 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-wider mb-4">
+            <i className="fas fa-wand-magic-sparkles"></i>
+            Planificación con IA
+          </span>
+          <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 leading-[1.1] tracking-tight">
+            Deja que la IA arme tu{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] dark:from-blue-300 dark:to-indigo-300">
+              itinerario perfecto
+            </span>
           </h2>
           <p className="text-slate-600 dark:text-blue-200 text-base md:text-lg mb-8">
             Dinos tu destino, tus días y tus intereses. TripPulse te devuelve un plan
@@ -74,13 +78,33 @@ const LandingIntro = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto mb-14">
+        {[
+          { value: '3+', label: 'Días por viaje' },
+          { value: '6', label: 'Lugares por día' },
+          { value: 'GPS', label: 'Coordenadas reales' },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-3 py-4 shadow-sm text-center"
+          >
+            <p className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] dark:from-blue-300 dark:to-indigo-300">
+              {stat.value}
+            </p>
+            <p className="text-xs md:text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">
+              {stat.label}
+            </p>
+          </div>
+        ))}
+      </div>
+
       <div className="grid sm:grid-cols-3 gap-4 text-left">
         {HIGHLIGHTS.map((item) => (
           <div
             key={item.title}
-            className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-lg dark:shadow-none"
+            className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-lg dark:shadow-none hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[var(--brand-600)] to-[var(--brand-700)] text-white flex items-center justify-center mb-3 shadow-md shadow-blue-900/20">
               <i className={`fas ${item.icon}`}></i>
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1.5">{item.title}</h3>

@@ -397,30 +397,65 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 overflow-y-auto transition-colors duration-300">
-      {/* Account Menu Button */}
-      {user && (
-        <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-6 z-50">
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            title="Mi cuenta"
-            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
-          >
-            <i className="fas fa-bars text-lg"></i>
-          </button>
+      {/* Barra superior fija: logo + acceso. El botón de "Iniciar sesión"
+          vive acá, siempre visible sin importar el scroll. Reemplaza los
+          botones flotantes sueltos que había antes (menú de cuenta y tema). */}
+      <header className="fixed top-0 inset-x-0 z-50">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-[calc(0.75rem+env(safe-area-inset-top))]">
+          <div className={`flex items-center justify-between gap-3 rounded-2xl px-3 sm:px-4 py-2.5 backdrop-blur-xl border shadow-lg shadow-black/5 transition-colors ${isDarkMode ? 'bg-slate-900/30 border-white/10' : 'bg-white/30 border-slate-200/60'}`}>
+            {/* Marca */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 bg-gradient-to-tr from-[var(--brand-600)] to-[var(--brand-700)] rounded-lg flex items-center justify-center shadow-md shrink-0">
+                {agencyBranding?.logo_url ? (
+                  <img src={agencyBranding.logo_url} alt={agencyBranding.name} className="w-full h-full object-cover rounded-lg" />
+                ) : (
+                  <i className="fas fa-route text-sm text-white"></i>
+                )}
+              </div>
+              <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white">TripPulse</span>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors active:scale-95 ${isDarkMode ? 'bg-white/5 border border-white/10 text-amber-400 hover:bg-white/10' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+              >
+                <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+              </button>
+              {!user ? (
+                <>
+                  <button
+                    onClick={handleTravelerLogin}
+                    className={`px-4 py-2 rounded-xl font-bold text-sm border transition-all active:scale-95 ${isDarkMode ? 'bg-white/5 border-white/20 text-white hover:bg-white/10' : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'}`}
+                  >
+                    <i className="fas fa-right-to-bracket mr-2"></i>
+                    Iniciar sesión
+                  </button>
+                  <button
+                    onClick={handleStartFree}
+                    className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 active:scale-95 transition-all"
+                  >
+                    <i className="fas fa-rocket mr-2"></i>
+                    Crear cuenta gratis
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsMenuOpen(true)}
+                  title="Mi cuenta"
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors active:scale-95 ${isDarkMode ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                >
+                  <i className="fas fa-bars"></i>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </header>
 
-      {/* Theme Toggle Button */}
-      <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] right-6 z-50 flex gap-3">
-        <button
-          onClick={toggleTheme}
-          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
-        >
-          <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
-        </button>
-      </div>
-
-      <div className="min-h-dvh flex flex-col items-center justify-center p-6">
+      <div className="min-h-dvh flex flex-col items-center justify-center p-6 pt-28 md:pt-32">
         
         {/* Header -- el logo/color de la agencia (si el viajero llegó vía
             una licencia) reemplaza el ícono y tiñe el degradé vía las
@@ -437,30 +472,9 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">Descubre. Planifica. Vive.</p>
         </div>
 
-        {/* CTA inmediata, pegada al hero -- antes el único login/registro
-            funcional vivía en PlansSection, después de todo el bloque de
-            marketing de LandingIntro. En mobile eso significaba varios
-            scrolls antes de ver cómo entrar. Esto no reemplaza PlansSection
-            (sigue con el detalle de planes más abajo), solo adelanta la
-            acción para quien ya sabe lo que quiere hacer. */}
-        {!user && !showCreateForm && (
-          <div className="flex flex-col sm:flex-row gap-3 mb-10 md:mb-14 animate-fade-in-down w-full max-w-xs sm:max-w-none justify-center">
-            <button
-              onClick={handleStartFree}
-              className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white px-8 py-3.5 rounded-xl font-bold text-base shadow-2xl shadow-blue-900/40 hover:shadow-blue-900/60 active:scale-95 transition-all"
-            >
-              <i className="fas fa-rocket mr-2"></i>
-              Crear cuenta gratis
-            </button>
-            <button
-              onClick={handleTravelerLogin}
-              className={`px-8 py-3.5 rounded-xl font-bold text-base border transition-all active:scale-95 ${isDarkMode ? 'bg-white/5 border-white/20 text-white hover:bg-white/10' : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'}`}
-            >
-              <i className="fas fa-right-to-bracket mr-2"></i>
-              Iniciar sesión
-            </button>
-          </div>
-        )}
+        {/* El acceso (Iniciar sesión / Crear cuenta) ahora vive fijo en la
+            barra superior, siempre visible. Acá el hero deja paso directo
+            al contenido de la landing. */}
 
         {/* Marca de la agencia que regaló el acceso */}
         {agencyBranding && (
