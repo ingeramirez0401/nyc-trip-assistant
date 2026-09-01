@@ -3,6 +3,14 @@ import sgMail from '@sendgrid/mail';
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
 
+// Correos necesitan una URL absoluta para cualquier imagen -- a diferencia
+// del resto de la app, acá no hay un req del que sacar el host. El ícono
+// real de la app (mismo que manifest/favicon/apple-touch-icon) reemplaza el
+// badge de emoji que tenían antes los correos por defecto (sin marca de
+// agencia), para que todos los correos compartan una sola identidad visual.
+const APP_PUBLIC_URL = (process.env.APP_PUBLIC_URL || '').replace(/\/$/, '');
+const TRIPPULSE_LOGO_URL = `${APP_PUBLIC_URL}/icons/icon-192x192.png`;
+
 if (SENDGRID_API_KEY) {
   sgMail.setApiKey(SENDGRID_API_KEY);
 } else {
@@ -48,7 +56,7 @@ function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt }) {
 
   const headerMark = safeLogo
     ? `<img src="${escapeHtml(safeLogo)}" alt="${escapeHtml(logoAlt || 'Logo')}" style="max-height:44px;max-width:180px;border-radius:8px;background:#ffffff;padding:4px 8px;margin-bottom:12px;" />`
-    : `<div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.18);display:inline-block;line-height:52px;font-size:24px;margin-bottom:12px;">🧭</div>
+    : `<img src="${TRIPPULSE_LOGO_URL}" alt="TripPulse" width="52" height="52" style="width:52px;height:52px;border-radius:14px;display:block;margin:0 auto 12px;" />
         <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>`;
 
   return `<!DOCTYPE html>
