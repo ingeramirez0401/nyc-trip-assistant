@@ -177,7 +177,7 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
     // "enviada" para siempre sin que nadie viera el cupo activo (el reporte
     // real que motivó este cambio). Ahora la cuenta se crea/detecta y la
     // licencia se canjea acá mismo, de una vez: "enviar" YA es "activar".
-    const account = await findOrCreateAccount(email);
+    const account = await findOrCreateAccount(email, { redirectTo: loginUrl });
 
     const result = await redeemLicenseAtomic({
       license,
@@ -194,8 +194,7 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
       await sendTravelerWelcomeEmail({
         to: email,
         agencyName,
-        password: account.password,
-        loginUrl,
+        actionLink: account.actionLink,
         quotaType: license.quota_type,
         quotaAmount: license.quota_amount,
         logoUrl,

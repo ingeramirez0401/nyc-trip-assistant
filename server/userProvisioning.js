@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { supabaseAdmin, SUPABASE_URL } from './supabaseAuth.js';
 
 const SERVICE_ROLE_KEY = process.env.TRIPPULSE_SUPABASE_SERVICE_ROLE_KEY;
@@ -15,14 +14,6 @@ async function findAuthUserByEmail(email) {
   return (data.users || []).find((u) => u.email?.toLowerCase() === email.toLowerCase()) || null;
 }
 
-// 10 bytes = 80 bits de entropía, en alfabeto base64url (sin +, /, = que
-// complican copiar/pegar o seleccionar con doble-click en un cliente de
-// correo). Suficiente para una clave temporal que el usuario cambiará o
-// que queda protegida por "olvidé mi contraseña" de todas formas.
-export function generateTempPassword() {
-  return crypto.randomBytes(10).toString('base64url');
-}
-
 // Punto único para "esta persona necesita una cuenta ya activa". Si el
 // email ya tiene perfil, no toca nada (evita duplicar cuentas o pisar una
 // contraseña que el usuario ya eligió). Si no existe, la crea vía Admin API
@@ -31,7 +22,14 @@ export function generateTempPassword() {
 // trigger trippulse_handle_new_user() crea la fila de perfil como parte de
 // la misma inserción en auth.users, así que al resolver esta promesa el
 // perfil ya existe.
-export async function findOrCreateAccount(email, { fullName } = {}) {
+//
+// Nunca se genera ni se guarda una contraseña acá -- mandar una clave en
+// texto plano por correo es justo el patrón que más dispara filtros de
+// spam (y una peor práctica de seguridad en general). En vez de eso, una
+// cuenta nueva recibe un link tipo "recovery" (mismo mecanismo que "olvidé
+// mi contraseña", que ya cae en la pantalla ResetPasswordScreen existente)
+// para que el usuario elija su propia clave la primera vez que entra.
+export async function findOrCreateAccount(email, { fullName, redirectTo } = {}) {
   const normalizedEmail = email.trim().toLowerCase();
 
   const { data: existingProfile, error: profileError } = await supabaseAdmin
@@ -43,27 +41,24 @@ export async function findOrCreateAccount(email, { fullName } = {}) {
   if (profileError) throw profileError;
 
   if (existingProfile) {
-    return { userId: existingProfile.id, created: false, password: null };
+    return { userId: existingProfile.id, created: false, actionLink: null };
   }
 
-  const password = generateTempPassword();
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: normalizedEmail,
-    password,
     email_confirm: true,
     user_metadata: fullName ? { full_name: fullName } : undefined,
   });
 
+  let userId;
   if (!error) {
-    return { userId: data.user.id, created: true, password };
-  }
-
-  // GoTrue ya tiene un auth.users con este correo pero no hay perfil --
-  // cuenta huérfana (ej. un signup que nunca terminó de sincronizar el
-  // trigger). En vez de tumbar todo el flujo con un 500, se adopta esa
-  // cuenta: se le crea el perfil que le falta, igual que lo haría el
-  // trigger en un signup normal, y se sigue como si ya existiera.
-  if (error.code === 'email_exists' || error.status === 422) {
+    userId = data.user.id;
+  } else if (error.code === 'email_exists' || error.status === 422) {
+    // GoTrue ya tiene un auth.users con este correo pero no hay perfil --
+    // cuenta huérfana (ej. un signup que nunca terminó de sincronizar el
+    // trigger). En vez de tumbar todo el flujo con un 500, se adopta esa
+    // cuenta: se le crea el perfil que le falta, igual que lo haría el
+    // trigger en un signup normal, y se sigue como si ya existiera.
     const existingUser = await findAuthUserByEmail(normalizedEmail);
     if (!existingUser) throw error;
 
@@ -79,10 +74,19 @@ export async function findOrCreateAccount(email, { fullName } = {}) {
       }]);
     if (insertError) throw insertError;
 
-    return { userId: existingUser.id, created: false, password: null };
+    return { userId: existingUser.id, created: false, actionLink: null };
+  } else {
+    throw error;
   }
 
-  throw error;
+  const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    type: 'recovery',
+    email: normalizedEmail,
+    options: redirectTo ? { redirectTo } : undefined,
+  });
+  if (linkError) throw linkError;
+
+  return { userId, created: true, actionLink: linkData.properties.action_link };
 }
 
 // Lectura-solo de "findOrCreateAccount", para dejar que la agencia sepa de
