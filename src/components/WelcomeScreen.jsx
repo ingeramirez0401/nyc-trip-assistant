@@ -430,7 +430,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         </button>
       </div>
 
-      <div className="min-h-dvh flex flex-col items-center justify-center p-6">
+      <div className="min-h-dvh flex flex-col items-center justify-center p-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         
         {/* Header -- el logo/color de la agencia (si el viajero llegó vía
             una licencia) reemplaza el ícono y tiñe el degradé vía las
