@@ -188,6 +188,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                     e.stopPropagation();
                     handleVisitToggle();
                 }}
+                aria-label={isVisited ? 'Marcar como no visitado' : 'Marcar como visitado'}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 shadow-lg border ${isVisited ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
             >
                 <i className={`fas ${isVisited ? 'fa-check' : 'fa-check'} text-lg`}></i>
@@ -222,6 +223,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                 {!readOnly && (
                     <button
                         onClick={() => fileInputRef.current?.click()}
+                        aria-label="Cambiar foto"
                         className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-black/60 transition active:scale-95"
                     >
                         <i className="fas fa-camera"></i>
@@ -229,6 +231,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                 )}
                 <button
                     onClick={onClose}
+                    aria-label="Cerrar"
                     className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-black/60 transition active:scale-95"
                 >
                     <i className="fas fa-times"></i>

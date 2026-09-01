@@ -65,6 +65,7 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
             ) : (
                 <button
                     onClick={onClose}
+                    aria-label="Cerrar"
                     className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/20 transition active:scale-95"
                 >
                     <i className="fas fa-times"></i>

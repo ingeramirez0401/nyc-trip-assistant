@@ -33,35 +33,36 @@ const ResetPasswordScreen = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-900 animate-fade-in">
-      <div className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-900 animate-fade-in">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30 overflow-hidden">
               <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Crea tu nueva contraseña</h2>
-            <p className="text-slate-400 text-sm">Elige una contraseña nueva para tu cuenta</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Crea tu nueva contraseña</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Elige una contraseña nueva para tu cuenta</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nueva contraseña</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Nueva contraseña</label>
               <div className="relative">
-                <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-12 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   required
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors active:scale-90"
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors active:scale-90"
                   tabIndex={-1}
                 >
                   <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
@@ -70,15 +71,15 @@ const ResetPasswordScreen = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Confirmar contraseña</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Confirmar contraseña</label>
               <div className="relative">
-                <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   required
                   minLength={6}
                 />
@@ -86,9 +87,9 @@ const ResetPasswordScreen = () => {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
-                <i className="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
-                <p className="text-sm text-red-300">{error}</p>
+              <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3">
+                <i className="fas fa-exclamation-circle text-red-500 dark:text-red-400 mt-0.5"></i>
+                <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
               </div>
             )}
 

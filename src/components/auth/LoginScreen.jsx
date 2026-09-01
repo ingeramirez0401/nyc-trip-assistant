@@ -142,12 +142,13 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden">
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-2 z-10"
+          aria-label="Cerrar"
+          className="absolute top-4 right-4 text-slate-400 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-2 z-10"
         >
           <i className="fas fa-times text-xl"></i>
         </button>
@@ -164,10 +165,10 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
               )}
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">{headerCopy.title}</h2>
-            <p className="text-slate-400 text-sm">{headerCopy.subtitle}</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{headerCopy.title}</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{headerCopy.subtitle}</p>
             {isAgency && (
-              <span className="inline-block mt-3 text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full uppercase tracking-wider">
+              <span className="inline-block mt-3 text-[10px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-3 py-1 rounded-full uppercase tracking-wider">
                 Acceso para agencias
               </span>
             )}
@@ -179,14 +180,14 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
               de reenviar si nunca llegaba. */}
           {isCheckEmail ? (
             <div className="space-y-5">
-              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center">
-                <p className="text-sm text-slate-200">
+              <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-200">
                   Te enviamos un link de confirmación a
                 </p>
-                <p className="text-white font-bold break-all mt-1">{pendingEmail}</p>
+                <p className="text-slate-900 dark:text-white font-bold break-all mt-1">{pendingEmail}</p>
               </div>
 
-              <div className="flex items-start gap-3 text-slate-400 text-xs">
+              <div className="flex items-start gap-3 text-slate-500 dark:text-slate-400 text-xs">
                 <i className="fas fa-circle-info mt-0.5 shrink-0"></i>
                 <p>
                   Ábrelo para activar tu cuenta. Si no lo ves en unos minutos, revisa la carpeta de
@@ -195,16 +196,16 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
               </div>
 
               {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
-                  <i className="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
-                  <p className="text-sm text-red-300">{error}</p>
+                <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-exclamation-circle text-red-500 dark:text-red-400 mt-0.5"></i>
+                  <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
                 </div>
               )}
 
               {message && (
-                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-start gap-3">
-                  <i className="fas fa-check-circle text-green-400 mt-0.5"></i>
-                  <p className="text-sm text-green-300">{message}</p>
+                <div className="p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-check-circle text-green-500 dark:text-green-400 mt-0.5"></i>
+                  <p className="text-sm text-green-600 dark:text-green-300">{message}</p>
                 </div>
               )}
 
@@ -212,7 +213,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 type="button"
                 onClick={handleResend}
                 disabled={resending || resendCooldown > 0}
-                className="w-full bg-slate-800 border border-white/10 text-white font-bold py-3.5 rounded-xl hover:bg-slate-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-bold py-3.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {resending ? (
                   <>
@@ -233,7 +234,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                 >
                   <i className="fas fa-arrow-left mr-1"></i> Volver a iniciar sesión
                 </button>
@@ -242,15 +243,15 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
           ) : isForgot ? (
             <form onSubmit={handleForgotSubmit} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Correo Electrónico</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Correo Electrónico</label>
                 <div className="relative">
-                  <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="nombre@ejemplo.com"
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     required
                   />
                 </div>
@@ -268,16 +269,16 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
               )}
 
               {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
-                  <i className="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
-                  <p className="text-sm text-red-300">{error}</p>
+                <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-exclamation-circle text-red-500 dark:text-red-400 mt-0.5"></i>
+                  <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
                 </div>
               )}
 
               {message && (
-                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-start gap-3">
-                  <i className="fas fa-check-circle text-green-400 mt-0.5"></i>
-                  <p className="text-sm text-green-300">{message}</p>
+                <div className="p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-check-circle text-green-500 dark:text-green-400 mt-0.5"></i>
+                  <p className="text-sm text-green-600 dark:text-green-300">{message}</p>
                 </div>
               )}
 
@@ -300,7 +301,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                 >
                   <i className="fas fa-arrow-left mr-1"></i> Volver a iniciar sesión
                 </button>
@@ -309,9 +310,9 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
           ) : (
             <>
               {isAgency && !isLogin && (
-                <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3">
-                  <i className="fas fa-circle-info text-blue-400 mt-0.5"></i>
-                  <p className="text-xs text-blue-200">
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3">
+                  <i className="fas fa-circle-info text-blue-500 dark:text-blue-400 mt-0.5"></i>
+                  <p className="text-xs text-blue-700 dark:text-blue-200">
                     Usa el mismo correo con el que aprobamos tu solicitud de agencia — así tu cuenta se activa automáticamente.
                   </p>
                 </div>
@@ -322,15 +323,15 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
 
                 {!isLogin && (
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nombre Completo</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Nombre Completo</label>
                     <div className="relative">
-                      <i className="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                      <i className="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                       <input
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder="Tu nombre"
-                        className="w-full bg-slate-800/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         required
                       />
                     </div>
@@ -338,15 +339,15 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 )}
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Correo Electrónico</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Correo Electrónico</label>
                   <div className="relative">
-                    <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="nombre@ejemplo.com"
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
@@ -354,32 +355,33 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between ml-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contraseña</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contraseña</label>
                     {isLogin && (
                       <button
                         type="button"
                         onClick={() => switchMode('forgot')}
-                        className="text-xs text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                       >
                         ¿Olvidaste tu contraseña?
                       </button>
                     )}
                   </div>
                   <div className="relative">
-                    <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-12 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors active:scale-90"
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors active:scale-90"
                       tabIndex={-1}
                     >
                       <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
@@ -400,16 +402,16 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
 
                 {/* Messages */}
                 {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
-                    <i className="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
-                    <p className="text-sm text-red-300">{error}</p>
+                  <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3">
+                    <i className="fas fa-exclamation-circle text-red-500 dark:text-red-400 mt-0.5"></i>
+                    <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
                   </div>
                 )}
 
                 {message && (
-                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-start gap-3">
-                    <i className="fas fa-check-circle text-green-400 mt-0.5"></i>
-                    <p className="text-sm text-green-300">{message}</p>
+                  <div className="p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl flex items-start gap-3">
+                    <i className="fas fa-check-circle text-green-500 dark:text-green-400 mt-0.5"></i>
+                    <p className="text-sm text-green-600 dark:text-green-300">{message}</p>
                   </div>
                 )}
 
@@ -432,19 +434,19 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
 
               {/* Toggle Login/Register */}
               <div className="mt-6 text-center space-y-2">
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                   {isLogin
                     ? (isAgency ? '¿Tu agencia fue aprobada y no tienes cuenta?' : '¿No tienes una cuenta?')
                     : '¿Ya tienes una cuenta?'}
                   <button
                     onClick={() => switchMode(isLogin ? 'signup' : 'login')}
-                    className="ml-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                    className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                   >
                     {isLogin ? (isAgency ? 'Actívala aquí' : 'Regístrate') : 'Inicia Sesión'}
                   </button>
                 </p>
                 {isAgency && (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
                     ¿Aún no eres partner?{' '}
                     <button
                       type="button"
@@ -452,7 +454,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                         onClose();
                         document.getElementById('agencias')?.scrollIntoView({ behavior: 'smooth' });
                       }}
-                      className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                     >
                       Solicita acceso
                     </button>

@@ -487,8 +487,9 @@ function App() {
           activado en index.html). En dispositivos sin eso, env() resuelve
           a 0 y queda igual que antes. */}
       <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-4 z-[500]">
-        <button 
+        <button
           onClick={() => setIsMenuOpen(true)}
+          aria-label="Abrir menú"
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
         >
           <i className="fas fa-bars text-lg"></i>
@@ -498,6 +499,7 @@ function App() {
       <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] right-4 z-[500]">
         <button
           onClick={toggleTheme}
+          aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
         >
           <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
@@ -537,44 +539,48 @@ function App() {
 
       {/* FLOATING ACTION BUTTONS */}
       <div className="absolute bottom-[170px] right-4 z-[400] flex flex-col gap-3 pointer-events-none">
-        <button 
+        <button
           onClick={() => setIsSearchOpen(true)}
+          aria-label="Agregar lugar al itinerario"
           className="w-12 h-12 rounded-full bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)] flex items-center justify-center hover:bg-blue-500 active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm"
         >
             <i className="fas fa-plus text-lg"></i>
         </button>
-        <button 
+        <button
           onClick={toggleGPS}
+          aria-label={gpsEnabled ? 'GPS activado, tocar para desactivar' : 'GPS desactivado, tocar para activar'}
+          title={gpsEnabled ? "GPS Activado - Click para desactivar" : "GPS Desactivado - Click para activar"}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
-            gpsEnabled 
-              ? 'bg-green-500 text-white hover:bg-green-600 shadow-[0_0_15px_rgba(34,197,94,0.5)]' 
+            gpsEnabled
+              ? 'bg-green-500 text-white hover:bg-green-600 shadow-[0_0_15px_rgba(34,197,94,0.5)]'
               : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
           }`}
-          title={gpsEnabled ? "GPS Activado - Click para desactivar" : "GPS Desactivado - Click para activar"}
         >
             <i className={`fas ${gpsEnabled ? 'fa-satellite-dish' : 'fa-satellite-dish'} text-lg`}></i>
         </button>
-        <button 
+        <button
           onClick={handleCenterOnUser}
           disabled={!gpsEnabled || !userLocation}
+          aria-label={!gpsEnabled ? 'Activa el GPS primero' : 'Ir a mi ubicación'}
+          title={!gpsEnabled ? "Activa el GPS primero" : "Ir a mi ubicación"}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
-            gpsEnabled && userLocation 
-              ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
+            gpsEnabled && userLocation
+              ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
               : 'bg-slate-700 text-slate-400 cursor-not-allowed'
           }`}
-          title={!gpsEnabled ? "Activa el GPS primero" : "Ir a mi ubicación"}
         >
             <i className="fas fa-location-arrow text-lg"></i>
         </button>
-        <button 
+        <button
           onClick={handleCenterOnBase}
           disabled={!baseLocation}
+          aria-label="Ir a ubicación base"
+          title="Ir a ubicación base"
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
             baseLocation
               ? isDarkMode ? 'bg-slate-900/90 text-amber-400 hover:bg-slate-800' : 'bg-white text-amber-500 hover:bg-slate-50'
               : 'bg-slate-700 text-slate-400 cursor-not-allowed'
           }`}
-          title="Ir a ubicación base"
         >
             <i className="fas fa-bed text-lg"></i>
         </button>

@@ -223,7 +223,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
 
               <LocationSearchInput
                 onLocationSelect={handleLocationSelect}
-                placeholder={`Busca tu hotel en ${city}...`}
+                placeholder={`Busca tu hotel en ${city}${country ? `, ${country}` : ''}...`}
                 city={city}
               />
 
