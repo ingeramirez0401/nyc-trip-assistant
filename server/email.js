@@ -25,7 +25,7 @@ const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 function safeAccentColor(value) {
   return typeof value === 'string' && HEX_COLOR_RE.test(value) ? value : null;
 }
-function safeLogoUrl(value) {
+function safeUrl(value) {
   if (typeof value !== 'string') return null;
   try {
     const parsed = new URL(value);
@@ -43,7 +43,7 @@ const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2563eb,#4f46e5)';
 // del degradé azul→índigo por defecto de TripPulse.
 function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt }) {
   const safeColor = safeAccentColor(accentColor);
-  const safeLogo = safeLogoUrl(logoUrl);
+  const safeLogo = safeUrl(logoUrl);
   const headerBg = safeColor || DEFAULT_GRADIENT;
 
   const headerMark = safeLogo
@@ -77,25 +77,21 @@ function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt }) {
 </html>`;
 }
 
+// href sin validar podía terminar interpolado tal cual en el atributo --
+// si algún caller pasaba algo que no fuera un string http(s) bien formado
+// (undefined, una URL rota), el botón se veía igual pero no llevaba a
+// ningún lado. safeUrl() ya hace exactamente esta validación para logos;
+// se reutiliza acá para que un botón roto sea imposible de generar.
 function ctaButton(href, label, accentColor) {
   const safeColor = safeAccentColor(accentColor);
+  const safeHref = safeUrl(href);
+  if (!safeHref) throw new Error(`ctaButton: href inválido: ${href}`);
   return `
     <div style="text-align:center;margin:28px 0 8px;">
-      <a href="${href}" style="background:${safeColor || DEFAULT_GRADIENT};color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+      <a href="${escapeHtml(safeHref)}" style="background:${safeColor || DEFAULT_GRADIENT};color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
         ${label}
       </a>
     </div>
-  `;
-}
-
-function credentialsBox(email, password) {
-  return `
-    <div style="background:#f8fafc;border:1px solid #eef2f7;border-radius:16px;padding:18px 20px;margin:20px 0;">
-      <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Tus datos de acceso</p>
-      <p style="margin:0 0 6px;font-size:14px;color:#0f172a;"><strong>Correo:</strong> ${escapeHtml(email)}</p>
-      <p style="margin:0;font-size:14px;color:#0f172a;"><strong>Contraseña temporal:</strong> <span style="font-family:monospace;letter-spacing:0.5px;background:#eef2ff;padding:2px 6px;border-radius:6px;">${escapeHtml(password)}</span></p>
-    </div>
-    <p style="color:#94a3b8;font-size:11px;margin:0 0 20px;text-align:center;">Por seguridad, te recomendamos cambiarla luego de iniciar sesión.</p>
   `;
 }
 
@@ -166,36 +162,41 @@ export async function sendAgencyRequestEmail({ to, request, approveUrl }) {
 }
 
 // Se dispara al aprobar una solicitud de agencia: la cuenta ya quedó creada
-// y activada del lado del servidor (ver agencyRequestRoutes.js), así que
-// este correo entrega credenciales reales, no un link de activación.
-export async function sendAgencyWelcomeEmail({ to, agencyName, password, loginUrl }) {
+// y activada del lado del servidor (ver agencyRequestRoutes.js). Si es
+// cuenta nueva, actionLink es un link tipo "recovery" para que elija su
+// propia contraseña (nunca se genera ni se envía una clave en texto plano).
+export async function sendAgencyWelcomeEmail({ to, agencyName, actionLink, loginUrl }) {
   if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL) {
     throw new Error('SendGrid no está configurado en el servidor');
   }
 
   const safeAgencyName = escapeHtml(agencyName);
 
-  // Si el contacto ya tenía cuenta en TripPulse (ej. como viajero), no se
-  // genera contraseña nueva -- se reutiliza la que ya tiene, no hay nada
-  // que entregarle salvo el aviso de que ahora es admin de su agencia.
-  const credentialsSection = password
-    ? credentialsBox(to, password)
-    : `<p style="color:#334155;font-size:14px;line-height:1.7;margin:0 0 20px;text-align:center;">
-         Usamos la cuenta que ya tenías en TripPulse (<strong>${escapeHtml(to)}</strong>) --
-         inicia sesión con tu contraseña de siempre.
-       </p>`;
-
-  const bodyHtml = `
-    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;text-align:center;">
-      ¡Bienvenida, <strong>${safeAgencyName}</strong>! Aprobamos tu solicitud y tu cuenta de
-      administrador de agencia ya está lista para usarse.
-    </p>
-    ${credentialsSection}
-    ${ctaButton(loginUrl, '🚀 Iniciar sesión')}
-    <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px;">
-      Desde tu panel puedes generar licencias, enviarlas a tus viajeros y personalizar tu marca (logo y color).
-    </p>
-  `;
+  // Si el contacto ya tenía cuenta en TripPulse (ej. como viajero), no hay
+  // actionLink -- se reutiliza la contraseña que ya tiene, solo se avisa
+  // que ahora es admin de su agencia.
+  const bodyHtml = actionLink
+    ? `
+      <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+        ¡Bienvenida, <strong>${safeAgencyName}</strong>! Aprobamos tu solicitud y tu cuenta de
+        administrador de agencia ya está lista. Solo falta que elijas tu contraseña.
+      </p>
+      ${ctaButton(actionLink, '🔑 Crear mi contraseña')}
+      <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px;">
+        Desde tu panel puedes generar licencias, enviarlas a tus viajeros y personalizar tu marca (logo y color).
+      </p>
+    `
+    : `
+      <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+        ¡Bienvenida, <strong>${safeAgencyName}</strong>! Aprobamos tu solicitud. Usamos la cuenta
+        que ya tenías en TripPulse (<strong>${escapeHtml(to)}</strong>) -- inicia sesión con tu
+        contraseña de siempre.
+      </p>
+      ${ctaButton(loginUrl, '🚀 Iniciar sesión')}
+      <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px;">
+        Desde tu panel puedes generar licencias, enviarlas a tus viajeros y personalizar tu marca (logo y color).
+      </p>
+    `;
 
   await sgMail.send({
     to,
@@ -211,8 +212,8 @@ export async function sendAgencyWelcomeEmail({ to, agencyName, password, loginUr
 
 // Envío de licencia a un email que NO tenía cuenta: se creó de una vez
 // (ver server/licenseRoutes.js) y la licencia ya quedó canjeada -- este
-// correo entrega credenciales, no un link de "canjear código".
-export async function sendTravelerWelcomeEmail({ to, agencyName, password, loginUrl, quotaType, quotaAmount, logoUrl, primaryColor }) {
+// correo entrega un link para crear contraseña, no un código para canjear.
+export async function sendTravelerWelcomeEmail({ to, agencyName, actionLink, quotaType, quotaAmount, logoUrl, primaryColor }) {
   if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL) {
     throw new Error('SendGrid no está configurado en el servidor');
   }
@@ -236,10 +237,10 @@ export async function sendTravelerWelcomeEmail({ to, agencyName, password, login
     <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;text-align:center;">
       <strong>${safeAgencyName}</strong> te regaló acceso a TripPulse, el planificador con IA
       que arma tu itinerario completo en segundos. Ya creamos tu cuenta y activamos tu licencia
-      de <strong>${escapeHtml(String(quotaAmount))} ${quotaLabel}</strong> -- no tienes que hacer nada más.
+      de <strong>${escapeHtml(String(quotaAmount))} ${quotaLabel}</strong> -- solo falta que elijas
+      tu contraseña para empezar.
     </p>
-    ${credentialsBox(to, password)}
-    ${ctaButton(loginUrl, '✨ Iniciar sesión y empezar', primaryColor)}
+    ${ctaButton(actionLink, '🔑 Crear mi contraseña y empezar', primaryColor)}
     <div style="border-top:1px solid #f1f5f9;padding-top:20px;">
       ${featureRows}
     </div>

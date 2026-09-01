@@ -166,6 +166,7 @@ router.post('/agency-requests/by-token/:token/approve', tokenLimiter, async (req
     // entrar.
     const account = await findOrCreateAccount(request.contact_email, {
       fullName: request.contact_name,
+      redirectTo: `${resolvePublicUrl(req)}/`,
     });
 
     const { error: promoteError } = await supabaseAdmin
@@ -184,7 +185,7 @@ router.post('/agency-requests/by-token/:token/approve', tokenLimiter, async (req
       await sendAgencyWelcomeEmail({
         to: request.contact_email,
         agencyName: request.agency_name,
-        password: account.password,
+        actionLink: account.actionLink,
         loginUrl: `${resolvePublicUrl(req)}/`,
       });
     } catch (emailError) {
