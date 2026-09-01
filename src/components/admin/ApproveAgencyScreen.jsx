@@ -61,8 +61,8 @@ const ApproveAgencyScreen = () => {
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6 transition-colors">
       <div className="w-full max-w-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-8">
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <i className="fas fa-route text-2xl text-white"></i>
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30 overflow-hidden">
+            <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Solicitud de agencia</h1>
         </div>

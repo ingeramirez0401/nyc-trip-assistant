@@ -1,8 +1,11 @@
+import { assertOnline } from '../lib/connectivity';
+
 // Endpoints públicos: quien solicita o aprueba no necesariamente tiene una
 // sesión de Supabase (el prospecto no tiene cuenta; el admin entra por un
 // link con token, no logueado). Sin bearer token, a diferencia del resto
 // de los servicios.
 async function callAPI(path, options = {}) {
+  assertOnline('completar esta acción');
   const response = await fetch(`/api${path}`, {
     ...options,
     headers: {

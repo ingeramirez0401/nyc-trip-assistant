@@ -155,8 +155,14 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
         <div className="p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <i className={`fas ${isCheckEmail ? 'fa-envelope-circle-check' : isAgency ? 'fa-building' : 'fa-route'} text-3xl text-white`}></i>
+            <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-blue-500/30 overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600">
+              {isCheckEmail ? (
+                <i className="fas fa-envelope-circle-check text-3xl text-white"></i>
+              ) : isAgency ? (
+                <i className="fas fa-building text-3xl text-white"></i>
+              ) : (
+                <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
+              )}
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">{headerCopy.title}</h2>
             <p className="text-slate-400 text-sm">{headerCopy.subtitle}</p>
@@ -373,7 +379,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors active:scale-90"
                       tabIndex={-1}
                     >
                       <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>

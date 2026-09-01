@@ -15,7 +15,9 @@ import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useAuth } from './hooks/useAuth';
 import { useAppRoute } from './hooks/useAppRoute';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { useToast } from './contexts/ToastContext';
+import { notifyActionError } from './lib/connectivity';
 import { tripService } from './services/tripService';
 import { testConnection } from './lib/supabase';
 
@@ -27,6 +29,7 @@ function App() {
   // está en memoria (ver efecto más abajo).
   const [route, navigate] = useAppRoute();
   const toast = useToast();
+  const isOnline = useOnlineStatus();
 
   // App State Management
   const [currentTrip, setCurrentTrip] = useState(() => {
@@ -185,12 +188,20 @@ function App() {
     await refreshData();
   };
 
-  const handleDeleteStop = (stopId) => {
-    removeStop(activeDayId, stopId);
+  const handleDeleteStop = async (stopId) => {
+    try {
+      await removeStop(activeDayId, stopId);
+    } catch (error) {
+      notifyActionError(toast, error, 'Error al eliminar la parada');
+    }
   };
 
-  const handleUpdateImage = (stopId, imageUrl) => {
-    updateStopImage(stopId, imageUrl);
+  const handleUpdateImage = async (stopId, imageUrl) => {
+    try {
+      await updateStopImage(stopId, imageUrl);
+    } catch (error) {
+      notifyActionError(toast, error, 'Error al actualizar la foto');
+    }
   };
 
 
@@ -237,20 +248,25 @@ function App() {
     }
   };
 
-  const handleAddPlace = (placeData) => {
+  const handleAddPlace = async (placeData) => {
     const newStop = {
       id: `custom-${Date.now()}`,
       ...placeData,
       tip: placeData.tip || "Agregado por ti",
       time: placeData.time || "N/A"
     };
-    addStop(activeDayId, newStop);
-    
+    try {
+      await addStop(activeDayId, newStop);
+    } catch (error) {
+      notifyActionError(toast, error, 'Error al agregar el lugar');
+      return;
+    }
+
     // Reordenar automáticamente por distancia
     setTimeout(() => {
-      reorderStopsByDistance(activeDayId);
+      reorderStopsByDistance(activeDayId).catch((error) => notifyActionError(toast, error, 'Error al reordenar las paradas'));
     }, 100);
-    
+
     setIsSearchOpen(false);
     setTimeout(() => setSelectedStop(newStop), 500);
   };
@@ -260,15 +276,20 @@ function App() {
     setIsEditOpen(true);
   };
 
-  const handleSaveEdit = (updatedPlace) => {
-    updateStop(activeDayId, updatedPlace);
+  const handleSaveEdit = async (updatedPlace) => {
+    try {
+      await updateStop(activeDayId, updatedPlace);
+    } catch (error) {
+      notifyActionError(toast, error, 'Error al guardar los cambios');
+      return;
+    }
     setIsEditOpen(false);
     setPlaceToEdit(null);
     setSelectedStop(updatedPlace);
-    
+
     // Reordenar después de editar
     setTimeout(() => {
-      reorderStopsByDistance(activeDayId);
+      reorderStopsByDistance(activeDayId).catch((error) => notifyActionError(toast, error, 'Error al reordenar las paradas'));
     }, 100);
   };
 
@@ -370,18 +391,44 @@ function App() {
   return (
     <div className={`h-dvh w-screen overflow-hidden relative ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
 
-      {/* MAPA */}
-      <MapComponent 
-        baseLocation={baseLocation}
-        activeDay={activeDay}
-        selectedStop={selectedStop}
-        onStopClick={handleStopClick}
-        userLocation={userLocation}
-        visited={visited}
-        isDarkMode={isDarkMode}
-        centerOnUser={centerOnUser}
-        gpsEnabled={gpsEnabled}
-      />
+      {/* MAPA -- Google Maps no puede cachearse para uso offline (lo
+          prohíben sus Términos de Servicio, no es una limitación técnica
+          nuestra). Sin señal, cede el lugar al itinerario del día en lista
+          en vez de intentar cargar tiles que nunca van a llegar. */}
+      {isOnline ? (
+        <MapComponent
+          baseLocation={baseLocation}
+          activeDay={activeDay}
+          selectedStop={selectedStop}
+          onStopClick={handleStopClick}
+          userLocation={userLocation}
+          visited={visited}
+          isDarkMode={isDarkMode}
+          centerOnUser={centerOnUser}
+          gpsEnabled={gpsEnabled}
+        />
+      ) : activeDay ? (
+        <ItineraryList
+          activeDay={activeDay}
+          stops={activeDay.stops}
+          visited={visited}
+          onStopClick={handleStopClick}
+          onToggleVisited={toggleVisited}
+          onDelete={handleDeleteStop}
+          onEdit={handleEditPlace}
+          offlineNotice
+        />
+      ) : (
+        <div className="h-full w-full flex items-center justify-center bg-slate-900 text-center p-6">
+          <div className="max-w-sm text-slate-300">
+            <i className="fas fa-triangle-exclamation text-4xl mb-4 opacity-50"></i>
+            <p className="font-bold mb-1">Sin conexión</p>
+            <p className="text-sm text-slate-400">
+              Este viaje todavía no tiene datos guardados en este dispositivo.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* HEADER CONTROLS -- top-[calc(1.5rem+env(...))]: el top-6 (1.5rem) de
           antes + lo que agregue el notch/Dynamic Island en iPhone si esto

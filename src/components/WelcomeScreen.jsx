@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { profileService } from '../services/profileService';
 import { licenseService } from '../services/licenseService';
+import { notifyActionError } from '../lib/connectivity';
 
 const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel }) => {
   const { user, profile, licenses, refreshLicenses, agencyBranding } = useAuth();
@@ -259,7 +260,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         hint: error.hint,
         code: error.code,
       });
-      toast.error(`Error al crear el viaje: ${error.message}`);
+      notifyActionError(toast, error, 'Error al crear el viaje');
     }
   };
 
@@ -347,6 +348,15 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
     } catch (error) {
       console.error('❌ Error generando itinerario:', error);
+
+      // Sin señal, ofrecer "crearlo manual" es una salida falsa -- esa
+      // ruta también necesita red (tripService.create) y fallaría por lo
+      // mismo. Se corta acá con el aviso claro en vez del diálogo de
+      // fallback que solo iba a repetir el problema.
+      if (error.isOfflineError) {
+        toast.warning(error.message);
+        return;
+      }
 
       // Fallback manual
       if (await toast.confirm('Hubo un problema al generar el itinerario con IA. ¿Deseas crear el viaje manualmente y configurarlo tú mismo?')) {
@@ -465,7 +475,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
             {agencyBranding?.logo_url ? (
               <img src={agencyBranding.logo_url} alt={agencyBranding.name} className="w-full h-full object-cover" />
             ) : (
-              <i className="fas fa-route text-2xl md:text-4xl text-white"></i>
+              <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
             )}
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] dark:from-white dark:via-blue-100 dark:to-blue-200 mb-2 md:mb-4 tracking-tight drop-shadow-lg">TripPulse</h1>

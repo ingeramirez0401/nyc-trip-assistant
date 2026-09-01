@@ -39,8 +39,12 @@ const OnboardingTour = ({ onComplete }) => {
         </button>
 
         <div className="p-8 pt-14 text-center">
-          <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <i className={`fas ${slide.icon} text-4xl text-white`}></i>
+          <div className="w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-blue-500/30 overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600">
+            {step === 0 ? (
+              <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
+            ) : (
+              <i className={`fas ${slide.icon} text-4xl text-white`}></i>
+            )}
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">{slide.title}</h2>
           <p className="text-slate-400 text-sm leading-relaxed mb-8 min-h-[60px]">{slide.text}</p>

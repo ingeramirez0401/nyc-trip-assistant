@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { assertOnline } from '../lib/connectivity';
 
 export const profileService = {
   // Get profile by ID
@@ -15,6 +16,7 @@ export const profileService = {
 
   // Update profile data
   async updateProfile(userId, updates) {
+    assertOnline('guardar cambios en tu perfil');
     const { data, error } = await supabase
       .from('trippulse_profiles')
       .update(updates)

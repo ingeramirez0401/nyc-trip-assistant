@@ -165,7 +165,10 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={{ show, success, error, warning, info, confirm }}>
       {children}
       {createPortal(
-        <div className="fixed top-4 right-4 z-[9999] flex flex-col items-end pointer-events-none w-full max-w-sm px-4 md:px-0">
+        <div
+          className="fixed right-4 z-[9999] flex flex-col items-end pointer-events-none w-full max-w-sm px-4 md:px-0"
+          style={{ top: 'calc(1rem + env(safe-area-inset-top))' }}
+        >
           {toasts.map((toast) => (
             <ToastItem
               key={toast.id}

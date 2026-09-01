@@ -1,10 +1,12 @@
 import { supabase } from '../lib/supabase';
+import { assertOnline } from '../lib/connectivity';
 
 // Las llamadas a OpenAI viven en el backend (server/index.js). La API key
 // nunca se expone al navegador; aquí solo se llama al endpoint propio,
 // adjuntando el token de sesión de Supabase para que el servidor pueda
 // verificar que quien pide la generación es un usuario autenticado.
 async function callAI(path, body) {
+  assertOnline('generar un itinerario con IA');
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
