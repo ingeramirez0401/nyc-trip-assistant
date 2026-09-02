@@ -1,0 +1,87 @@
+{
+  "needsConnectionFor": "Necesitas conexión para {{action}}.",
+  "actions": {
+    "signUp": "registrarte",
+    "login": "iniciar sesión",
+    "loginWithGoogle": "iniciar sesión con Google",
+    "resetPassword": "recuperar tu contraseña",
+    "resendConfirmation": "reenviar el correo de confirmación",
+    "updatePassword": "actualizar tu contraseña",
+    "generateAiItinerary": "generar un itinerario con IA",
+    "completeAction": "completar esta acción",
+    "useLicenseService": "usar el servicio de licencias",
+    "useLicense": "usar tu licencia",
+    "addDay": "agregar un día al itinerario",
+    "createDays": "crear los días del itinerario",
+    "saveDayChanges": "guardar cambios en el día",
+    "deleteDay": "eliminar el día",
+    "saveProfileChanges": "guardar cambios en tu perfil",
+    "searchPlaces": "buscar lugares",
+    "createTrip": "crear un viaje nuevo",
+    "saveTripChanges": "guardar cambios en el viaje",
+    "deleteTrip": "eliminar el viaje",
+    "addStop": "agregar una parada",
+    "saveStopChanges": "guardar cambios en la parada",
+    "updatePhoto": "actualizar la foto",
+    "markStopVisited": "marcar esta parada como visitada",
+    "deleteStop": "eliminar la parada",
+    "reorderStops": "reordenar las paradas",
+    "uploadPhoto": "subir una foto"
+  },
+  "offlineBanner": "Sin conexión — mostrando lo que ya tienes guardado",
+  "pwaUpdate": {
+    "offlineReady": "TripPulse ya puede abrir sin conexión.",
+    "newVersion": "Hay una versión nueva de TripPulse",
+    "update": "Actualizar",
+    "closeAria": "Cerrar aviso de actualización"
+  },
+  "locationHelp": {
+    "title": "Ubicación bloqueada",
+    "subtitle": "Así la activas de nuevo",
+    "retrying": "Probando...",
+    "retry": "Ya lo arreglé, reintentar",
+    "close": "Cerrar",
+    "steps": {
+      "ios": [
+        "Abre la app Ajustes de tu iPhone",
+        "Privacidad y seguridad → Localización → Servicios de Localización → actívalo si está apagado",
+        "En esa misma pantalla, baja hasta \"Safari en sitios web\" y ponlo en \"Mientras se usa la app\"",
+        "Si ya estaba activado: con esta página abierta en Safari, toca el ícono \"aA\" junto a la barra de direcciones → Configuración de sitio web → Ubicación → Permitir"
+      ],
+      "android": [
+        "Toca el ícono de candado o \"i\" junto a la barra de direcciones de Chrome",
+        "Toca \"Permisos\" → Ubicación → Permitir",
+        "Si no aparece la opción: Ajustes del sistema → Apps → Chrome → Permisos → Ubicación → Permitir"
+      ],
+      "desktop": [
+        "Haz clic en el ícono de candado o de información junto a la barra de direcciones",
+        "Busca \"Ubicación\" y cámbiala a \"Permitir\"",
+        "Recarga la página"
+      ]
+    }
+  },
+  "onboarding": {
+    "skip": "Omitir",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "finish": "¡Empezar a planear!",
+    "slides": [
+      {
+        "title": "¡Bienvenido a TripPulse! 🎒",
+        "text": "Tu compañero de viaje con inteligencia artificial. Te mostramos en unos segundos con qué te vas a encontrar."
+      },
+      {
+        "title": "Arma tu itinerario",
+        "text": "Crea tus viajes, organiza cada día y guarda tus paradas con mapa y rutas incluidas."
+      },
+      {
+        "title": "Genera con IA",
+        "text": "Cuéntale tu destino, tus días y tus intereses — la IA arma el plan completo por ti en segundos."
+      },
+      {
+        "title": "Guarda cada momento",
+        "text": "Marca lugares como visitados y agrega fotos y notas a cada parada de tu viaje."
+      }
+    ]
+  }
+}

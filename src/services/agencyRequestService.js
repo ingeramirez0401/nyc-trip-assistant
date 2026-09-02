@@ -5,7 +5,7 @@ import { assertOnline } from '../lib/connectivity';
 // link con token, no logueado). Sin bearer token, a diferencia del resto
 // de los servicios.
 async function callAPI(path, options = {}) {
-  assertOnline('completar esta acción');
+  assertOnline('completeAction');
   const response = await fetch(`/api${path}`, {
     ...options,
     headers: {

@@ -1,0 +1,51 @@
+{
+  "actions": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "retry": "Reintentar",
+    "delete": "Eliminar",
+    "edit": "Editar"
+  },
+  "confirmDialog": {
+    "title": "Confirmar acción"
+  },
+  "errors": {
+    "generic": "Ha ocurrido un error"
+  },
+  "password": {
+    "show": "Mostrar contraseña",
+    "hide": "Ocultar contraseña"
+  },
+  "theme": {
+    "toggleToLight": "Cambiar a modo claro",
+    "toggleToDark": "Cambiar a modo oscuro"
+  },
+  "license": {
+    "quotaUnit_trips": "viajes",
+    "quotaUnit_ai": "gen. IA"
+  },
+  "category": {
+    "icono": "Icono",
+    "cultura": "Cultura",
+    "relax": "Relax",
+    "vista": "Vista",
+    "experiencia": "Experiencia",
+    "naturaleza": "Naturaleza",
+    "arte": "Arte",
+    "museo": "Museo",
+    "paseo": "Paseo",
+    "moda": "Moda",
+    "memoria": "Memoria",
+    "foto": "Foto",
+    "deporte": "Deporte",
+    "restaurante": "Restaurante",
+    "compras": "Compras",
+    "monumento": "Monumento",
+    "historia": "Historia",
+    "entretenimiento": "Entretenimiento",
+    "interes": "Interés"
+  }
+}

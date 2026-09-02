@@ -1,0 +1,51 @@
+{
+  "actions": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "retry": "Retry",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "confirmDialog": {
+    "title": "Confirm action"
+  },
+  "errors": {
+    "generic": "An error occurred"
+  },
+  "password": {
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "theme": {
+    "toggleToLight": "Switch to light mode",
+    "toggleToDark": "Switch to dark mode"
+  },
+  "license": {
+    "quotaUnit_trips": "trips",
+    "quotaUnit_ai": "AI gen."
+  },
+  "category": {
+    "icono": "Icon",
+    "cultura": "Culture",
+    "relax": "Relax",
+    "vista": "View",
+    "experiencia": "Experience",
+    "naturaleza": "Nature",
+    "arte": "Art",
+    "museo": "Museum",
+    "paseo": "Walk",
+    "moda": "Fashion",
+    "memoria": "Memorial",
+    "foto": "Photo",
+    "deporte": "Sports",
+    "restaurante": "Restaurant",
+    "compras": "Shopping",
+    "monumento": "Monument",
+    "historia": "History",
+    "entretenimiento": "Entertainment",
+    "interes": "Interest"
+  }
+}

@@ -1,32 +1,17 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const SLIDES = [
-  {
-    icon: 'fa-route',
-    title: '¡Bienvenido a TripPulse! 🎒',
-    text: 'Tu compañero de viaje con inteligencia artificial. Te mostramos en unos segundos con qué te vas a encontrar.',
-  },
-  {
-    icon: 'fa-map-location-dot',
-    title: 'Arma tu itinerario',
-    text: 'Crea tus viajes, organiza cada día y guarda tus paradas con mapa y rutas incluidas.',
-  },
-  {
-    icon: 'fa-wand-magic-sparkles',
-    title: 'Genera con IA',
-    text: 'Cuéntale tu destino, tus días y tus intereses — la IA arma el plan completo por ti en segundos.',
-  },
-  {
-    icon: 'fa-camera-retro',
-    title: 'Guarda cada momento',
-    text: 'Marca lugares como visitados y agrega fotos y notas a cada parada de tu viaje.',
-  },
-];
+// Los íconos son puramente visuales (clase FontAwesome) -- se quedan
+// fuera de las traducciones; el texto de cada slide viene de
+// connectivity.json#onboarding.slides (mismo orden, mismo índice).
+const SLIDE_ICONS = ['fa-route', 'fa-map-location-dot', 'fa-wand-magic-sparkles', 'fa-camera-retro'];
 
 const OnboardingTour = ({ onComplete }) => {
+  const { t } = useTranslation('connectivity');
+  const slides = t('connectivity:onboarding.slides', { returnObjects: true });
   const [step, setStep] = useState(0);
-  const isLast = step === SLIDES.length - 1;
-  const slide = SLIDES[step];
+  const isLast = step === slides.length - 1;
+  const slide = { ...slides[step], icon: SLIDE_ICONS[step] };
 
   return (
     <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
@@ -35,7 +20,7 @@ const OnboardingTour = ({ onComplete }) => {
           onClick={onComplete}
           className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors text-sm font-semibold z-10"
         >
-          Omitir
+          {t('connectivity:onboarding.skip')}
         </button>
 
         <div className="p-8 pt-14 text-center">
@@ -50,7 +35,7 @@ const OnboardingTour = ({ onComplete }) => {
           <p className="text-slate-400 text-sm leading-relaxed mb-8 min-h-[60px]">{slide.text}</p>
 
           <div className="flex items-center justify-center gap-2 mb-8">
-            {SLIDES.map((_, i) => (
+            {slides.map((_, i) => (
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${i === step ? 'w-6 bg-blue-500' : 'w-1.5 bg-white/20'}`}
@@ -64,14 +49,14 @@ const OnboardingTour = ({ onComplete }) => {
                 onClick={() => setStep((s) => s - 1)}
                 className="flex-1 bg-white/5 border border-white/10 text-slate-300 py-3 rounded-xl font-bold hover:bg-white/10 transition"
               >
-                Atrás
+                {t('connectivity:onboarding.back')}
               </button>
             )}
             <button
               onClick={() => (isLast ? onComplete() : setStep((s) => s + 1))}
               className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 active:scale-[0.98] transition-all"
             >
-              {isLast ? '¡Empezar a planear!' : 'Siguiente'}
+              {isLast ? t('connectivity:onboarding.finish') : t('connectivity:onboarding.next')}
             </button>
           </div>
         </div>

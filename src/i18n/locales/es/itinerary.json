@@ -1,0 +1,43 @@
+{
+  "dayLabel": "Día {{number}}",
+  "offlineBadge": "Mapa sin señal",
+  "emptyState": "No hay paradas para este día aún.",
+  "markVisited": "Marcar",
+  "visited": "Visitado",
+  "confirmDeleteStop": "¿Eliminar esta parada del itinerario?",
+  "endOfDay": "Fin del día",
+  "openFullList": "Ver itinerario completo del día",
+  "visitedCount_one": "{{done}}/{{total}} visitado",
+  "visitedCount_other": "{{done}}/{{total}} visitados",
+  "mapNotConfigured": {
+    "title": "Mapa no configurado",
+    "detail": "Faltan VITE_GOOGLE_MAPS_API_KEY y/o VITE_GOOGLE_MAPS_MAP_ID en el entorno."
+  },
+  "app": {
+    "openMenuAria": "Abrir menú",
+    "addPlaceAria": "Agregar lugar al itinerario",
+    "gpsOnAria": "GPS activado, tocar para desactivar",
+    "gpsOffAria": "GPS desactivado, tocar para activar",
+    "gpsOnTitle": "GPS Activado - Click para desactivar",
+    "gpsOffTitle": "GPS Desactivado - Click para activar",
+    "enableGpsFirst": "Activa el GPS primero",
+    "goToMyLocation": "Ir a mi ubicación",
+    "goToBaseLocation": "Ir a ubicación base",
+    "loadingTrip": "Cargando viaje...",
+    "loadingItinerary": "Cargando itinerario...",
+    "connectionError": "Error de Conexión",
+    "offlineTitle": "Sin conexión",
+    "offlineNoLocalData": "Este viaje todavía no tiene datos guardados en este dispositivo.",
+    "tripNotFound": "No se encontró ese viaje o ya no tienes acceso a él.",
+    "hotelTip": "Tu punto base durante este viaje.",
+    "defaultStopTip": "Agregado por ti",
+    "defaultStopTime": "N/A",
+    "errors": {
+      "deleteStop": "Error al eliminar la parada",
+      "updatePhoto": "Error al actualizar la foto",
+      "addPlace": "Error al agregar el lugar",
+      "reorderStops": "Error al reordenar las paradas",
+      "saveChanges": "Error al guardar los cambios"
+    }
+  }
+}

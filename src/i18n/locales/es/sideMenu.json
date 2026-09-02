@@ -1,0 +1,32 @@
+{
+  "confirmSignOut": "¿Estás seguro de que quieres cerrar sesión?",
+  "defaultUserName": "Usuario",
+  "vipBadge": "VIP",
+  "agencyBadge": "AGENCIA",
+  "license": {
+    "expiresOn": "Vence el {{date}}"
+  },
+  "guestBrand": {
+    "tagline": "Tu Ritmo, Tu Viaje"
+  },
+  "menu": {
+    "loginLabel": "Iniciar Sesión",
+    "loginHint": "Guarda tus viajes",
+    "navigationSection": "Navegación",
+    "itineraryLabel": "Itinerario del Día",
+    "itineraryHint": "Ver y gestionar paradas",
+    "confirmExitTrip": "¿Salir de este viaje y volver al selector?",
+    "switchTripLabel": "Cambiar de Viaje",
+    "switchTripHint": "Volver al selector",
+    "agencyPanelLabel": "Panel de Agencia",
+    "agencyPanelHint": "Generar y gestionar licencias",
+    "settingsSection": "Configuración",
+    "darkModeOn": "Modo Claro",
+    "darkModeOff": "Modo Oscuro",
+    "themeHint": "Cambiar apariencia del mapa",
+    "languageLabel": "Idioma",
+    "signOut": "Cerrar Sesión"
+  },
+  "footerBefore": "Hecho con",
+  "footerAfter": "para viajeros"
+}

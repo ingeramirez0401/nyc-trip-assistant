@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { placesService } from '../services/placesService';
 
-const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicación...", city }) => {
+const LocationSearchInput = ({ onLocationSelect, placeholder, city }) => {
+  const { t } = useTranslation('placeSearch');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -52,7 +54,7 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
     } catch (error) {
       console.error('Error searching location:', error);
       setResults([]);
-      setSearchError(error.message || 'Error en la búsqueda');
+      setSearchError(error.message || t('placeSearch:errors.search'));
       setShowResults(true);
     } finally {
       setIsSearching(false);
@@ -80,7 +82,7 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
       });
     } catch (error) {
       console.error('Error getting place details:', error);
-      setSearchError('No se pudo obtener el detalle de ese lugar. Intenta de nuevo.');
+      setSearchError(t('placeSearch:errors.details'));
     }
   };
 
@@ -92,7 +94,7 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setShowResults(true)}
-          placeholder={placeholder}
+          placeholder={placeholder || t('placeSearch:defaultPlaceholder')}
           className="w-full px-4 py-3 pl-11 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
         />
         <i className={`fas ${isSearching ? 'fa-spinner fa-spin' : 'fa-search'} absolute left-4 top-1/2 -translate-y-1/2 text-slate-400`}></i>
@@ -134,7 +136,7 @@ const LocationSearchInput = ({ onLocationSelect, placeholder = "Buscar ubicació
         <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-4 text-center">
           <i className={`fas ${searchError ? 'fa-triangle-exclamation' : 'fa-search'} text-slate-400 dark:text-slate-500 text-2xl mb-2`}></i>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
-            {searchError || 'No se encontraron resultados'}
+            {searchError || t('placeSearch:noResultsFound')}
           </p>
         </div>
       )}

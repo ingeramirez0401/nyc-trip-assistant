@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../contexts/ToastContext';
 
 const ResetPasswordScreen = () => {
+  const { t } = useTranslation(['auth', 'common']);
   const { updatePassword } = useAuth();
   const toast = useToast();
   const [password, setPassword] = useState('');
@@ -16,7 +18,7 @@ const ResetPasswordScreen = () => {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError(t('auth:resetPassword.mismatch'));
       return;
     }
 
@@ -24,9 +26,9 @@ const ResetPasswordScreen = () => {
     try {
       const { error } = await updatePassword(password);
       if (error) throw error;
-      toast.success('Contraseña actualizada. Ya puedes seguir usando tu cuenta.');
+      toast.success(t('auth:resetPassword.success'));
     } catch (err) {
-      setError(err.message || 'Ha ocurrido un error');
+      setError(err.message || t('common:errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -40,13 +42,13 @@ const ResetPasswordScreen = () => {
             <div className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30 overflow-hidden">
               <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Crea tu nueva contraseña</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Elige una contraseña nueva para tu cuenta</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('auth:resetPassword.title')}</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{t('auth:resetPassword.subtitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Nueva contraseña</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('auth:resetPassword.newPasswordLabel')}</label>
               <div className="relative">
                 <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                 <input
@@ -61,7 +63,7 @@ const ResetPasswordScreen = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={showPassword ? t('common:password.hide') : t('common:password.show')}
                   className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors active:scale-90"
                   tabIndex={-1}
                 >
@@ -71,7 +73,7 @@ const ResetPasswordScreen = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Confirmar contraseña</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('auth:resetPassword.confirmPasswordLabel')}</label>
               <div className="relative">
                 <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                 <input
@@ -101,10 +103,10 @@ const ResetPasswordScreen = () => {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <i className="fas fa-circle-notch fa-spin"></i>
-                  Guardando...
+                  {t('auth:resetPassword.saving')}
                 </span>
               ) : (
-                'Guardar nueva contraseña'
+                t('auth:resetPassword.submit')
               )}
             </button>
           </form>

@@ -1,0 +1,30 @@
+{
+  "confirmDelete": "Are you sure you want to remove \"{{title}}\" from the itinerary?",
+  "visitedBadge": "Visited",
+  "markVisited": "Mark as Visited",
+  "completed": "Completed",
+  "markVisitedAria": "Mark as visited",
+  "markUnvisitedAria": "Mark as not visited",
+  "changePhoto": "Change photo",
+  "directions": {
+    "walking": "Walk",
+    "walkingTitle": "Walking directions",
+    "driving": "Drive",
+    "drivingTitle": "Driving directions"
+  },
+  "tip": {
+    "label": "Traveler Tip",
+    "default": "Enjoy the moment and take lots of photos."
+  },
+  "suggestedTime": {
+    "label": "Suggested Time",
+    "default": "At your own pace"
+  },
+  "hoursLabel": "Hours",
+  "websiteLabel": "Website",
+  "management": {
+    "title": "Manage",
+    "edit": "Edit Details",
+    "delete": "Delete"
+  }
+}

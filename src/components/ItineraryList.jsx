@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
-import { getCategoryIcon } from '../data/categories';
+import { getCategoryIcon, getCategoryById, getCategoryLabel } from '../data/categories';
 import { useHybridPlaceImage } from '../hooks/useHybridPlaceImage';
 
 // Miniatura de cada parada: si hay una foto real (de Google Places, subida
@@ -43,6 +44,7 @@ function StopThumbnail({ stop }) {
 // "cerrar" hacia un mapa que tampoco va a cargar, así que el botón de
 // cerrar se cambia por un aviso fijo del motivo.
 const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onToggleVisited, onDelete, onEdit, offlineNotice = false }) => {
+  const { t } = useTranslation(['itinerary', 'common']);
   const toast = useToast();
   return (
     <div className="fixed inset-0 z-[1500] bg-slate-50 dark:bg-slate-900 flex flex-col animate-fade-in transition-colors duration-300">
@@ -54,18 +56,18 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
             frecuentemente lo primero que se ve y el notch se lo comía. */}
         <div className={`px-6 border-b border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between pb-5 ${offlineNotice ? 'pt-[calc(3.5rem+env(safe-area-inset-top))]' : 'pt-[calc(1.25rem+env(safe-area-inset-top))]'}`}>
             <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">Día {activeDay.dayNumber}</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">{t('itinerary:dayLabel', { number: activeDay.dayNumber })}</h2>
                 <p className="text-sm text-blue-500 dark:text-blue-400 font-medium">{activeDay.title}</p>
             </div>
             {offlineNotice ? (
                 <span className="text-xs font-bold px-3 py-2 rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center gap-1.5 shrink-0">
                     <i className="fas fa-triangle-exclamation"></i>
-                    <span className="hidden sm:inline">Mapa sin señal</span>
+                    <span className="hidden sm:inline">{t('itinerary:offlineBadge')}</span>
                 </span>
             ) : (
                 <button
                     onClick={onClose}
-                    aria-label="Cerrar"
+                    aria-label={t('common:actions.close')}
                     className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/20 transition active:scale-95"
                 >
                     <i className="fas fa-times"></i>
@@ -78,7 +80,7 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
             {stops.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-4 opacity-50">
                     <i className="fas fa-map-marked-alt text-5xl"></i>
-                    <p>No hay paradas para este día aún.</p>
+                    <p>{t('itinerary:emptyState')}</p>
                 </div>
             ) : (
                 <div className="space-y-3 relative">
@@ -119,7 +121,7 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5">
-                                                    {stop.cat}
+                                                    {getCategoryLabel(t, getCategoryById(stop.cat))}
                                                 </span>
                                                 {stop.time && (
                                                     <span className="text-[10px] text-slate-400 dark:text-slate-500">
@@ -140,7 +142,7 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
                                                     }`}
                                                 >
                                                     <i className={`fas ${isVisited ? 'fa-check-circle' : 'fa-circle'}`}></i>
-                                                    {isVisited ? 'Visitado' : 'Marcar'}
+                                                    {isVisited ? t('itinerary:visited') : t('itinerary:markVisited')}
                                                 </button>
                                                 
                                                 <button 
@@ -163,7 +165,7 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
                                                 </button>
                                                 <button 
                                                     onClick={async () => {
-                                                        if(await toast.confirm('¿Eliminar esta parada del itinerario?')) onDelete(stop.id);
+                                                        if(await toast.confirm(t('itinerary:confirmDeleteStop'))) onDelete(stop.id);
                                                     }}
                                                     className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 flex items-center justify-center hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/10"
                                                 >
@@ -180,7 +182,7 @@ const ItineraryList = ({ activeDay, stops, visited, onClose, onStopClick, onTogg
                     {/* End Node */}
                     <div className="flex flex-col items-center pt-1 opacity-50 pb-8">
                         <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700"></div>
-                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-600 mt-2 uppercase tracking-widest">Fin del día</div>
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-600 mt-2 uppercase tracking-widest">{t('itinerary:endOfDay')}</div>
                     </div>
                 </div>
             )}

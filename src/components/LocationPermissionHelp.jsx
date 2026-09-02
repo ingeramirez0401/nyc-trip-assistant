@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Detección de plataforma solo para elegir qué instrucciones mostrar --
 // nunca para gatear funcionalidad, así que el riesgo de un user-agent raro
@@ -13,38 +14,21 @@ function detectPlatform() {
   return 'desktop';
 }
 
-const INSTRUCTIONS = {
-  ios: {
-    icon: 'fa-mobile-screen',
-    steps: [
-      'Abre la app Ajustes de tu iPhone',
-      'Privacidad y seguridad → Localización → Servicios de Localización → actívalo si está apagado',
-      'En esa misma pantalla, baja hasta "Safari en sitios web" y ponlo en "Mientras se usa la app"',
-      'Si ya estaba activado: con esta página abierta en Safari, toca el ícono "aA" junto a la barra de direcciones → Configuración de sitio web → Ubicación → Permitir',
-    ],
-  },
-  android: {
-    icon: 'fa-mobile-screen-button',
-    steps: [
-      'Toca el ícono de candado o "i" junto a la barra de direcciones de Chrome',
-      'Toca "Permisos" → Ubicación → Permitir',
-      'Si no aparece la opción: Ajustes del sistema → Apps → Chrome → Permisos → Ubicación → Permitir',
-    ],
-  },
-  desktop: {
-    icon: 'fa-desktop',
-    steps: [
-      'Haz clic en el ícono de candado o de información junto a la barra de direcciones',
-      'Busca "Ubicación" y cámbiala a "Permitir"',
-      'Recarga la página',
-    ],
-  },
+// El ícono por plataforma es puramente visual (nombre de clase FontAwesome,
+// no texto) -- se queda fuera de las traducciones, solo los pasos vienen
+// de connectivity.json#locationHelp.steps.<platform>.
+const PLATFORM_ICON = {
+  ios: 'fa-mobile-screen',
+  android: 'fa-mobile-screen-button',
+  desktop: 'fa-desktop',
 };
 
 const LocationPermissionHelp = ({ onRetry, onClose }) => {
+  const { t } = useTranslation('connectivity');
   const [platform] = useState(detectPlatform);
   const [retrying, setRetrying] = useState(false);
-  const copy = INSTRUCTIONS[platform];
+  const icon = PLATFORM_ICON[platform];
+  const steps = t(`connectivity:locationHelp.steps.${platform}`, { returnObjects: true });
 
   const handleRetry = async () => {
     setRetrying(true);
@@ -59,15 +43,15 @@ const LocationPermissionHelp = ({ onRetry, onClose }) => {
       <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-fade-in-down">
         <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-6 text-center">
           <div className="w-14 h-14 rounded-2xl bg-white/15 mx-auto flex items-center justify-center mb-3">
-            <i className={`fas ${copy.icon} text-2xl text-white`}></i>
+            <i className={`fas ${icon} text-2xl text-white`}></i>
           </div>
-          <h2 className="text-white font-bold text-lg">Ubicación bloqueada</h2>
-          <p className="text-blue-100 text-sm mt-1">Así la activas de nuevo</p>
+          <h2 className="text-white font-bold text-lg">{t('connectivity:locationHelp.title')}</h2>
+          <p className="text-blue-100 text-sm mt-1">{t('connectivity:locationHelp.subtitle')}</p>
         </div>
 
         <div className="p-6">
           <ol className="space-y-3 mb-6">
-            {copy.steps.map((step, i) => (
+            {steps.map((step, i) => (
               <li key={i} className="flex gap-3">
                 <span className="shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">
                   {i + 1}
@@ -85,12 +69,12 @@ const LocationPermissionHelp = ({ onRetry, onClose }) => {
             {retrying ? (
               <>
                 <i className="fas fa-circle-notch fa-spin"></i>
-                Probando...
+                {t('connectivity:locationHelp.retrying')}
               </>
             ) : (
               <>
                 <i className="fas fa-rotate-right"></i>
-                Ya lo arreglé, reintentar
+                {t('connectivity:locationHelp.retry')}
               </>
             )}
           </button>
@@ -98,7 +82,7 @@ const LocationPermissionHelp = ({ onRetry, onClose }) => {
             onClick={onClose}
             className="w-full text-slate-500 dark:text-slate-400 py-3 text-sm font-medium mt-1 hover:text-slate-700 dark:hover:text-slate-200 transition"
           >
-            Cerrar
+            {t('connectivity:locationHelp.close')}
           </button>
         </div>
       </div>

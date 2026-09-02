@@ -1,0 +1,51 @@
+{
+  "loading": "Cargando viajes...",
+  "accountMenu": "Mi cuenta",
+  "tagline": "Descubre. Planifica. Vive.",
+  "cta": {
+    "signup": "Crear cuenta gratis",
+    "login": "Iniciar sesión"
+  },
+  "agencyGiftPrefix": "Un regalo de",
+  "license": {
+    "expires": "vence {{date}}"
+  },
+  "emptyState": {
+    "title": "¡Bienvenido!",
+    "body": "Aún no tienes viajes planeados. Comienza creando tu primer itinerario."
+  },
+  "tripsList": {
+    "title": "Tus Viajes",
+    "deleting": "Eliminando...",
+    "deleteTrip": "Eliminar Viaje"
+  },
+  "createForm": {
+    "title": "Nuevo Viaje",
+    "destinationLabel": "Buscar Destino *",
+    "destinationPlaceholder": "Busca tu ciudad o destino...",
+    "nameLabel": "Nombre del Viaje (Opcional)",
+    "namePlaceholder": "Ej: Vacaciones de Verano 2026",
+    "generateAI": "Generar con IA",
+    "manual": "Manual",
+    "defaultTripName": "Viaje a {{city}}"
+  },
+  "createButton": "Crear Nuevo Viaje",
+  "footer": "Planifica, explora y disfruta cada momento",
+  "errors": {
+    "loadTrips": "Error al cargar los viajes. Por favor recarga la página.",
+    "deleteTripConfirm": "¿Eliminar el viaje \"{{tripName}}\"? Esta acción no se puede deshacer.",
+    "deleteTripSuccess": "Viaje \"{{tripName}}\" eliminado exitosamente",
+    "deleteTripError": "Error al eliminar el viaje: {{message}}",
+    "deleteTripErrorFallback": "Por favor intenta de nuevo",
+    "freeLimitReached": "Has alcanzado el límite de 3 viajes gratuitos. ¡Actualiza a VIP o usa tu código de agencia para más!",
+    "aiVipOnly": "🔒 La generación con IA es exclusiva para usuarios VIP o con una licencia de agencia. Contáctanos para actualizar tu cuenta.",
+    "selectLocation": "Por favor busca y selecciona una ubicación",
+    "createTrip": "Error al crear el viaje",
+    "createTripManualFallback": "Error al crear el viaje. Por favor intenta de nuevo."
+  },
+  "success": {
+    "tripCreated": "¡Viaje creado exitosamente!",
+    "itineraryGenerated": "¡Itinerario generado con éxito!"
+  },
+  "aiGenerationFailedConfirm": "Hubo un problema al generar el itinerario con IA. ¿Deseas crear el viaje manualmente y configurarlo tú mismo?"
+}

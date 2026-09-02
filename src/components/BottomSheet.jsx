@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
 import { useHybridPlaceImage } from '../hooks/useHybridPlaceImage';
+import { getCategoryById, getCategoryLabel } from '../data/categories';
+import { LOCALE_MAP } from '../i18n';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1496442226666-8d4a0e29e128?w=800&q=80';
 
@@ -11,6 +14,7 @@ const FALLBACK_IMG = 'https://images.unsplash.com/photo-1496442226666-8d4a0e29e1
 const DRAG_THRESHOLD = 60;
 
 const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDelete, onUpdateImage, onEdit, city = "travel destination", readOnly = false }) => {
+  const { t, i18n } = useTranslation(['placeDetail', 'common']);
   const toast = useToast();
   const hybridImgSrc = useHybridPlaceImage(place?.img, place?.id, city);
   const [uploadedPreview, setUploadedPreview] = useState(null);
@@ -85,7 +89,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
   };
 
   const handleDelete = async () => {
-    if (await toast.confirm(`¿Seguro que quieres eliminar "${place.title}" del itinerario?`)) {
+    if (await toast.confirm(t('placeDetail:confirmDelete', { title: place.title }))) {
         onDelete(place.id);
         onClose();
     }
@@ -170,7 +174,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
         <div className="flex-1 min-w-0 flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-1">
                 <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-[10px] font-bold uppercase tracking-wider border border-blue-200 dark:border-blue-500/20">
-                    {place.cat}
+                    {getCategoryLabel(t, getCategoryById(place.cat))}
                 </span>
                 {place.time && (
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
@@ -188,7 +192,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                     e.stopPropagation();
                     handleVisitToggle();
                 }}
-                aria-label={isVisited ? 'Marcar como no visitado' : 'Marcar como visitado'}
+                aria-label={isVisited ? t('placeDetail:markUnvisitedAria') : t('placeDetail:markVisitedAria')}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 shadow-lg border ${isVisited ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
             >
                 <i className={`fas ${isVisited ? 'fa-check' : 'fa-check'} text-lg`}></i>
@@ -223,7 +227,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                 {!readOnly && (
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        aria-label="Cambiar foto"
+                        aria-label={t('placeDetail:changePhoto')}
                         className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-black/60 transition active:scale-95"
                     >
                         <i className="fas fa-camera"></i>
@@ -231,14 +235,14 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                 )}
                 <button
                     onClick={onClose}
-                    aria-label="Cerrar"
+                    aria-label={t('common:actions.close')}
                     className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-center hover:bg-black/60 transition active:scale-95"
                 >
                     <i className="fas fa-times"></i>
                 </button>
             </div>
 
-            <input 
+            <input
                 ref={fileInputRef}
                 type="file" 
                 accept="image/*"
@@ -252,11 +256,11 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                     <div>
                         <div className="flex gap-2 mb-2">
                              <span className="px-2.5 py-1 rounded-lg bg-black/50 dark:bg-white/10 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest border border-white/10">
-                                {place.cat}
+                                {getCategoryLabel(t, getCategoryById(place.cat))}
                             </span>
                             {isVisited && (
                                 <span className="px-2.5 py-1 rounded-lg bg-emerald-500/90 dark:bg-emerald-500/20 backdrop-blur-md text-white dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest border border-emerald-500/20 flex items-center gap-1">
-                                    <i className="fas fa-check"></i> Visitado
+                                    <i className="fas fa-check"></i> {t('placeDetail:visitedBadge')}
                                 </span>
                             )}
                         </div>
@@ -266,7 +270,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                                 <i className="fas fa-star text-amber-400"></i>
                                 {place.placeRating.toFixed(1)}
                                 {place.placeRatingCount != null && (
-                                    <span className="text-slate-400 dark:text-slate-500 font-medium">({place.placeRatingCount.toLocaleString('es')})</span>
+                                    <span className="text-slate-400 dark:text-slate-500 font-medium">({place.placeRatingCount.toLocaleString(LOCALE_MAP[i18n.language])})</span>
                                 )}
                             </p>
                         )}
@@ -295,7 +299,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                             : 'bg-slate-100 dark:bg-white text-slate-900 hover:bg-slate-200 dark:hover:bg-slate-100'}`}
                     >
                         <i className={`fas ${isVisited ? 'fa-check-circle' : 'fa-circle'}`}></i>
-                        {isVisited ? 'Completado' : 'Marcar Visitado'}
+                        {isVisited ? t('placeDetail:completed') : t('placeDetail:markVisited')}
                     </button>
                  )}
                 {/* Sin origin: Google Maps usa la ubicación en vivo del
@@ -309,22 +313,22 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                         href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=walking`}
                         target="_blank"
                         rel="noreferrer"
-                        title="Ir caminando"
+                        title={t('placeDetail:directions.walkingTitle')}
                         className="flex-1 bg-slate-800 text-white py-3.5 hover:bg-slate-700 transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
                     >
                         <i className="fas fa-person-walking text-blue-400"></i>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">A pie</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{t('placeDetail:directions.walking')}</span>
                     </a>
                     <div className="w-px bg-white/10"></div>
                     <a
                         href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=driving`}
                         target="_blank"
                         rel="noreferrer"
-                        title="Ir en auto"
+                        title={t('placeDetail:directions.drivingTitle')}
                         className="flex-1 bg-slate-800 text-white py-3.5 hover:bg-slate-700 transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
                     >
                         <i className="fas fa-car text-blue-400"></i>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">En auto</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{t('placeDetail:directions.driving')}</span>
                     </a>
                 </div>
             </div>
@@ -335,18 +339,18 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                     <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-3">
                         <i className="fas fa-lightbulb text-amber-500 dark:text-amber-400 text-sm"></i>
                     </div>
-                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Tip de Viajero</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">{t('placeDetail:tip.label')}</div>
                     <div className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-snug">
-                        {place.tip || "Disfruta el momento y toma muchas fotos."}
+                        {place.tip || t('placeDetail:tip.default')}
                     </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
                     <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center mb-3">
                         <i className="fas fa-clock text-purple-500 dark:text-purple-400 text-sm"></i>
                     </div>
-                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Tiempo Sugerido</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">{t('placeDetail:suggestedTime.label')}</div>
                     <div className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-snug">
-                        {place.time || "A tu ritmo"}
+                        {place.time || t('placeDetail:suggestedTime.default')}
                     </div>
                 </div>
             </div>
@@ -363,7 +367,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                         >
                             <i className="fas fa-clock text-purple-500 dark:text-purple-400 mt-0.5"></i>
                             <div className="flex-1 min-w-0">
-                                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Horario</div>
+                                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">{t('placeDetail:hoursLabel')}</div>
                                 {showFullHours ? (
                                     <div className="space-y-0.5">
                                         {place.placeHours.map((line, i) => (
@@ -393,7 +397,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                     {place.placeWebsite && (
                         <a href={place.placeWebsite} target="_blank" rel="noreferrer" className="p-4 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition">
                             <i className="fas fa-globe text-blue-500 dark:text-blue-400"></i>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">Sitio web</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{t('placeDetail:websiteLabel')}</span>
                         </a>
                     )}
                 </div>
@@ -404,7 +408,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                 "Gestión" vacío no aporta nada. */}
             {!readOnly && (onEdit || onDelete) && (
                 <div className="pt-4 border-t border-slate-200 dark:border-white/5">
-                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-4">Gestión</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-4">{t('placeDetail:management.title')}</div>
                     <div className="grid grid-cols-2 gap-3">
                         {onEdit && (
                             <button
@@ -412,7 +416,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                                 className="bg-slate-50 dark:bg-slate-800 text-blue-500 dark:text-blue-400 py-3 rounded-xl font-semibold text-sm border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2"
                             >
                                 <i className="fas fa-edit"></i>
-                                <span>Editar Datos</span>
+                                <span>{t('placeDetail:management.edit')}</span>
                             </button>
                         )}
                         {onDelete && (
@@ -421,7 +425,7 @@ const BottomSheet = ({ place, isOpen, onClose, isVisited, onToggleVisited, onDel
                                 className="bg-slate-50 dark:bg-slate-800 text-red-500 dark:text-red-400 py-3 rounded-xl font-semibold text-sm border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2"
                             >
                                 <i className="fas fa-trash-alt"></i>
-                                <span>Eliminar</span>
+                                <span>{t('placeDetail:management.delete')}</span>
                             </button>
                         )}
                     </div>

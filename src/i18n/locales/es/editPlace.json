@@ -1,0 +1,14 @@
+{
+  "title": "Editar Lugar",
+  "nameLabel": "Nombre del lugar",
+  "namePlaceholder": "Ej: Times Square",
+  "categoryLabel": "Categoría",
+  "tipLabel": "Consejo de Viajero",
+  "tipPlaceholder": "Ej: Mejor vista desde las escaleras rojas",
+  "timeLabel": "Tiempo sugerido",
+  "timePlaceholder": "Ej: 45 min",
+  "imageLabel": "Imagen",
+  "removeImage": "Eliminar",
+  "changePhoto": "Cambiar foto",
+  "save": "Guardar Cambios"
+}

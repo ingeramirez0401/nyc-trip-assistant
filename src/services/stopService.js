@@ -48,7 +48,7 @@ export const stopService = {
 
   // Crear una nueva parada
   async create(stopData) {
-    assertOnline('agregar una parada');
+    assertOnline('addStop');
     // Obtener el siguiente order_index
     const { count } = await supabase
       .from('trippulse_stops')
@@ -87,7 +87,7 @@ export const stopService = {
 
   // Actualizar una parada
   async update(id, stopData) {
-    assertOnline('guardar cambios en la parada');
+    assertOnline('saveStopChanges');
     const updateData = {};
     
     if (stopData.title !== undefined) updateData.title = stopData.title;
@@ -114,7 +114,7 @@ export const stopService = {
 
   // Actualizar solo la imagen
   async updateImage(id, imageUrl) {
-    assertOnline('actualizar la foto');
+    assertOnline('updatePhoto');
     const { data, error } = await supabase
       .from('trippulse_stops')
       .update({ img: imageUrl })
@@ -128,7 +128,7 @@ export const stopService = {
 
   // Toggle estado de visitado
   async toggleVisited(id) {
-    assertOnline('marcar esta parada como visitada');
+    assertOnline('markStopVisited');
     // Primero obtener el estado actual
     const { data: currentStop } = await supabase
       .from('trippulse_stops')
@@ -149,7 +149,7 @@ export const stopService = {
 
   // Eliminar una parada
   async delete(id) {
-    assertOnline('eliminar la parada');
+    assertOnline('deleteStop');
     const { error } = await supabase
       .from('trippulse_stops')
       .delete()
@@ -161,7 +161,7 @@ export const stopService = {
 
   // Reordenar paradas (actualizar order_index de múltiples paradas)
   async reorder(dayId, stopsWithNewOrder) {
-    assertOnline('reordenar las paradas');
+    assertOnline('reorderStops');
     // stopsWithNewOrder es un array de { id, orderIndex }
     const updates = stopsWithNewOrder.map(stop => 
       supabase

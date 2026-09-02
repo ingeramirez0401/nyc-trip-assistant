@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { categories } from '../data/categories';
+import { useTranslation } from 'react-i18next';
+import { categories, getCategoryLabel } from '../data/categories';
 
 const EditPlaceModal = ({ place, onSave, onClose }) => {
+  const { t } = useTranslation(['editPlace', 'common']);
   const [formData, setFormData] = useState({
     title: place.title || '',
     cat: place.cat || 'Interés',
@@ -50,12 +52,12 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
         <div className="p-5 border-b border-slate-200 dark:border-white/10 flex items-center gap-4 bg-slate-50 dark:bg-white/5">
           <button
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t('common:actions.close')}
             className="w-11 h-11 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/20 transition"
           >
             <i className="fas fa-times text-sm"></i>
           </button>
-          <h2 className="font-bold text-lg text-slate-900 dark:text-white">Editar Lugar</h2>
+          <h2 className="font-bold text-lg text-slate-900 dark:text-white">{t('editPlace:title')}</h2>
         </div>
 
         {/* Form */}
@@ -63,19 +65,19 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">Nombre del lugar</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">{t('editPlace:nameLabel')}</label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-600"
-              placeholder="Ej: Times Square"
+              placeholder={t('editPlace:namePlaceholder')}
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">Categoría</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">{t('editPlace:categoryLabel')}</label>
             <div className="grid grid-cols-3 gap-2">
               {categories.map((cat) => (
                 <button
@@ -89,7 +91,7 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
                 >
                   <i className={`fas ${cat.icon} text-lg`} style={{ color: formData.cat === cat.name ? '#60a5fa' : cat.color }}></i>
                   <p className={`text-[10px] font-bold truncate w-full text-center ${formData.cat === cat.name ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-                      {cat.name}
+                      {getCategoryLabel(t, cat)}
                   </p>
                 </button>
               ))}
@@ -98,31 +100,31 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
 
           {/* Tip */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">Consejo de Viajero</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">{t('editPlace:tipLabel')}</label>
             <textarea
               value={formData.tip}
               onChange={(e) => handleChange('tip', e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none placeholder-slate-400 dark:placeholder-slate-600"
               rows="3"
-              placeholder="Ej: Mejor vista desde las escaleras rojas"
+              placeholder={t('editPlace:tipPlaceholder')}
             />
           </div>
 
           {/* Time */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">Tiempo sugerido</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">{t('editPlace:timeLabel')}</label>
             <input
               type="text"
               value={formData.time}
               onChange={(e) => handleChange('time', e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-slate-400 dark:placeholder-slate-600"
-              placeholder="Ej: 45 min"
+              placeholder={t('editPlace:timePlaceholder')}
             />
           </div>
 
           {/* Image */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">Imagen</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">{t('editPlace:imageLabel')}</label>
             <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-2xl p-4 text-center bg-slate-50 dark:bg-slate-800/30 transition-colors">
               {showImage ? (
                 <div className="relative group">
@@ -135,7 +137,7 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
                       }}
                       className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
                     >
-                      <i className="fas fa-trash-alt mr-2"></i> Eliminar
+                      <i className="fas fa-trash-alt mr-2"></i> {t('editPlace:removeImage')}
                     </button>
                   </div>
                 </div>
@@ -147,7 +149,7 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
                   <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-inner">
                     <i className="fas fa-camera text-xl"></i>
                   </div>
-                  <span className="text-sm font-bold">Cambiar foto</span>
+                  <span className="text-sm font-bold">{t('editPlace:changePhoto')}</span>
                 </button>
               )}
               <input
@@ -167,14 +169,14 @@ const EditPlaceModal = ({ place, onSave, onClose }) => {
             onClick={onClose}
             className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3.5 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition"
           >
-            Cancelar
+            {t('common:actions.cancel')}
           </button>
           <button
             onClick={handleSave}
             className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             <i className="fas fa-save"></i>
-            Guardar Cambios
+            {t('editPlace:save')}
           </button>
         </div>
       </div>

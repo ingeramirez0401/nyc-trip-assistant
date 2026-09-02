@@ -22,10 +22,13 @@
     "dexie": "^4.4.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "i18next": "^26.4.1",
+    "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^0.303.0",
     "openai": "^4.104.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-i18next": "^17.0.13",
     "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 const ToastContext = createContext(null);
 
@@ -89,6 +90,7 @@ const ToastItem = ({ id, message, type, onClose }) => {
 };
 
 const ConfirmDialog = ({ message, onConfirm, onCancel }) => {
+  const { t } = useTranslation('common');
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-white/10 animate-fade-in-up">
@@ -99,7 +101,7 @@ const ConfirmDialog = ({ message, onConfirm, onCancel }) => {
             </div>
             <div className="flex-1 pt-1">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                Confirmar acción
+                {t('confirmDialog.title')}
               </h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                 {message}
@@ -112,13 +114,13 @@ const ConfirmDialog = ({ message, onConfirm, onCancel }) => {
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
           >
-            Cancelar
+            {t('actions.cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="flex-1 px-4 py-2.5 rounded-xl font-medium text-white bg-red-500 hover:bg-red-600 transition-colors"
           >
-            Confirmar
+            {t('actions.confirm')}
           </button>
         </div>
       </div>

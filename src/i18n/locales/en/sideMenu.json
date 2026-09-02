@@ -1,0 +1,32 @@
+{
+  "confirmSignOut": "Are you sure you want to sign out?",
+  "defaultUserName": "User",
+  "vipBadge": "VIP",
+  "agencyBadge": "AGENCY",
+  "license": {
+    "expiresOn": "Expires {{date}}"
+  },
+  "guestBrand": {
+    "tagline": "Your Pace, Your Trip"
+  },
+  "menu": {
+    "loginLabel": "Sign In",
+    "loginHint": "Save your trips",
+    "navigationSection": "Navigation",
+    "itineraryLabel": "Day Itinerary",
+    "itineraryHint": "View and manage stops",
+    "confirmExitTrip": "Leave this trip and go back to the trip list?",
+    "switchTripLabel": "Switch Trip",
+    "switchTripHint": "Back to trip list",
+    "agencyPanelLabel": "Agency Panel",
+    "agencyPanelHint": "Generate and manage licenses",
+    "settingsSection": "Settings",
+    "darkModeOn": "Light Mode",
+    "darkModeOff": "Dark Mode",
+    "themeHint": "Change the map's appearance",
+    "languageLabel": "Language",
+    "signOut": "Sign Out"
+  },
+  "footerBefore": "Made with",
+  "footerAfter": "for travelers"
+}

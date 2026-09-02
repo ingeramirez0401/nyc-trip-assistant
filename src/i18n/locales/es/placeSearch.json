@@ -1,0 +1,27 @@
+{
+  "backAria": "Volver",
+  "confirmTitle": "Confirmar Lugar",
+  "addTitle": "Agregar Nuevo Lugar",
+  "searchPlaceholder": "Ej: Central Park, Empire State...",
+  "restrictToCityPrefix": "Solo en",
+  "restrictToCitySuffix": "(apagado, buscando en todo el mundo)",
+  "keepTyping": "Sigue escribiendo...",
+  "searching": "Buscando lugares...",
+  "noResults": "No encontramos lugares con ese nombre.",
+  "tryWithoutRestrict": "Prueba apagando \"Solo en {{city}}\" para buscar en todo el mundo.",
+  "categoryLabel": "Selecciona una Categoría",
+  "removePhoto": "Quitar",
+  "changePhoto": "Cambiar foto",
+  "googlePhotoBadge": "Foto de Google Places",
+  "addPhoto": "Agregar foto del lugar",
+  "cameraOrGallery": "Cámara o Galería",
+  "addToItinerary": "Agregar al Itinerario",
+  "defaultPlaceholder": "Buscar ubicación...",
+  "noResultsFound": "No se encontraron resultados",
+  "errors": {
+    "search": "Error en la búsqueda",
+    "details": "No se pudo obtener el detalle de ese lugar. Intenta de nuevo.",
+    "notAuthenticated": "Debes iniciar sesión.",
+    "placesServiceGeneric": "Error en el buscador de lugares"
+  }
+}

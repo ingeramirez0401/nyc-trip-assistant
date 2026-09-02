@@ -29,7 +29,7 @@ if (!GOOGLE_PLACES_API_KEY) {
 // global sin sesgo.
 router.get('/places/autocomplete', requireAuth, async (req, res) => {
   try {
-    const { query, city, restrict } = req.query;
+    const { query, city, restrict, lang } = req.query;
     if (!query || query.trim().length < 2) {
       return res.json({ predictions: [] });
     }
@@ -44,9 +44,12 @@ router.get('/places/autocomplete', requireAuth, async (req, res) => {
       if (circle) locationField = { locationRestriction: circle };
     }
 
+    // Whitelist explícita -- solo 'es'/'en' soportados hoy (ver
+    // src/i18n/index.js supportedLngs), cualquier otra cosa cae a 'es'.
+    const languageCode = lang === 'en' ? 'en' : 'es';
     const body = {
       input: query,
-      languageCode: 'es',
+      languageCode,
       ...locationField,
     };
 
@@ -92,7 +95,8 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
       return res.status(503).json({ error: 'Buscador de lugares no configurado' });
     }
 
-    const response = await fetch(`https://places.googleapis.com/v1/places/${req.params.placeId}?languageCode=es`, {
+    const languageCode = req.query.lang === 'en' ? 'en' : 'es';
+    const response = await fetch(`https://places.googleapis.com/v1/places/${req.params.placeId}?languageCode=${languageCode}`, {
       headers: {
         'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
         'X-Goog-FieldMask':

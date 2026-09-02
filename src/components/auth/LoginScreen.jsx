@@ -1,27 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 
 const RESEND_COOLDOWN_S = 45;
 
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
 
-const HEADER_COPY = {
-  traveler: {
-    login: { title: 'Bienvenido de nuevo', subtitle: 'Ingresa para acceder a tus viajes guardados' },
-    signup: { title: 'Crea tu cuenta', subtitle: 'Únete para crear y compartir itinerarios increíbles' },
-    forgot: { title: 'Recupera tu contraseña', subtitle: 'Te enviaremos instrucciones a tu correo' },
-    'check-email': { title: 'Revisa tu correo', subtitle: 'Un paso más y ya puedes entrar' },
-  },
-  agency: {
-    login: { title: 'Acceso de tu agencia', subtitle: 'Ingresa con el correo de tu cuenta ya aprobada' },
-    signup: { title: 'Activa tu cuenta de agencia', subtitle: 'Usa el mismo correo con el que aprobamos tu solicitud' },
-    forgot: { title: 'Recupera tu contraseña', subtitle: 'Te enviaremos instrucciones a tu correo' },
-    'check-email': { title: 'Revisa tu correo', subtitle: 'Un paso más y ya puedes entrar' },
-  },
-};
-
 const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience = 'traveler' }) => {
+  const { t } = useTranslation(['auth', 'common']);
   const [mode, setMode] = useState(initialMode === 'signup' ? 'signup' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,8 +31,8 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
   // martille y choque con el rate limit de envío de GoTrue.
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
   }, [resendCooldown]);
 
   const handleResend = async () => {
@@ -55,10 +42,10 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
     try {
       const { error } = await resendConfirmation(pendingEmail);
       if (error) throw error;
-      setMessage('Correo reenviado. Revisa tu bandeja de entrada (y spam).');
+      setMessage(t('auth:checkEmail.resendSuccess'));
       setResendCooldown(RESEND_COOLDOWN_S);
     } catch (err) {
-      setError(err.message || 'No se pudo reenviar el correo. Intenta de nuevo en un momento.');
+      setError(err.message || t('auth:checkEmail.resendError'));
     } finally {
       setResending(false);
     }
@@ -83,7 +70,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
     // process failed" pase lo que pase, sin importar qué escribiera el
     // usuario.
     if (HCAPTCHA_SITE_KEY && !captchaToken) {
-      setError('Por favor completa la verificación de seguridad.');
+      setError(t('auth:forgot.captchaRequired'));
       return;
     }
 
@@ -92,9 +79,9 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
       const { error } = await resetPassword(email, captchaToken);
       if (error) throw error;
       setCaptchaToken(null);
-      setMessage('Si ese correo tiene una cuenta, te enviamos instrucciones para restablecer tu contraseña.');
+      setMessage(t('auth:forgot.success'));
     } catch (err) {
-      setError(err.message || 'Ha ocurrido un error');
+      setError(err.message || t('common:errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -106,7 +93,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
     setMessage(null);
 
     if (HCAPTCHA_SITE_KEY && !captchaToken) {
-      setError('Por favor completa la verificación de seguridad.');
+      setError(t('auth:forgot.captchaRequired'));
       return;
     }
 
@@ -128,16 +115,18 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
     } catch (err) {
       console.error(err);
       if (err.code === 'email_provider_disabled' || err.message?.includes('Email signups are disabled')) {
-        setError('El registro está deshabilitado en la configuración del servidor. Contacta al administrador.');
+        setError(t('auth:errors.signupDisabled'));
       } else {
-        setError(err.message || 'Ha ocurrido un error');
+        setError(err.message || t('common:errors.generic'));
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const headerCopy = HEADER_COPY[audience][mode];
+  const headerAudience = audience === 'agency' ? 'agency' : 'traveler';
+  const headerMode = mode === 'check-email' ? 'checkEmail' : mode;
+  const headerCopy = t(`auth:header.${headerAudience}.${headerMode}`, { returnObjects: true });
   const isAgency = audience === 'agency';
 
   return (
@@ -147,7 +136,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
         {/* Close Button */}
         <button
           onClick={onClose}
-          aria-label="Cerrar"
+          aria-label={t('common:actions.close')}
           className="absolute top-4 right-4 text-slate-400 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-2 z-10"
         >
           <i className="fas fa-times text-xl"></i>
@@ -169,7 +158,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
             <p className="text-slate-500 dark:text-slate-400 text-sm">{headerCopy.subtitle}</p>
             {isAgency && (
               <span className="inline-block mt-3 text-[10px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-3 py-1 rounded-full uppercase tracking-wider">
-                Acceso para agencias
+                {t('auth:agencyBadge')}
               </span>
             )}
           </div>
@@ -182,17 +171,14 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
             <div className="space-y-5">
               <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl text-center">
                 <p className="text-sm text-slate-600 dark:text-slate-200">
-                  Te enviamos un link de confirmación a
+                  {t('auth:checkEmail.sentTo')}
                 </p>
                 <p className="text-slate-900 dark:text-white font-bold break-all mt-1">{pendingEmail}</p>
               </div>
 
               <div className="flex items-start gap-3 text-slate-500 dark:text-slate-400 text-xs">
                 <i className="fas fa-circle-info mt-0.5 shrink-0"></i>
-                <p>
-                  Ábrelo para activar tu cuenta. Si no lo ves en unos minutos, revisa la carpeta de
-                  spam o promociones -- a veces llega ahí la primera vez.
-                </p>
+                <p>{t('auth:checkEmail.instructions')}</p>
               </div>
 
               {error && (
@@ -218,14 +204,14 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 {resending ? (
                   <>
                     <i className="fas fa-circle-notch fa-spin"></i>
-                    Reenviando...
+                    {t('auth:checkEmail.resending')}
                   </>
                 ) : resendCooldown > 0 ? (
-                  `Reenviar en ${resendCooldown}s`
+                  t('auth:checkEmail.resendIn', { seconds: resendCooldown })
                 ) : (
                   <>
                     <i className="fas fa-paper-plane"></i>
-                    Reenviar correo
+                    {t('auth:checkEmail.resend')}
                   </>
                 )}
               </button>
@@ -236,21 +222,21 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                   onClick={() => switchMode('login')}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                 >
-                  <i className="fas fa-arrow-left mr-1"></i> Volver a iniciar sesión
+                  <i className="fas fa-arrow-left mr-1"></i> {t('auth:checkEmail.backToLogin')}
                 </button>
               </p>
             </div>
           ) : isForgot ? (
             <form onSubmit={handleForgotSubmit} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Correo Electrónico</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('auth:forgot.emailLabel')}</label>
                 <div className="relative">
                   <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nombre@ejemplo.com"
+                    placeholder={t('auth:forgot.emailPlaceholder')}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     required
                   />
@@ -290,10 +276,10 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <i className="fas fa-circle-notch fa-spin"></i>
-                    Enviando...
+                    {t('auth:forgot.sending')}
                   </span>
                 ) : (
-                  'Enviar instrucciones'
+                  t('auth:forgot.submit')
                 )}
               </button>
 
@@ -303,7 +289,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                   onClick={() => switchMode('login')}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                 >
-                  <i className="fas fa-arrow-left mr-1"></i> Volver a iniciar sesión
+                  <i className="fas fa-arrow-left mr-1"></i> {t('auth:forgot.backToLogin')}
                 </button>
               </p>
             </form>
@@ -313,7 +299,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3">
                   <i className="fas fa-circle-info text-blue-500 dark:text-blue-400 mt-0.5"></i>
                   <p className="text-xs text-blue-700 dark:text-blue-200">
-                    Usa el mismo correo con el que aprobamos tu solicitud de agencia — así tu cuenta se activa automáticamente.
+                    {t('auth:agencyNotice')}
                   </p>
                 </div>
               )}
@@ -323,14 +309,14 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
 
                 {!isLogin && (
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Nombre Completo</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('auth:form.fullNameLabel')}</label>
                     <div className="relative">
                       <i className="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                       <input
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Tu nombre"
+                        placeholder={t('auth:form.fullNamePlaceholder')}
                         className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         required
                       />
@@ -339,14 +325,14 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                 )}
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Correo Electrónico</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('auth:form.emailLabel')}</label>
                   <div className="relative">
                     <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="nombre@ejemplo.com"
+                      placeholder={t('auth:form.emailPlaceholder')}
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       required
                     />
@@ -355,14 +341,14 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between ml-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contraseña</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('auth:form.passwordLabel')}</label>
                     {isLogin && (
                       <button
                         type="button"
                         onClick={() => switchMode('forgot')}
                         className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                       >
-                        ¿Olvidaste tu contraseña?
+                        {t('auth:form.forgotPassword')}
                       </button>
                     )}
                   </div>
@@ -380,7 +366,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      aria-label={showPassword ? t('common:password.hide') : t('common:password.show')}
                       className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors active:scale-90"
                       tabIndex={-1}
                     >
@@ -424,10 +410,10 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <i className="fas fa-circle-notch fa-spin"></i>
-                      Procesando...
+                      {t('auth:form.processing')}
                     </span>
                   ) : (
-                    isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'
+                    isLogin ? t('auth:form.loginSubmit') : t('auth:form.signupSubmit')
                   )}
                 </button>
               </form>
@@ -436,18 +422,18 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
               <div className="mt-6 text-center space-y-2">
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   {isLogin
-                    ? (isAgency ? '¿Tu agencia fue aprobada y no tienes cuenta?' : '¿No tienes una cuenta?')
-                    : '¿Ya tienes una cuenta?'}
+                    ? (isAgency ? t('auth:toggle.agencyLoginPrompt') : t('auth:toggle.travelerLoginPrompt'))
+                    : t('auth:toggle.signupPrompt')}
                   <button
                     onClick={() => switchMode(isLogin ? 'signup' : 'login')}
                     className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                   >
-                    {isLogin ? (isAgency ? 'Actívala aquí' : 'Regístrate') : 'Inicia Sesión'}
+                    {isLogin ? (isAgency ? t('auth:toggle.agencyActivate') : t('auth:toggle.signupLink')) : t('auth:toggle.loginLink')}
                   </button>
                 </p>
                 {isAgency && (
                   <p className="text-xs text-slate-400 dark:text-slate-500">
-                    ¿Aún no eres partner?{' '}
+                    {t('auth:toggle.notPartnerYet')}{' '}
                     <button
                       type="button"
                       onClick={() => {
@@ -456,7 +442,7 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
                       }}
                       className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                     >
-                      Solicita acceso
+                      {t('auth:toggle.requestAccess')}
                     </button>
                   </p>
                 )}

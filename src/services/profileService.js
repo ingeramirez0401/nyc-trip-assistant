@@ -16,7 +16,7 @@ export const profileService = {
 
   // Update profile data
   async updateProfile(userId, updates) {
-    assertOnline('guardar cambios en tu perfil');
+    assertOnline('saveProfileChanges');
     const { data, error } = await supabase
       .from('trippulse_profiles')
       .update(updates)

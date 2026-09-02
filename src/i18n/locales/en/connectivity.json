@@ -1,0 +1,87 @@
+{
+  "needsConnectionFor": "You need a connection to {{action}}.",
+  "actions": {
+    "signUp": "sign up",
+    "login": "sign in",
+    "loginWithGoogle": "sign in with Google",
+    "resetPassword": "reset your password",
+    "resendConfirmation": "resend the confirmation email",
+    "updatePassword": "update your password",
+    "generateAiItinerary": "generate an itinerary with AI",
+    "completeAction": "complete this action",
+    "useLicenseService": "use the license service",
+    "useLicense": "use your license",
+    "addDay": "add a day to the itinerary",
+    "createDays": "create the itinerary days",
+    "saveDayChanges": "save changes to the day",
+    "deleteDay": "delete the day",
+    "saveProfileChanges": "save changes to your profile",
+    "searchPlaces": "search places",
+    "createTrip": "create a new trip",
+    "saveTripChanges": "save changes to the trip",
+    "deleteTrip": "delete the trip",
+    "addStop": "add a stop",
+    "saveStopChanges": "save changes to the stop",
+    "updatePhoto": "update the photo",
+    "markStopVisited": "mark this stop as visited",
+    "deleteStop": "delete the stop",
+    "reorderStops": "reorder the stops",
+    "uploadPhoto": "upload a photo"
+  },
+  "offlineBanner": "You're offline — showing what's already saved",
+  "pwaUpdate": {
+    "offlineReady": "TripPulse can now open without a connection.",
+    "newVersion": "A new version of TripPulse is available",
+    "update": "Update",
+    "closeAria": "Dismiss update notice"
+  },
+  "locationHelp": {
+    "title": "Location blocked",
+    "subtitle": "Here's how to turn it back on",
+    "retrying": "Checking...",
+    "retry": "I fixed it, retry",
+    "close": "Close",
+    "steps": {
+      "ios": [
+        "Open the Settings app on your iPhone",
+        "Privacy & Security → Location Services → Location Services → turn it on if it's off",
+        "On that same screen, scroll down to \"Safari Websites\" and set it to \"While Using the App\"",
+        "If it was already on: with this page open in Safari, tap the \"aA\" icon next to the address bar → Website Settings → Location → Allow"
+      ],
+      "android": [
+        "Tap the lock or \"i\" icon next to Chrome's address bar",
+        "Tap \"Permissions\" → Location → Allow",
+        "If the option isn't there: System Settings → Apps → Chrome → Permissions → Location → Allow"
+      ],
+      "desktop": [
+        "Click the lock or info icon next to the address bar",
+        "Find \"Location\" and set it to \"Allow\"",
+        "Reload the page"
+      ]
+    }
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Start planning!",
+    "slides": [
+      {
+        "title": "Welcome to TripPulse! 🎒",
+        "text": "Your AI-powered travel companion. Here's a quick look at what you'll find."
+      },
+      {
+        "title": "Build your itinerary",
+        "text": "Create your trips, organize each day, and save your stops with map and routes included."
+      },
+      {
+        "title": "Generate with AI",
+        "text": "Tell it your destination, days, and interests — AI builds the full plan for you in seconds."
+      },
+      {
+        "title": "Save every moment",
+        "text": "Mark places as visited and add photos and notes to each stop of your trip."
+      }
+    ]
+  }
+}

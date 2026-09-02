@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { tripService } from '../services/tripService';
 import { dayService } from '../services/dayService';
 import { stopService } from '../services/stopService';
@@ -17,8 +18,11 @@ import { useToast } from '../contexts/ToastContext';
 import { profileService } from '../services/profileService';
 import { licenseService } from '../services/licenseService';
 import { notifyActionError } from '../lib/connectivity';
+import { quotaUnitLabel } from '../lib/licenseFormat';
+import { LOCALE_MAP } from '../i18n';
 
 const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel }) => {
+  const { t, i18n } = useTranslation(['welcome', 'common']);
   const { user, profile, licenses, refreshLicenses, agencyBranding } = useAuth();
   const toast = useToast();
   const [trips, setTrips] = useState([]);
@@ -77,21 +81,11 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   const loadTrips = async () => {
     try {
       setLoading(true);
-      console.log('📋 Loading trips...');
-      
       const data = await tripService.getAll();
-      console.log('✅ Trips loaded:', data?.length || 0);
-      
       setTrips(data || []);
     } catch (error) {
-      console.error('❌ Error loading trips:', error);
-      console.error('Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
-      toast.error('Error al cargar los viajes. Por favor recarga la página.');
+      console.error('Error loading trips:', error);
+      toast.error(t('welcome:errors.loadTrips'));
       setTrips([]);
     } finally {
       setLoading(false);
@@ -99,32 +93,22 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
   };
 
   const handleDeleteTrip = async (tripId, tripName) => {
-    const confirmDelete = await toast.confirm(`¿Eliminar el viaje "${tripName}"? Esta acción no se puede deshacer.`);
-    
+    const confirmDelete = await toast.confirm(t('welcome:errors.deleteTripConfirm', { tripName }));
+
     if (!confirmDelete) {
       return;
     }
 
     try {
       setDeletingTripId(tripId);
-      console.log('🗑️ Deleting trip:', tripId);
-      
       await tripService.delete(tripId);
-      
-      toast.success(`Viaje "${tripName}" eliminado exitosamente`);
-      console.log('✅ Trip deleted successfully');
-      
+      toast.success(t('welcome:errors.deleteTripSuccess', { tripName }));
+
       // Recargar lista de viajes
       await loadTrips();
     } catch (error) {
-      console.error('❌ Error deleting trip:', error);
-      console.error('Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
-      toast.error(`Error al eliminar el viaje: ${error.message || 'Por favor intenta de nuevo'}`);
+      console.error('Error deleting trip:', error);
+      toast.error(t('welcome:errors.deleteTripError', { message: error.message || t('welcome:errors.deleteTripErrorFallback') }));
     } finally {
       setDeletingTripId(null);
     }
@@ -189,7 +173,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
     // límite de 3 viajes gratuitos del plan Free
     const isFreeTierOk = profile?.tier === 'vip' || trips.length < 3;
     if (!hasLicenseQuota('trips') && !isFreeTierOk) {
-      toast.warning('Has alcanzado el límite de 3 viajes gratuitos. ¡Actualiza a VIP o usa tu código de agencia para más!');
+      toast.warning(t('welcome:errors.freeLimitReached'));
       return;
     }
     setShowCreateForm(true);
@@ -203,7 +187,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
     }
     // VIP o licencia de agencia con cupo de generaciones IA
     if (profile?.tier !== 'vip' && !hasLicenseQuota('ai_generations')) {
-      toast.info('🔒 La generación con IA es exclusiva para usuarios VIP o con una licencia de agencia. Contáctanos para actualizar tu cuenta.');
+      toast.info(t('welcome:errors.aiVipOnly'));
       return;
     }
     setShowAIGenerator(true);
@@ -217,21 +201,13 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
     }
 
     if (!newTripData.city.trim()) {
-      toast.warning('Por favor busca y selecciona una ubicación');
+      toast.warning(t('welcome:errors.selectLocation'));
       return;
     }
 
     try {
-      const tripName = newTripData.name.trim() || `Viaje a ${newTripData.city}`;
-      
-      console.log('🚀 Creating trip with data:', {
-        name: tripName,
-        city: newTripData.city,
-        country: newTripData.country || null,
-        baseLocation: newTripData.baseLocation,
-        user_id: user.id
-      });
-      
+      const tripName = newTripData.name.trim() || t('welcome:createForm.defaultTripName', { city: newTripData.city });
+
       const trip = await tripService.create({
         name: tripName,
         city: newTripData.city,
@@ -239,7 +215,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         baseLocation: newTripData.baseLocation,
         user_id: user.id,
       });
-      
+
       // Track usage
       await profileService.incrementTripCount(user.id);
       if (hasLicenseQuota('trips')) {
@@ -247,21 +223,14 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         await refreshLicenses();
       }
 
-      toast.success('¡Viaje creado exitosamente!');
-      console.log('✅ Trip created successfully:', trip);
+      toast.success(t('welcome:success.tripCreated'));
       setShowCreateForm(false);
       setNewTripData({ name: '', city: '', country: '', baseLocation: null });
       // Flujo manual: ir a TripSetup para configurar días
       onCreateTrip(trip);
     } catch (error) {
-      console.error('❌ Error creating trip:', error);
-      console.error('Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
-      notifyActionError(toast, error, 'Error al crear el viaje');
+      console.error('Error creating trip:', error);
+      notifyActionError(toast, error, t('welcome:errors.createTrip'));
     }
   };
 
@@ -274,7 +243,6 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
     try {
       setGeneratingAI(true);
-      console.log('🤖 Generando itinerario con IA...');
 
       // Usar la ubicación base específica si se seleccionó, o la genérica de la ciudad
       const tripBaseLocation = baseLocation || newTripData.baseLocation;
@@ -288,8 +256,6 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         budget
       });
 
-      console.log('✅ Itinerario generado:', itinerary);
-
       // Track AI usage
       await profileService.incrementAIUsage(user.id);
       if (hasLicenseQuota('ai_generations')) {
@@ -298,7 +264,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       }
 
       // Crear el viaje
-      const tripName = newTripData.name.trim() || `Viaje a ${newTripData.city}`;
+      const tripName = newTripData.name.trim() || t('welcome:createForm.defaultTripName', { city: newTripData.city });
       const trip = await tripService.create({
         name: tripName,
         city: newTripData.city,
@@ -310,8 +276,6 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       // Track usage
       await profileService.incrementTripCount(user.id);
 
-      console.log('✅ Trip created:', trip.id);
-
       // Crear días y lugares
       for (const day of itinerary.days) {
         const createdDay = await dayService.create({
@@ -320,8 +284,6 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           title: day.title,
           color: day.color
         });
-
-        console.log(`✅ Day ${day.dayNumber} created:`, createdDay.id);
 
         // Crear lugares para este día
         for (const stop of day.stops) {
@@ -339,8 +301,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         }
       }
 
-      toast.success('¡Itinerario generado con éxito!');
-      console.log('✅ Itinerario completo creado');
+      toast.success(t('welcome:success.itineraryGenerated'));
       setShowAIGenerator(false);
       setShowCreateForm(false);
       setNewTripData({ name: '', city: '', country: '', baseLocation: null });
@@ -348,7 +309,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       onSelectTrip(trip);
 
     } catch (error) {
-      console.error('❌ Error generando itinerario:', error);
+      console.error('Error generando itinerario:', error);
 
       // Sin señal, ofrecer "crearlo manual" es una salida falsa -- esa
       // ruta también necesita red (tripService.create) y fallaría por lo
@@ -360,9 +321,9 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       }
 
       // Fallback manual
-      if (await toast.confirm('Hubo un problema al generar el itinerario con IA. ¿Deseas crear el viaje manualmente y configurarlo tú mismo?')) {
+      if (await toast.confirm(t('welcome:aiGenerationFailedConfirm'))) {
         try {
-          const tripName = newTripData.name.trim() || `Viaje a ${newTripData.city}`;
+          const tripName = newTripData.name.trim() || t('welcome:createForm.defaultTripName', { city: newTripData.city });
           const tripBaseLocation = baseLocation || newTripData.baseLocation;
 
           const trip = await tripService.create({
@@ -380,14 +341,13 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
             await refreshLicenses();
           }
 
-          console.log('✅ Trip created manually (fallback):', trip);
           setShowAIGenerator(false);
           setShowCreateForm(false);
           setNewTripData({ name: '', city: '', country: '', baseLocation: null });
           onCreateTrip(trip);
         } catch (createError) {
           console.error('Error creating trip manually:', createError);
-          toast.error('Error al crear el viaje. Por favor intenta de nuevo.');
+          toast.error(t('welcome:errors.createTripManualFallback'));
         }
       }
     } finally {
@@ -400,7 +360,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white font-medium">Cargando viajes...</p>
+          <p className="text-white font-medium">{t('welcome:loading')}</p>
         </div>
       </div>
     );
@@ -408,23 +368,26 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 overflow-y-auto transition-colors duration-300">
-      {/* Account Menu Button */}
-      {user && (
-        <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-6 z-50">
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            title="Mi cuenta"
-            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
-          >
-            <i className="fas fa-bars text-lg"></i>
-          </button>
-        </div>
-      )}
+      {/* Menu Button -- antes solo se mostraba con sesión activa, pero
+          SideMenu ya soporta el estado sin usuario (login, tema, idioma) y
+          un invitado necesita poder llegar ahí para cambiar el idioma
+          antes de crear cuenta, no solo después. */}
+      <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-6 z-50">
+        <button
+          onClick={() => setIsMenuOpen(true)}
+          title={t('welcome:accountMenu')}
+          aria-label={t('welcome:accountMenu')}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
+        >
+          <i className="fas fa-bars text-lg"></i>
+        </button>
+      </div>
 
       {/* Theme Toggle Button */}
       <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] right-6 z-50 flex gap-3">
         <button
           onClick={toggleTheme}
+          aria-label={isDarkMode ? t('common:theme.toggleToLight') : t('common:theme.toggleToDark')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
         >
           <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
@@ -432,7 +395,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       </div>
 
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
-        
+
         {/* Header -- el logo/color de la agencia (si el viajero llegó vía
             una licencia) reemplaza el ícono y tiñe el degradé vía las
             variables --brand-*, que AuthContext ya dejó puestas en :root. */}
@@ -445,7 +408,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
             )}
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] dark:from-white dark:via-blue-100 dark:to-blue-200 mb-2 md:mb-4 tracking-tight drop-shadow-lg">TripPulse</h1>
-          <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">Descubre. Planifica. Vive.</p>
+          <p className="text-slate-600 dark:text-blue-300 text-base md:text-lg font-medium tracking-wide">{t('welcome:tagline')}</p>
         </div>
 
         {/* CTA inmediata, pegada al hero -- antes el único login/registro
@@ -461,14 +424,14 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
               className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white px-8 py-3.5 rounded-xl font-bold text-base shadow-2xl shadow-blue-900/40 hover:shadow-blue-900/60 active:scale-95 transition-all"
             >
               <i className="fas fa-rocket mr-2"></i>
-              Crear cuenta gratis
+              {t('welcome:cta.signup')}
             </button>
             <button
               onClick={handleTravelerLogin}
               className={`px-8 py-3.5 rounded-xl font-bold text-base border transition-all active:scale-95 ${isDarkMode ? 'bg-white/5 border-white/20 text-white hover:bg-white/10' : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'}`}
             >
               <i className="fas fa-right-to-bracket mr-2"></i>
-              Iniciar sesión
+              {t('welcome:cta.login')}
             </button>
           </div>
         )}
@@ -483,7 +446,8 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
               <img src={agencyBranding.logo_url} alt={agencyBranding.name} className="w-6 h-6 rounded-full object-cover" />
             )}
             <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-              Un regalo de <span className="text-slate-900 dark:text-white">{agencyBranding.name}</span>
+              {t('welcome:agencyGiftPrefix')}{' '}
+              <span className="text-slate-900 dark:text-white">{agencyBranding.name}</span>
             </span>
           </div>
         )}
@@ -502,11 +466,11 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
               >
                 <i className="fas fa-ticket text-green-600 dark:text-green-400 text-sm"></i>
                 <span className="text-xs font-bold text-green-700 dark:text-green-400">
-                  {lic.quota_remaining}/{lic.quota_amount} {lic.quota_type === 'trips' ? 'viajes' : 'gen. IA'}
+                  {lic.quota_remaining}/{lic.quota_amount} {quotaUnitLabel(t, lic.quota_type)}
                 </span>
                 {lic.expires_at && (
                   <span className="text-[11px] text-green-600/70 dark:text-green-400/60">
-                    · vence {new Date(lic.expires_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                    · {t('welcome:license.expires', { date: new Date(lic.expires_at).toLocaleDateString(LOCALE_MAP[i18n.language], { day: '2-digit', month: 'short' }) })}
                   </span>
                 )}
               </div>
@@ -527,7 +491,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
               de cupo por activar (trips y ai_generations no compiten) */}
           {profile?.role !== 'agency_admin' &&
             !showCreateForm &&
-            ['trips', 'ai_generations'].some((t) => !licenses.some((l) => l.quota_type === t)) && (
+            ['trips', 'ai_generations'].some((qt) => !licenses.some((l) => l.quota_type === qt)) && (
               <RedeemLicense onRedeemed={loadTrips} />
             )}
         </div>
@@ -540,15 +504,15 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
           <div className="max-w-md w-full text-center mb-8">
             <div className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-12 mb-6 shadow-xl dark:shadow-none">
               <i className="fas fa-map-marked-alt text-6xl text-blue-400 mb-6 opacity-50"></i>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">¡Bienvenido!</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">{t('welcome:emptyState.title')}</h2>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                Aún no tienes viajes planeados. Comienza creando tu primer itinerario.
+                {t('welcome:emptyState.body')}
               </p>
             </div>
           </div>
         ) : user && !showCreateForm ? (
           <div className="max-w-2xl w-full mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">Tus Viajes</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">{t('welcome:tripsList.title')}</h2>
             <div className="grid gap-4">
               {trips.map((trip) => (
                 <div
@@ -599,12 +563,12 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
                               {deletingTripId === trip.id ? (
                                 <>
                                   <i className="fas fa-spinner fa-spin w-4"></i>
-                                  <span>Eliminando...</span>
+                                  <span>{t('welcome:tripsList.deleting')}</span>
                                 </>
                               ) : (
                                 <>
                                   <i className="fas fa-trash-alt w-4"></i>
-                                  <span>Eliminar Viaje</span>
+                                  <span>{t('welcome:tripsList.deleteTrip')}</span>
                                 </>
                               )}
                             </button>
@@ -622,17 +586,17 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         {/* Create Form */}
         {showCreateForm ? (
           <div className="max-w-md w-full bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-8 animate-fade-in shadow-xl dark:shadow-none">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">Nuevo Viaje</h2>
-            
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">{t('welcome:createForm.title')}</h2>
+
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider">
                   <i className="fas fa-map-marker-alt mr-2"></i>
-                  Buscar Destino *
+                  {t('welcome:createForm.destinationLabel')}
                 </label>
                 <LocationSearchInput
                   onLocationSelect={handleLocationSelect}
-                  placeholder="Busca tu ciudad o destino..."
+                  placeholder={t('welcome:createForm.destinationPlaceholder')}
                 />
                 {newTripData.baseLocation && (
                   <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 rounded-lg">
@@ -650,11 +614,11 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider">
-                  Nombre del Viaje (Opcional)
+                  {t('welcome:createForm.nameLabel')}
                 </label>
                 <input
                   type="text"
-                  placeholder="Ej: Vacaciones de Verano 2026"
+                  placeholder={t('welcome:createForm.namePlaceholder')}
                   value={newTripData.name}
                   onChange={(e) => setNewTripData({ ...newTripData, name: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
@@ -670,20 +634,20 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
                 }}
                 className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition"
               >
-                Cancelar
+                {t('common:actions.cancel')}
               </button>
               <button
                 onClick={handleOpenAIGenerator}
                 className="flex-[2] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <i className="fas fa-wand-magic-sparkles"></i>
-                <span>Generar con IA</span>
+                <span>{t('welcome:createForm.generateAI')}</span>
               </button>
               <button
                 onClick={handleCreateTrip}
                 className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition"
               >
-                Manual
+                {t('welcome:createForm.manual')}
               </button>
             </div>
           </div>
@@ -693,13 +657,13 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
             className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white px-6 py-3 md:px-8 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-2xl shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-95 transition-all w-full md:w-auto"
           >
             <i className="fas fa-plus-circle mr-2 md:mr-3"></i>
-            Crear Nuevo Viaje
+            {t('welcome:createButton')}
           </button>
         ) : null}
 
         {/* Footer */}
         <div className="mt-12 text-center text-slate-500 dark:text-slate-300 text-sm">
-          <p>Planifica, explora y disfruta cada momento</p>
+          <p>{t('welcome:footer')}</p>
         </div>
       </div>
 

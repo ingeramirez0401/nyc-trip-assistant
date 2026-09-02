@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
 
 // registerType:'prompt' en vite.config.js deja el registro y el aviso de
@@ -7,6 +8,7 @@ import { useToast } from '../contexts/ToastContext';
 // solo -- así el viajero nunca pierde una nota a medio escribir por un
 // refresh silencioso en segundo plano.
 const PwaUpdateBanner = () => {
+  const { t } = useTranslation('connectivity');
   const toast = useToast();
   const {
     offlineReady: [offlineReady, setOfflineReady],
@@ -20,9 +22,9 @@ const PwaUpdateBanner = () => {
 
   useEffect(() => {
     if (!offlineReady) return;
-    toast.success('TripPulse ya puede abrir sin conexión.');
+    toast.success(t('connectivity:pwaUpdate.offlineReady'));
     setOfflineReady(false);
-  }, [offlineReady, setOfflineReady, toast]);
+  }, [offlineReady, setOfflineReady, toast, t]);
 
   if (!needRefresh) return null;
 
@@ -35,16 +37,16 @@ const PwaUpdateBanner = () => {
       <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
         <i className="fas fa-arrows-rotate text-blue-400"></i>
       </div>
-      <p className="flex-1 text-sm font-medium leading-snug">Hay una versión nueva de TripPulse</p>
+      <p className="flex-1 text-sm font-medium leading-snug">{t('connectivity:pwaUpdate.newVersion')}</p>
       <button
         onClick={() => updateServiceWorker(true)}
         className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition active:scale-95"
       >
-        Actualizar
+        {t('connectivity:pwaUpdate.update')}
       </button>
       <button
         onClick={() => setNeedRefresh(false)}
-        aria-label="Cerrar aviso de actualización"
+        aria-label={t('connectivity:pwaUpdate.closeAria')}
         className="shrink-0 text-slate-400 hover:text-white transition"
       >
         <i className="fas fa-times"></i>

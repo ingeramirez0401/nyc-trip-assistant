@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 // Único punto de verdad de "¿hay señal?" -- usado tanto por el guard de
 // acciones (assertOnline) como por el hook de UI (useOnlineStatus), para
 // que ambos coincidan siempre.
@@ -8,11 +10,12 @@ export function isOnline() {
 // Se llama al inicio de cada acción que escribe o depende de red (crear
 // viaje, generar con IA, subir foto, iniciar sesión, licencias...) --
 // corta ANTES de intentar el fetch, con un mensaje específico a esa
-// acción, en vez de dejar que falle con un error crudo de red. `mensaje`
-// va después de "Necesitas conexión para ", ej. assertOnline('crear un viaje').
-export function assertOnline(mensaje) {
+// acción, en vez de dejar que falle con un error crudo de red. `actionKey`
+// es una clave de connectivity.json#actions, ej. assertOnline('createTrip').
+export function assertOnline(actionKey) {
   if (!isOnline()) {
-    const error = new Error(`Necesitas conexión para ${mensaje}.`);
+    const action = i18n.t(`connectivity:actions.${actionKey}`);
+    const error = new Error(i18n.t('connectivity:needsConnectionFor', { action }));
     error.isOfflineError = true;
     throw error;
   }

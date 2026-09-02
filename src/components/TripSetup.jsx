@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { dayService } from '../services/dayService';
 import { tripService } from '../services/tripService';
 import LocationSearchInput from './LocationSearchInput';
 import { useToast } from '../contexts/ToastContext';
 
 const TripSetup = ({ trip, onComplete }) => {
+  const { t } = useTranslation('tripSetup');
   const toast = useToast();
+  const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
   const [numDays, setNumDays] = useState(3);
   const [customDays, setCustomDays] = useState('');
   const [showCustomDays, setShowCustomDays] = useState(false);
-  const [days, setDays] = useState([
-    { title: 'Día 1', color: '#ef4444' },
-    { title: 'Día 2', color: '#3b82f6' },
-    { title: 'Día 3', color: '#10b981' },
-  ]);
+  const [days, setDays] = useState(() =>
+    [1, 2, 3].map((n, i) => ({ title: t('setup.dayLabel', { number: n }), color: colors[i] }))
+  );
   const [baseLocation, setBaseLocation] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
 
   const handleNumDaysChange = (num) => {
     setNumDays(num);
@@ -41,7 +40,7 @@ const TripSetup = ({ trip, onComplete }) => {
         newDays.push(days[i]);
       } else {
         newDays.push({
-          title: `Día ${i + 1}`,
+          title: t('setup.dayLabel', { number: i + 1 }),
           color: colors[i % colors.length],
         });
       }
@@ -102,7 +101,7 @@ const TripSetup = ({ trip, onComplete }) => {
       onComplete();
     } catch (error) {
       console.error('Error setting up trip:', error);
-      toast.error('Error al configurar el viaje. Por favor intenta de nuevo.');
+      toast.error(t('setup.errors.setup'));
     } finally {
       setLoading(false);
     }
@@ -114,7 +113,7 @@ const TripSetup = ({ trip, onComplete }) => {
         
         {/* Header */}
         <div className="text-center mb-6 md:mb-8 animate-fade-in-down">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2">Configurar Itinerario</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('setup.title')}</h1>
           <p className="text-blue-500 dark:text-blue-300 text-sm md:text-base">
             <i className="fas fa-map-marked-alt mr-2"></i>
             {trip.name}
@@ -126,7 +125,7 @@ const TripSetup = ({ trip, onComplete }) => {
           {/* Number of Days */}
           <div>
             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wider">
-              ¿Cuántos días durará tu viaje?
+              {t('setup.daysQuestion')}
             </label>
             <div className="flex gap-2 flex-wrap justify-center md:justify-start">
               {[1, 2, 3, 4, 5, 6, 7].map((num) => (
@@ -139,7 +138,7 @@ const TripSetup = ({ trip, onComplete }) => {
                       : 'bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
                   }`}
                 >
-                  {num} <span className="hidden md:inline ml-1">{num === 1 ? 'día' : 'días'}</span>
+                  {num} <span className="hidden md:inline ml-1">{t('setup.day', { count: num })}</span>
                 </button>
               ))}
               <button
@@ -157,7 +156,7 @@ const TripSetup = ({ trip, onComplete }) => {
             {showCustomDays && (
                 <div className="animate-fade-in mt-4">
                   <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                    Ingresa el número de días:
+                    {t('setup.customDaysLabel')}
                   </label>
                   <input
                     type="number"
@@ -166,7 +165,7 @@ const TripSetup = ({ trip, onComplete }) => {
                     value={customDays}
                     onChange={handleCustomDaysChange}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-lg font-bold"
-                    placeholder="Ej: 10"
+                    placeholder={t('setup.customDaysPlaceholder')}
                     autoFocus
                   />
                 </div>
@@ -176,7 +175,7 @@ const TripSetup = ({ trip, onComplete }) => {
           {/* Days Configuration */}
           <div>
             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wider">
-              Personaliza tus días
+              {t('setup.customizeDaysLabel')}
             </label>
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               {days.map((day, index) => (
@@ -188,12 +187,12 @@ const TripSetup = ({ trip, onComplete }) => {
                     className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0 p-0"
                   />
                   <div className="flex-1">
-                     <span className="text-[10px] text-slate-500 dark:text-slate-500 uppercase font-bold tracking-wider block mb-0.5">Día {index + 1}</span>
+                     <span className="text-[10px] text-slate-500 dark:text-slate-500 uppercase font-bold tracking-wider block mb-0.5">{t('setup.dayLabel', { number: index + 1 })}</span>
                      <input
                       type="text"
                       value={day.title}
                       onChange={(e) => handleDayChange(index, 'title', e.target.value)}
-                      placeholder={`Título del Día ${index + 1}`}
+                      placeholder={t('setup.dayTitlePlaceholder', { number: index + 1 })}
                       className="w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none font-medium"
                     />
                   </div>
@@ -206,12 +205,12 @@ const TripSetup = ({ trip, onComplete }) => {
           <div>
             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wider">
               <i className="fas fa-hotel mr-2"></i>
-              Ubicación Base (Opcional)
+              {t('setup.baseLocationLabel')}
             </label>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Busca tu hotel, Airbnb o punto de partida principal</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t('setup.baseLocationHint')}</p>
             <LocationSearchInput
               onLocationSelect={handleLocationSelect}
-              placeholder="Busca tu hotel o alojamiento..."
+              placeholder={t('setup.baseLocationPlaceholder')}
               city={trip.city}
             />
             {baseLocation && (
@@ -243,12 +242,12 @@ const TripSetup = ({ trip, onComplete }) => {
               {loading ? (
                 <>
                   <i className="fas fa-circle-notch fa-spin mr-2"></i>
-                  Creando itinerario...
+                  {t('setup.creating')}
                 </>
               ) : (
                 <>
                   <i className="fas fa-check-circle mr-2"></i>
-                  Comenzar a Planear
+                  {t('setup.startPlanning')}
                 </>
               )}
             </button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import MapComponent from './components/MapComponent';
 import BottomSheet from './components/BottomSheet';
 import DaySelector from './components/DaySelector';
@@ -28,6 +29,7 @@ import { testConnection } from './lib/supabase';
 const BASE_LOCATION_ID = 'base-location';
 
 function App() {
+  const { t } = useTranslation(['itinerary', 'common']);
   // Navegación real basada en URL (home / agencia / viaje) -- ver
   // useAppRoute.js. currentTrip sigue siendo el objeto completo del viaje
   // (lo necesitan useSupabaseItinerary y los hijos); la URL solo carga el
@@ -166,7 +168,7 @@ function App() {
       .catch((err) => {
         if (cancelled) return;
         console.error('No se pudo cargar el viaje desde la URL:', err);
-        toast.error('No se encontró ese viaje o ya no tienes acceso a él.');
+        toast.error(t('itinerary:app.tripNotFound'));
         navigate({ screen: 'home' }, { replace: true });
       })
       .finally(() => {
@@ -198,7 +200,7 @@ function App() {
     try {
       await removeStop(activeDayId, stopId);
     } catch (error) {
-      notifyActionError(toast, error, 'Error al eliminar la parada');
+      notifyActionError(toast, error, t('itinerary:app.errors.deleteStop'));
     }
   };
 
@@ -206,7 +208,7 @@ function App() {
     try {
       await updateStopImage(stopId, imageUrl);
     } catch (error) {
-      notifyActionError(toast, error, 'Error al actualizar la foto');
+      notifyActionError(toast, error, t('itinerary:app.errors.updatePhoto'));
     }
   };
 
@@ -233,7 +235,7 @@ function App() {
       lng: baseLocation.lng,
       address: baseLocation.desc,
       img: baseLocation.img,
-      tip: 'Tu punto base durante este viaje.',
+      tip: t('itinerary:app.hotelTip'),
     };
     setSelectedStop(hotelPlace);
 
@@ -302,19 +304,19 @@ function App() {
     const newStop = {
       id: `custom-${Date.now()}`,
       ...placeData,
-      tip: placeData.tip || "Agregado por ti",
-      time: placeData.time || "N/A"
+      tip: placeData.tip || t('itinerary:app.defaultStopTip'),
+      time: placeData.time || t('itinerary:app.defaultStopTime')
     };
     try {
       await addStop(activeDayId, newStop);
     } catch (error) {
-      notifyActionError(toast, error, 'Error al agregar el lugar');
+      notifyActionError(toast, error, t('itinerary:app.errors.addPlace'));
       return;
     }
 
     // Reordenar automáticamente por distancia
     setTimeout(() => {
-      reorderStopsByDistance(activeDayId).catch((error) => notifyActionError(toast, error, 'Error al reordenar las paradas'));
+      reorderStopsByDistance(activeDayId).catch((error) => notifyActionError(toast, error, t('itinerary:app.errors.reorderStops')));
     }, 100);
 
     setIsSearchOpen(false);
@@ -330,7 +332,7 @@ function App() {
     try {
       await updateStop(activeDayId, updatedPlace);
     } catch (error) {
-      notifyActionError(toast, error, 'Error al guardar los cambios');
+      notifyActionError(toast, error, t('itinerary:app.errors.saveChanges'));
       return;
     }
     setIsEditOpen(false);
@@ -339,7 +341,7 @@ function App() {
 
     // Reordenar después de editar
     setTimeout(() => {
-      reorderStopsByDistance(activeDayId).catch((error) => notifyActionError(toast, error, 'Error al reordenar las paradas'));
+      reorderStopsByDistance(activeDayId).catch((error) => notifyActionError(toast, error, t('itinerary:app.errors.reorderStops')));
     }, 100);
   };
 
@@ -387,7 +389,7 @@ function App() {
       <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white font-medium">Cargando viaje...</p>
+          <p className="text-white font-medium">{t('itinerary:app.loadingTrip')}</p>
         </div>
       </div>
     );
@@ -404,7 +406,7 @@ function App() {
       <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white font-medium">Cargando itinerario...</p>
+          <p className="text-white font-medium">{t('itinerary:app.loadingItinerary')}</p>
         </div>
       </div>
     );
@@ -416,13 +418,13 @@ function App() {
       <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-6">
         <div className="text-center max-w-md">
           <i className="fas fa-exclamation-triangle text-5xl text-red-500 mb-4"></i>
-          <h2 className="text-2xl font-bold text-white mb-2">Error de Conexión</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('itinerary:app.connectionError')}</h2>
           <p className="text-slate-400 mb-6">{error}</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition"
           >
-            Reintentar
+            {t('common:actions.retry')}
           </button>
         </div>
       </div>
@@ -473,9 +475,9 @@ function App() {
         <div className="h-full w-full flex items-center justify-center bg-slate-900 text-center p-6">
           <div className="max-w-sm text-slate-300">
             <i className="fas fa-triangle-exclamation text-4xl mb-4 opacity-50"></i>
-            <p className="font-bold mb-1">Sin conexión</p>
+            <p className="font-bold mb-1">{t('itinerary:app.offlineTitle')}</p>
             <p className="text-sm text-slate-400">
-              Este viaje todavía no tiene datos guardados en este dispositivo.
+              {t('itinerary:app.offlineNoLocalData')}
             </p>
           </div>
         </div>
@@ -489,7 +491,7 @@ function App() {
       <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-4 z-[500]">
         <button
           onClick={() => setIsMenuOpen(true)}
-          aria-label="Abrir menú"
+          aria-label={t('itinerary:app.openMenuAria')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-white border border-white/10' : 'bg-white text-slate-800'}`}
         >
           <i className="fas fa-bars text-lg"></i>
@@ -499,7 +501,7 @@ function App() {
       <div className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] right-4 z-[500]">
         <button
           onClick={toggleTheme}
-          aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          aria-label={isDarkMode ? t('common:theme.toggleToLight') : t('common:theme.toggleToDark')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 ${isDarkMode ? 'bg-slate-900/90 text-amber-400 border border-white/10' : 'bg-white text-slate-800'}`}
         >
           <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
@@ -541,15 +543,15 @@ function App() {
       <div className="absolute bottom-[170px] right-4 z-[400] flex flex-col gap-3 pointer-events-none">
         <button
           onClick={() => setIsSearchOpen(true)}
-          aria-label="Agregar lugar al itinerario"
+          aria-label={t('itinerary:app.addPlaceAria')}
           className="w-12 h-12 rounded-full bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)] flex items-center justify-center hover:bg-blue-500 active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm"
         >
             <i className="fas fa-plus text-lg"></i>
         </button>
         <button
           onClick={toggleGPS}
-          aria-label={gpsEnabled ? 'GPS activado, tocar para desactivar' : 'GPS desactivado, tocar para activar'}
-          title={gpsEnabled ? "GPS Activado - Click para desactivar" : "GPS Desactivado - Click para activar"}
+          aria-label={gpsEnabled ? t('itinerary:app.gpsOnAria') : t('itinerary:app.gpsOffAria')}
+          title={gpsEnabled ? t('itinerary:app.gpsOnTitle') : t('itinerary:app.gpsOffTitle')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
             gpsEnabled
               ? 'bg-green-500 text-white hover:bg-green-600 shadow-[0_0_15px_rgba(34,197,94,0.5)]'
@@ -561,8 +563,8 @@ function App() {
         <button
           onClick={handleCenterOnUser}
           disabled={!gpsEnabled || !userLocation}
-          aria-label={!gpsEnabled ? 'Activa el GPS primero' : 'Ir a mi ubicación'}
-          title={!gpsEnabled ? "Activa el GPS primero" : "Ir a mi ubicación"}
+          aria-label={!gpsEnabled ? t('itinerary:app.enableGpsFirst') : t('itinerary:app.goToMyLocation')}
+          title={!gpsEnabled ? t('itinerary:app.enableGpsFirst') : t('itinerary:app.goToMyLocation')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
             gpsEnabled && userLocation
               ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
@@ -574,8 +576,8 @@ function App() {
         <button
           onClick={handleCenterOnBase}
           disabled={!baseLocation}
-          aria-label="Ir a ubicación base"
-          title="Ir a ubicación base"
+          aria-label={t('itinerary:app.goToBaseLocation')}
+          title={t('itinerary:app.goToBaseLocation')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all pointer-events-auto border border-white/20 backdrop-blur-sm ${
             baseLocation
               ? isDarkMode ? 'bg-slate-900/90 text-amber-400 hover:bg-slate-800' : 'bg-white text-amber-500 hover:bg-slate-50'

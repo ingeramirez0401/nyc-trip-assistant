@@ -1,16 +1,17 @@
 import { supabase } from '../lib/supabase';
 import { assertOnline } from '../lib/connectivity';
+import i18n from '../i18n';
 
 // Las llamadas a OpenAI viven en el backend (server/index.js). La API key
 // nunca se expone al navegador; aquí solo se llama al endpoint propio,
 // adjuntando el token de sesión de Supabase para que el servidor pueda
 // verificar que quien pide la generación es un usuario autenticado.
 async function callAI(path, body) {
-  assertOnline('generar un itinerario con IA');
+  assertOnline('generateAiItinerary');
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    throw new Error('Debes iniciar sesión para usar la generación con IA.');
+    throw new Error(i18n.t('tripSetup:aiGenerator.errors.notAuthenticated'));
   }
 
   const response = await fetch(`/api/ai/${path}`, {
@@ -19,13 +20,15 @@ async function callAI(path, body) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify(body),
+    // El idioma elegido viaja en cada llamado -- el backend lo usa para
+    // pedirle a GPT-4o que responda en ese idioma (ver server/index.js).
+    body: JSON.stringify({ ...body, language: i18n.language }),
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Error en el servicio de IA');
+    throw new Error(data.error || i18n.t('tripSetup:aiGenerator.errors.aiServiceGeneric'));
   }
 
   return data;

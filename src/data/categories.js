@@ -27,8 +27,16 @@ export const getCategoryById = (id) => {
 
 export const getCategoryIcon = (categoryName) => {
   const normalized = categoryName?.toLowerCase();
-  const category = categories.find(cat => 
+  const category = categories.find(cat =>
     cat.id === normalized || cat.name.toLowerCase() === normalized
   );
   return category || categories[categories.length - 1];
 };
+
+// `cat.name` (ej. "Cultura") es el CÓDIGO INTERNO real -- se guarda tal
+// cual en cada parada (EditPlaceModal, PlaceSearch) y el prompt de IA del
+// backend lo usa como enum fijo en español. Nunca se traduce ni se
+// modifica; esta función solo resuelve la etiqueta a MOSTRAR según el
+// idioma activo, vía la clave `common:category.<id>` (mismo id que ya usa
+// `categories`, ver src/i18n/locales/*/common.json).
+export const getCategoryLabel = (t, category) => t(`common:category.${category.id}`);

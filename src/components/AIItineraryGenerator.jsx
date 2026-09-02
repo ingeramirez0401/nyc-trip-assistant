@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import LocationSearchInput from './LocationSearchInput';
 import { useToast } from '../contexts/ToastContext';
 
 const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
+  const { t } = useTranslation('tripSetup');
   const toast = useToast();
   const [step, setStep] = useState(1);
   const [numDays, setNumDays] = useState(3);
@@ -12,14 +14,14 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
   const [generating, setGenerating] = useState(false);
 
   const interestOptions = [
-    { id: 'art', label: '🎨 Arte', icon: 'fa-palette' },
-    { id: 'food', label: '🍽️ Gastronomía', icon: 'fa-utensils' },
-    { id: 'history', label: '🏛️ Historia', icon: 'fa-landmark' },
-    { id: 'nature', label: '🌳 Naturaleza', icon: 'fa-tree' },
-    { id: 'nightlife', label: '🌃 Vida Nocturna', icon: 'fa-moon' },
-    { id: 'shopping', label: '🛍️ Compras', icon: 'fa-shopping-bag' },
-    { id: 'adventure', label: '⛰️ Aventura', icon: 'fa-hiking' },
-    { id: 'culture', label: '🎭 Cultura', icon: 'fa-masks-theater' }
+    { id: 'art', label: t('aiGenerator.interests.options.art'), icon: 'fa-palette' },
+    { id: 'food', label: t('aiGenerator.interests.options.food'), icon: 'fa-utensils' },
+    { id: 'history', label: t('aiGenerator.interests.options.history'), icon: 'fa-landmark' },
+    { id: 'nature', label: t('aiGenerator.interests.options.nature'), icon: 'fa-tree' },
+    { id: 'nightlife', label: t('aiGenerator.interests.options.nightlife'), icon: 'fa-moon' },
+    { id: 'shopping', label: t('aiGenerator.interests.options.shopping'), icon: 'fa-shopping-bag' },
+    { id: 'adventure', label: t('aiGenerator.interests.options.adventure'), icon: 'fa-hiking' },
+    { id: 'culture', label: t('aiGenerator.interests.options.culture'), icon: 'fa-masks-theater' }
   ];
 
   const totalSteps = 4;
@@ -53,7 +55,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
 
   const handleGenerate = async () => {
     if (interests.length === 0) {
-      toast.warning('Selecciona al menos un interés');
+      toast.warning(t('aiGenerator.errors.noInterests'));
       return;
     }
 
@@ -62,7 +64,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
       await onGenerate({ numDays, interests, budget, baseLocation });
     } catch (error) {
       console.error('Error generating:', error);
-      toast.error('Error al generar itinerario. Por favor intenta de nuevo.');
+      toast.error(t('aiGenerator.errors.generate'));
     } finally {
       setGenerating(false);
     }
@@ -70,10 +72,10 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
 
   const getStepTitle = () => {
     switch(step) {
-      case 1: return 'Duración del Viaje';
-      case 2: return 'Intereses';
-      case 3: return 'Presupuesto';
-      case 4: return 'Alojamiento';
+      case 1: return t('aiGenerator.steps.duration');
+      case 2: return t('aiGenerator.steps.interests');
+      case 3: return t('aiGenerator.steps.budget');
+      case 4: return t('aiGenerator.steps.lodging');
       default: return '';
     }
   };
@@ -92,7 +94,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
               <i className={`fas ${step > 1 ? 'fa-arrow-left' : 'fa-times'}`}></i>
             </button>
             <div className="text-center">
-              <span className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">Paso {step} de {totalSteps}</span>
+              <span className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">{t('aiGenerator.stepOf', { step, total: totalSteps })}</span>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">{getStepTitle()}</h2>
             </div>
             <div className="w-10"></div> {/* Spacer for alignment */}
@@ -117,8 +119,8 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
                 <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-4xl">📅</span>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¿Cuántos días?</h3>
-                <p className="text-slate-500 dark:text-slate-400">Define la duración de tu aventura en {city}</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('aiGenerator.duration.title')}</h3>
+                <p className="text-slate-500 dark:text-slate-400">{t('aiGenerator.duration.subtitle', { city })}</p>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
@@ -133,7 +135,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
                     }`}
                   >
                     <span className="text-xl block mb-1">{num}</span>
-                    <span className="text-xs uppercase opacity-70">{num === 1 ? 'Día' : 'Días'}</span>
+                    <span className="text-xs uppercase opacity-70">{t('aiGenerator.duration.day', { count: num })}</span>
                   </button>
                 ))}
               </div>
@@ -147,8 +149,8 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
                  <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-4xl">✨</span>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¿Qué te apasiona?</h3>
-                <p className="text-slate-500 dark:text-slate-400">Selecciona al menos uno para personalizar tu viaje</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('aiGenerator.interests.title')}</h3>
+                <p className="text-slate-500 dark:text-slate-400">{t('aiGenerator.interests.subtitle')}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -179,15 +181,15 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
                 <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-4xl">💸</span>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Tu Presupuesto</h3>
-                <p className="text-slate-500 dark:text-slate-400">Para recomendarte los mejores lugares</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('aiGenerator.budget.title')}</h3>
+                <p className="text-slate-500 dark:text-slate-400">{t('aiGenerator.budget.subtitle')}</p>
               </div>
 
               <div className="space-y-3">
                 {[
-                  { id: 'low', icon: '💰', label: 'Económico', desc: 'Ahorro máximo, lugares gratuitos' },
-                  { id: 'medium', icon: '💵', label: 'Moderado', desc: 'Equilibrio entre calidad y precio' },
-                  { id: 'high', icon: '💎', label: 'Premium', desc: 'Experiencias exclusivas' }
+                  { id: 'low', icon: '💰', label: t('aiGenerator.budget.low.label'), desc: t('aiGenerator.budget.low.desc') },
+                  { id: 'medium', icon: '💵', label: t('aiGenerator.budget.medium.label'), desc: t('aiGenerator.budget.medium.desc') },
+                  { id: 'high', icon: '💎', label: t('aiGenerator.budget.high.label'), desc: t('aiGenerator.budget.high.desc') }
                 ].map((opt) => (
                   <button
                     key={opt.id}
@@ -217,13 +219,13 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
                 <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-4xl">🏨</span>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¿Dónde te hospedas?</h3>
-                <p className="text-slate-500 dark:text-slate-400">Opcional: Para optimizar tus rutas diarias</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('aiGenerator.lodging.title')}</h3>
+                <p className="text-slate-500 dark:text-slate-400">{t('aiGenerator.lodging.subtitle')}</p>
               </div>
 
               <LocationSearchInput
                 onLocationSelect={handleLocationSelect}
-                placeholder={`Busca tu hotel en ${city}${country ? `, ${country}` : ''}...`}
+                placeholder={t('aiGenerator.lodging.placeholder', { city, countrySuffix: country ? `, ${country}` : '' })}
                 city={city}
               />
 
@@ -249,7 +251,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
                 <div className="flex items-start gap-3">
                   <i className="fas fa-info-circle text-blue-500 dark:text-blue-400 mt-1"></i>
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    La IA usará esta ubicación para planear el inicio y fin de tus días.
+                    {t('aiGenerator.lodging.aiNotice')}
                   </p>
                 </div>
               </div>
@@ -265,7 +267,7 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
               disabled={step === 2 && interests.length === 0}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <span>Continuar</span>
+              <span>{t('aiGenerator.continue')}</span>
               <i className="fas fa-arrow-right"></i>
             </button>
           ) : (
@@ -277,12 +279,12 @@ const AIItineraryGenerator = ({ city, country, onGenerate, onCancel }) => {
               {generating ? (
                 <>
                   <i className="fas fa-circle-notch fa-spin"></i>
-                  <span>Creando tu viaje...</span>
+                  <span>{t('aiGenerator.generating')}</span>
                 </>
               ) : (
                 <>
                   <i className="fas fa-wand-magic-sparkles"></i>
-                  <span>Generar Itinerario</span>
+                  <span>{t('aiGenerator.generate')}</span>
                 </>
               )}
             </button>

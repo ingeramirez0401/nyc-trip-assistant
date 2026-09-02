@@ -1,0 +1,72 @@
+{
+  "setup": {
+    "title": "Configurar Itinerario",
+    "daysQuestion": "¿Cuántos días durará tu viaje?",
+    "day_one": "día",
+    "day_other": "días",
+    "customDaysLabel": "Ingresa el número de días:",
+    "customDaysPlaceholder": "Ej: 10",
+    "customizeDaysLabel": "Personaliza tus días",
+    "dayLabel": "Día {{number}}",
+    "dayTitlePlaceholder": "Título del Día {{number}}",
+    "baseLocationLabel": "Ubicación Base (Opcional)",
+    "baseLocationHint": "Busca tu hotel, Airbnb o punto de partida principal",
+    "baseLocationPlaceholder": "Busca tu hotel o alojamiento...",
+    "creating": "Creando itinerario...",
+    "startPlanning": "Comenzar a Planear",
+    "errors": {
+      "setup": "Error al configurar el viaje. Por favor intenta de nuevo."
+    }
+  },
+  "aiGenerator": {
+    "stepOf": "Paso {{step}} de {{total}}",
+    "steps": {
+      "duration": "Duración del Viaje",
+      "interests": "Intereses",
+      "budget": "Presupuesto",
+      "lodging": "Alojamiento"
+    },
+    "duration": {
+      "title": "¿Cuántos días?",
+      "subtitle": "Define la duración de tu aventura en {{city}}",
+      "day_one": "Día",
+      "day_other": "Días"
+    },
+    "interests": {
+      "title": "¿Qué te apasiona?",
+      "subtitle": "Selecciona al menos uno para personalizar tu viaje",
+      "options": {
+        "art": "🎨 Arte",
+        "food": "🍽️ Gastronomía",
+        "history": "🏛️ Historia",
+        "nature": "🌳 Naturaleza",
+        "nightlife": "🌃 Vida Nocturna",
+        "shopping": "🛍️ Compras",
+        "adventure": "⛰️ Aventura",
+        "culture": "🎭 Cultura"
+      }
+    },
+    "budget": {
+      "title": "Tu Presupuesto",
+      "subtitle": "Para recomendarte los mejores lugares",
+      "low": { "label": "Económico", "desc": "Ahorro máximo, lugares gratuitos" },
+      "medium": { "label": "Moderado", "desc": "Equilibrio entre calidad y precio" },
+      "high": { "label": "Premium", "desc": "Experiencias exclusivas" }
+    },
+    "lodging": {
+      "title": "¿Dónde te hospedas?",
+      "subtitle": "Opcional: Para optimizar tus rutas diarias",
+      "placeholder": "Busca tu hotel en {{city}}{{countrySuffix}}...",
+      "aiNotice": "La IA usará esta ubicación para planear el inicio y fin de tus días."
+    },
+    "continue": "Continuar",
+    "generating": "Creando tu viaje...",
+    "generate": "Generar Itinerario",
+    "errors": {
+      "noInterests": "Selecciona al menos un interés",
+      "generate": "Error al generar itinerario. Por favor intenta de nuevo.",
+      "notAuthenticated": "Debes iniciar sesión para usar la generación con IA.",
+      "aiServiceGeneric": "Error en el servicio de IA"
+    }
+  }
+}

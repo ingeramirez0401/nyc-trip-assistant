@@ -1,9 +1,11 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { licenseService } from '../services/licenseService';
+import { profileService } from '../services/profileService';
 import { applyBrandTheme, clearBrandTheme } from '../lib/theme';
 import { assertOnline } from '../lib/connectivity';
 import { clearOfflineDb } from '../lib/offlineDb';
+import i18n from '../i18n';
 
 export const AuthContext = createContext({});
 
@@ -65,6 +67,12 @@ export const AuthProvider = ({ children }) => {
       } else {
         profileData = data;
         setProfile(data);
+        // El idioma del perfil manda sobre lo que haya en localStorage --
+        // mismo criterio que ya usa refreshAgencyBranding/applyBrandTheme
+        // para la marca de agencia: una preferencia guardada en la cuenta
+        // debe aplicarse sola al iniciar sesión, sin que el viajero tenga
+        // que volver a elegirla en cada dispositivo.
+        if (profileData?.language) i18n.changeLanguage(profileData.language);
       }
     } catch (error) {
       console.error('Exception fetching profile:', error);
@@ -73,6 +81,26 @@ export const AuthProvider = ({ children }) => {
     }
     refreshLicenses();
     refreshAgencyBranding(profileData);
+  };
+
+  // A diferencia del modo oscuro (que hoy no se persiste en ningún lado,
+  // ver App.jsx), el idioma sí debe sobrevivir un reload y viajar entre
+  // dispositivos: i18next-browser-languagedetector ya deja la elección en
+  // localStorage (tp_language) apenas cambia, y acá además se sincroniza
+  // a la cuenta si hay sesión activa.
+  const changeLanguage = async (lang) => {
+    await i18n.changeLanguage(lang);
+    document.documentElement.lang = lang;
+    if (user) {
+      try {
+        const updated = await profileService.updateProfile(user.id, { language: lang });
+        setProfile(updated);
+        return { error: null };
+      } catch (error) {
+        return { error };
+      }
+    }
+    return { error: null };
   };
 
   const refreshLicenses = async () => {
@@ -109,7 +137,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUp = async (email, password, metadata = {}, captchaToken) => {
-    assertOnline('registrarte');
+    assertOnline('signUp');
     return await supabase.auth.signUp({
       email,
       password,
@@ -122,7 +150,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signIn = async (email, password, captchaToken) => {
-    assertOnline('iniciar sesión');
+    assertOnline('login');
     return await supabase.auth.signInWithPassword({
       email,
       password,
@@ -133,14 +161,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signInWithGoogle = async () => {
-    assertOnline('iniciar sesión con Google');
+    assertOnline('loginWithGoogle');
     return await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
   };
 
   const resetPassword = async (email, captchaToken) => {
-    assertOnline('recuperar tu contraseña');
+    assertOnline('resetPassword');
     return await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/`,
       ...(captchaToken && { captchaToken }),
@@ -150,7 +178,7 @@ export const AuthProvider = ({ children }) => {
   // Reenvía el correo de confirmación de signup -- para la pantalla
   // "revisa tu correo" cuando el usuario dice que nunca le llegó.
   const resendConfirmation = async (email) => {
-    assertOnline('reenviar el correo de confirmación');
+    assertOnline('resendConfirmation');
     return await supabase.auth.resend({
       type: 'signup',
       email,
@@ -159,7 +187,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updatePassword = async (newPassword) => {
-    assertOnline('actualizar tu contraseña');
+    assertOnline('updatePassword');
     const result = await supabase.auth.updateUser({ password: newPassword });
     if (!result.error) {
       setIsPasswordRecovery(false);
@@ -209,6 +237,7 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     resendConfirmation,
     updatePassword,
+    changeLanguage,
   };
 
   return (

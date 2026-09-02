@@ -1,5 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { I18nextProvider } from 'react-i18next'
+import i18n from './i18n'
 import App from './App.jsx'
 import SupabaseDiagnostic from './components/SupabaseDiagnostic.jsx'
 import ApproveAgencyScreen from './components/admin/ApproveAgencyScreen.jsx'
@@ -26,12 +28,14 @@ const Router = () => {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ToastProvider>
-      <PwaUpdateBanner />
-      <ConnectivityBanner />
-      <AuthProvider>
-        <Router />
-      </AuthProvider>
-    </ToastProvider>
+    <I18nextProvider i18n={i18n}>
+      <ToastProvider>
+        <PwaUpdateBanner />
+        <ConnectivityBanner />
+        <AuthProvider>
+          <Router />
+        </AuthProvider>
+      </ToastProvider>
+    </I18nextProvider>
   </React.StrictMode>,
 )

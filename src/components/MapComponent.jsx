@@ -8,6 +8,7 @@ import {
   ColorScheme,
   useMap,
 } from '@vis.gl/react-google-maps';
+import { useTranslation } from 'react-i18next';
 import { getCategoryIcon } from '../data/categories';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -189,14 +190,15 @@ function MapInner({
 }
 
 const MapComponent = (props) => {
+  const { t } = useTranslation('itinerary');
   if (!GOOGLE_MAPS_API_KEY || !GOOGLE_MAPS_MAP_ID) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-slate-900 text-center p-6">
         <div className="max-w-sm text-slate-300">
           <i className="fas fa-map-location-dot text-4xl mb-4 opacity-50"></i>
-          <p className="font-bold mb-1">Mapa no configurado</p>
+          <p className="font-bold mb-1">{t('itinerary:mapNotConfigured.title')}</p>
           <p className="text-sm text-slate-400">
-            Faltan VITE_GOOGLE_MAPS_API_KEY y/o VITE_GOOGLE_MAPS_MAP_ID en el entorno.
+            {t('itinerary:mapNotConfigured.detail')}
           </p>
         </div>
       </div>

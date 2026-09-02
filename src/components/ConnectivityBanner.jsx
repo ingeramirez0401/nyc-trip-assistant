@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 // Franja fija arriba de todo, visible mientras dure la falta de señal --
@@ -7,6 +8,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 // caer la señal como, implícitamente, al recuperarla (la franja desaparece
 // sola -- no hace falta un segundo aviso de "ya volvió").
 const ConnectivityBanner = () => {
+  const { t } = useTranslation('connectivity');
   const online = useOnlineStatus();
 
   if (online) return null;
@@ -18,7 +20,7 @@ const ConnectivityBanner = () => {
       role="status"
     >
       <i className="fas fa-triangle-exclamation"></i>
-      Sin conexión — mostrando lo que ya tienes guardado
+      {t('connectivity:offlineBanner')}
     </div>
   );
 };

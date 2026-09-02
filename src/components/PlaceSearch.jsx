@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { categories } from '../data/categories';
+import { useTranslation } from 'react-i18next';
+import { categories, getCategoryLabel } from '../data/categories';
 import { placesService } from '../services/placesService';
 
 // Ícono + color representativo por tipo de lugar de Google -- para que la
@@ -39,6 +40,7 @@ const styleForTypes = (types) => {
 };
 
 const PlaceSearch = ({ onAddPlace, onClose, city }) => {
+  const { t } = useTranslation('placeSearch');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -65,7 +67,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
     } catch (err) {
       console.error('Search failed', err);
       setResults([]);
-      setSearchError(err.message || 'Error en la búsqueda');
+      setSearchError(err.message || t('placeSearch:errors.search'));
     } finally {
       setLoading(false);
     }
@@ -125,7 +127,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
       });
     } catch (err) {
       console.error('Error getting place details', err);
-      setSearchError('No se pudo obtener el detalle de ese lugar. Intenta de nuevo.');
+      setSearchError(t('placeSearch:errors.details'));
     }
   };
 
@@ -161,7 +163,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                     <i className="fas fa-arrow-left text-sm"></i>
                 </button>
                 <h2 className="font-bold text-lg text-slate-900 dark:text-white">
-                    {selectedPlace ? 'Confirmar Lugar' : 'Agregar Nuevo Lugar'}
+                    {selectedPlace ? t('placeSearch:confirmTitle') : t('placeSearch:addTitle')}
                 </h2>
             </div>
 
@@ -179,7 +181,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                             <i className={`fas fa-search absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${loading ? 'text-blue-500' : 'text-slate-400 group-focus-within:text-blue-500'}`}></i>
                             <input
                                 type="text"
-                                placeholder="Ej: Central Park, Empire State..."
+                                placeholder={t('placeSearch:searchPlaceholder')}
                                 className="w-full pl-11 pr-11 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-inner focus:ring-0 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all"
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
@@ -210,8 +212,8 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                                     <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${restrictToCity ? 'translate-x-4' : 'translate-x-0'}`}></div>
                                 </div>
                                 <span className="text-sm text-slate-600 dark:text-slate-300">
-                                    Solo en <strong className="text-slate-900 dark:text-white">{city}</strong>
-                                    {!restrictToCity && <span className="text-slate-400 dark:text-slate-500"> (apagado, buscando en todo el mundo)</span>}
+                                    {t('placeSearch:restrictToCityPrefix')} <strong className="text-slate-900 dark:text-white">{city}</strong>
+                                    {!restrictToCity && <span className="text-slate-400 dark:text-slate-500"> {t('placeSearch:restrictToCitySuffix')}</span>}
                                 </span>
                             </label>
                         )}
@@ -219,13 +221,13 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
 
                     <div className="flex-1 overflow-y-auto px-5 pb-5 hide-scrollbar">
                         {query.trim().length > 0 && query.trim().length < 2 && (
-                            <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-6">Sigue escribiendo...</p>
+                            <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-6">{t('placeSearch:keepTyping')}</p>
                         )}
 
                         {loading && (
                             <div className="py-12 text-center text-slate-500">
                                 <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-blue-500 animate-spin mx-auto mb-4"></div>
-                                <p className="font-medium">Buscando lugares...</p>
+                                <p className="font-medium">{t('placeSearch:searching')}</p>
                             </div>
                         )}
 
@@ -239,9 +241,9 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                         {!loading && !searchError && results.length === 0 && query.trim().length >= 2 && (
                             <div className="py-12 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5 border-dashed mx-2">
                                 <i className="fas fa-map-signs text-3xl mb-3 opacity-50"></i>
-                                <p>No encontramos lugares con ese nombre.</p>
+                                <p>{t('placeSearch:noResults')}</p>
                                 {restrictToCity && city && (
-                                    <p className="text-xs mt-1.5 opacity-75">Prueba apagando &quot;Solo en {city}&quot; para buscar en todo el mundo.</p>
+                                    <p className="text-xs mt-1.5 opacity-75">{t('placeSearch:tryWithoutRestrict', { city })}</p>
                                 )}
                             </div>
                         )}
@@ -284,7 +286,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
 
                         {/* Category Selector */}
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Selecciona una Categoría</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">{t('placeSearch:categoryLabel')}</label>
                             <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                                 {categories.map((cat) => (
                                     <button
@@ -298,7 +300,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                                     >
                                         <i className={`fas ${cat.icon} text-xl`} style={{ color: selectedCategory === cat.name ? '#3b82f6' : cat.color }}></i>
                                         <p className={`text-[10px] font-bold truncate w-full text-center ${selectedCategory === cat.name ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-                                            {cat.name}
+                                            {getCategoryLabel(t, cat)}
                                         </p>
                                     </button>
                                 ))}
@@ -319,20 +321,20 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                                                 onClick={() => setUploadedImage(null)}
                                                 className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
                                             >
-                                                <i className="fas fa-trash-alt mr-2"></i> Quitar
+                                                <i className="fas fa-trash-alt mr-2"></i> {t('placeSearch:removePhoto')}
                                             </button>
                                         ) : (
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
                                                 className="bg-white text-slate-900 px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 hover:scale-100 transition"
                                             >
-                                                <i className="fas fa-camera mr-2"></i> Cambiar foto
+                                                <i className="fas fa-camera mr-2"></i> {t('placeSearch:changePhoto')}
                                             </button>
                                         )}
                                     </div>
                                     {!uploadedImage && (
                                         <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-full">
-                                            Foto de Google Places
+                                            {t('placeSearch:googlePhotoBadge')}
                                         </span>
                                     )}
                                 </div>
@@ -345,8 +347,8 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                                         <i className="fas fa-camera text-2xl text-slate-500 dark:text-slate-400"></i>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Agregar foto del lugar</p>
-                                        <p className="text-xs opacity-60 mt-1">Cámara o Galería</p>
+                                        <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{t('placeSearch:addPhoto')}</p>
+                                        <p className="text-xs opacity-60 mt-1">{t('placeSearch:cameraOrGallery')}</p>
                                     </div>
                                 </button>
                             )}
@@ -364,7 +366,7 @@ const PlaceSearch = ({ onAddPlace, onClose, city }) => {
                             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                         >
                             <i className="fas fa-plus-circle"></i>
-                            <span>Agregar al Itinerario</span>
+                            <span>{t('placeSearch:addToItinerary')}</span>
                         </button>
                     </div>
                 </div>

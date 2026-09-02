@@ -1,0 +1,72 @@
+{
+  "setup": {
+    "title": "Set Up Itinerary",
+    "daysQuestion": "How many days will your trip be?",
+    "day_one": "day",
+    "day_other": "days",
+    "customDaysLabel": "Enter the number of days:",
+    "customDaysPlaceholder": "E.g.: 10",
+    "customizeDaysLabel": "Customize your days",
+    "dayLabel": "Day {{number}}",
+    "dayTitlePlaceholder": "Day {{number}} Title",
+    "baseLocationLabel": "Base Location (Optional)",
+    "baseLocationHint": "Search your hotel, Airbnb, or main starting point",
+    "baseLocationPlaceholder": "Search your hotel or lodging...",
+    "creating": "Creating itinerary...",
+    "startPlanning": "Start Planning",
+    "errors": {
+      "setup": "Error setting up the trip. Please try again."
+    }
+  },
+  "aiGenerator": {
+    "stepOf": "Step {{step}} of {{total}}",
+    "steps": {
+      "duration": "Trip Duration",
+      "interests": "Interests",
+      "budget": "Budget",
+      "lodging": "Lodging"
+    },
+    "duration": {
+      "title": "How many days?",
+      "subtitle": "Set the length of your adventure in {{city}}",
+      "day_one": "Day",
+      "day_other": "Days"
+    },
+    "interests": {
+      "title": "What are you into?",
+      "subtitle": "Select at least one to personalize your trip",
+      "options": {
+        "art": "🎨 Art",
+        "food": "🍽️ Food",
+        "history": "🏛️ History",
+        "nature": "🌳 Nature",
+        "nightlife": "🌃 Nightlife",
+        "shopping": "🛍️ Shopping",
+        "adventure": "⛰️ Adventure",
+        "culture": "🎭 Culture"
+      }
+    },
+    "budget": {
+      "title": "Your Budget",
+      "subtitle": "So we can recommend the best places",
+      "low": { "label": "Budget", "desc": "Maximum savings, free places" },
+      "medium": { "label": "Moderate", "desc": "Balance between quality and price" },
+      "high": { "label": "Premium", "desc": "Exclusive experiences" }
+    },
+    "lodging": {
+      "title": "Where are you staying?",
+      "subtitle": "Optional: To optimize your daily routes",
+      "placeholder": "Search your hotel in {{city}}{{countrySuffix}}...",
+      "aiNotice": "AI will use this location to plan the start and end of your days."
+    },
+    "continue": "Continue",
+    "generating": "Creating your trip...",
+    "generate": "Generate Itinerary",
+    "errors": {
+      "noInterests": "Select at least one interest",
+      "generate": "Error generating itinerary. Please try again.",
+      "notAuthenticated": "You need to sign in to use AI generation.",
+      "aiServiceGeneric": "Error in the AI service"
+    }
+  }
+}

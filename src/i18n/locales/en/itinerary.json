@@ -1,0 +1,43 @@
+{
+  "dayLabel": "Day {{number}}",
+  "offlineBadge": "Map offline",
+  "emptyState": "No stops for this day yet.",
+  "markVisited": "Mark",
+  "visited": "Visited",
+  "confirmDeleteStop": "Delete this stop from the itinerary?",
+  "endOfDay": "End of day",
+  "openFullList": "View full day itinerary",
+  "visitedCount_one": "{{done}}/{{total}} visited",
+  "visitedCount_other": "{{done}}/{{total}} visited",
+  "mapNotConfigured": {
+    "title": "Map not configured",
+    "detail": "VITE_GOOGLE_MAPS_API_KEY and/or VITE_GOOGLE_MAPS_MAP_ID are missing from the environment."
+  },
+  "app": {
+    "openMenuAria": "Open menu",
+    "addPlaceAria": "Add place to itinerary",
+    "gpsOnAria": "GPS on, tap to turn off",
+    "gpsOffAria": "GPS off, tap to turn on",
+    "gpsOnTitle": "GPS On - Click to turn off",
+    "gpsOffTitle": "GPS Off - Click to turn on",
+    "enableGpsFirst": "Turn on GPS first",
+    "goToMyLocation": "Go to my location",
+    "goToBaseLocation": "Go to base location",
+    "loadingTrip": "Loading trip...",
+    "loadingItinerary": "Loading itinerary...",
+    "connectionError": "Connection Error",
+    "offlineTitle": "Offline",
+    "offlineNoLocalData": "This trip doesn't have any data saved on this device yet.",
+    "tripNotFound": "That trip wasn't found or you no longer have access to it.",
+    "hotelTip": "Your base location for this trip.",
+    "defaultStopTip": "Added by you",
+    "defaultStopTime": "N/A",
+    "errors": {
+      "deleteStop": "Error deleting the stop",
+      "updatePhoto": "Error updating the photo",
+      "addPlace": "Error adding the place",
+      "reorderStops": "Error reordering the stops",
+      "saveChanges": "Error saving the changes"
+    }
+  }
+}

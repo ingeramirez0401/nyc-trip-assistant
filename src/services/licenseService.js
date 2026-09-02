@@ -8,7 +8,7 @@ import { assertOnline } from '../lib/connectivity';
 // claro en vez de un error de red crudo -- el resultado final (sin datos)
 // es el mismo de cualquier forma.
 async function callAPI(path, options = {}) {
-  assertOnline('usar el servicio de licencias');
+  assertOnline('useLicenseService');
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
@@ -94,7 +94,7 @@ export const licenseService = {
   // requiere ningún secreto -- solo la sesión propia del usuario, la misma
   // que ya usan tripService/dayService/stopService).
   async consumeQuota(quotaType) {
-    assertOnline('usar tu licencia');
+    assertOnline('useLicense');
     const { data, error } = await supabase.rpc('trippulse_consume_license_quota', {
       p_quota_type: quotaType,
     });

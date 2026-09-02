@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Segundo rediseño. El primero (pestaña activa que crece con título +
 // progreso inline, ver git blame) tenía dos problemas reales que el
@@ -21,6 +22,7 @@ import React, { useEffect, useRef } from 'react';
 // esos botones bajan por el safe-area pero este selector no lo hacía, así
 // que en pantallas con notch terminaban chocando.
 const DaySelector = ({ days, activeDayId, onSelectDay, visited = {}, onOpenList }) => {
+  const { t } = useTranslation('itinerary');
   const hasOverflow = days.length > 5;
   const activeBtnRef = useRef(null);
 
@@ -69,7 +71,8 @@ const DaySelector = ({ days, activeDayId, onSelectDay, visited = {}, onOpenList 
           {onOpenList && (
             <button
               onClick={onOpenList}
-              title="Ver itinerario completo del día"
+              title={t('itinerary:openFullList')}
+              aria-label={t('itinerary:openFullList')}
               className="shrink-0 w-9 h-9 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center shadow-2xl hover:bg-slate-800 active:scale-95 transition-all"
             >
               <i className="fas fa-list-ul text-sm"></i>
@@ -86,7 +89,7 @@ const DaySelector = ({ days, activeDayId, onSelectDay, visited = {}, onOpenList 
             <span className="text-xs font-bold text-white truncate min-w-0">{activeDay.title}</span>
             {total > 0 && (
               <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-auto">
-                {done}/{total} visitado{total !== 1 ? 's' : ''}
+                {t('itinerary:visitedCount', { count: total, done, total })}
               </span>
             )}
           </div>

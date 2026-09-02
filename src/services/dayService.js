@@ -48,7 +48,7 @@ export const dayService = {
 
   // Crear un nuevo día
   async create(dayData) {
-    assertOnline('agregar un día al itinerario');
+    assertOnline('addDay');
     const { data, error } = await supabase
       .from('trippulse_days')
       .insert([{
@@ -66,7 +66,7 @@ export const dayService = {
 
   // Crear múltiples días a la vez
   async createMultiple(tripId, daysData) {
-    assertOnline('crear los días del itinerario');
+    assertOnline('createDays');
     const days = daysData.map((day, index) => ({
       trip_id: tripId,
       day_number: day.dayNumber || index + 1,
@@ -85,7 +85,7 @@ export const dayService = {
 
   // Actualizar un día
   async update(id, dayData) {
-    assertOnline('guardar cambios en el día');
+    assertOnline('saveDayChanges');
     const { data, error } = await supabase
       .from('trippulse_days')
       .update({
@@ -103,7 +103,7 @@ export const dayService = {
 
   // Eliminar un día (CASCADE eliminará paradas)
   async delete(id) {
-    assertOnline('eliminar el día');
+    assertOnline('deleteDay');
     const { error } = await supabase
       .from('trippulse_days')
       .delete()

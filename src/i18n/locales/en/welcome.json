@@ -1,0 +1,51 @@
+{
+  "loading": "Loading trips...",
+  "accountMenu": "My account",
+  "tagline": "Discover. Plan. Live.",
+  "cta": {
+    "signup": "Create free account",
+    "login": "Sign in"
+  },
+  "agencyGiftPrefix": "A gift from",
+  "license": {
+    "expires": "expires {{date}}"
+  },
+  "emptyState": {
+    "title": "Welcome!",
+    "body": "You don't have any trips planned yet. Start by creating your first itinerary."
+  },
+  "tripsList": {
+    "title": "Your Trips",
+    "deleting": "Deleting...",
+    "deleteTrip": "Delete Trip"
+  },
+  "createForm": {
+    "title": "New Trip",
+    "destinationLabel": "Search Destination *",
+    "destinationPlaceholder": "Search your city or destination...",
+    "nameLabel": "Trip Name (Optional)",
+    "namePlaceholder": "E.g.: Summer Vacation 2026",
+    "generateAI": "Generate with AI",
+    "manual": "Manual",
+    "defaultTripName": "Trip to {{city}}"
+  },
+  "createButton": "Create New Trip",
+  "footer": "Plan, explore and enjoy every moment",
+  "errors": {
+    "loadTrips": "Error loading trips. Please reload the page.",
+    "deleteTripConfirm": "Delete the trip \"{{tripName}}\"? This action cannot be undone.",
+    "deleteTripSuccess": "Trip \"{{tripName}}\" deleted successfully",
+    "deleteTripError": "Error deleting the trip: {{message}}",
+    "deleteTripErrorFallback": "Please try again",
+    "freeLimitReached": "You've reached the free 3-trip limit. Upgrade to VIP or use your agency code for more!",
+    "aiVipOnly": "🔒 AI generation is exclusive to VIP users or those with an agency license. Contact us to upgrade your account.",
+    "selectLocation": "Please search and select a location",
+    "createTrip": "Error creating the trip",
+    "createTripManualFallback": "Error creating the trip. Please try again."
+  },
+  "success": {
+    "tripCreated": "Trip created successfully!",
+    "itineraryGenerated": "Itinerary generated successfully!"
+  },
+  "aiGenerationFailedConfirm": "There was a problem generating the itinerary with AI. Do you want to create the trip manually and set it up yourself?"
+}

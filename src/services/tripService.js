@@ -48,7 +48,7 @@ export const tripService = {
 
   // Crear un nuevo viaje
   async create(tripData) {
-    assertOnline('crear un viaje nuevo');
+    assertOnline('createTrip');
     try {
       // Helper para limpiar strings vacíos a null
       const cleanString = (str) => {
@@ -93,7 +93,7 @@ export const tripService = {
 
   // Actualizar un viaje
   async update(id, tripData) {
-    assertOnline('guardar cambios en el viaje');
+    assertOnline('saveTripChanges');
     const { data, error } = await supabase
       .from('trippulse_trips')
       .update({
@@ -117,7 +117,7 @@ export const tripService = {
 
   // Eliminar un viaje (CASCADE eliminará días y paradas)
   async delete(id) {
-    assertOnline('eliminar el viaje');
+    assertOnline('deleteTrip');
     const { error } = await supabase
       .from('trippulse_trips')
       .delete()

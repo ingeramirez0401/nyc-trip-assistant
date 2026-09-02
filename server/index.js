@@ -22,6 +22,12 @@ if (!OPENAI_API_KEY) {
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
+// El idioma que manda el cliente (i18n.language, ver src/i18n/index.js) se
+// traduce a un nombre legible para metérselo al prompt -- whitelist
+// explícita, 'es' de default para cualquier valor inesperado.
+const LANG_NAME = { es: 'español', en: 'inglés (English)' };
+const resolveLang = (lang) => (lang === 'en' ? 'en' : 'es');
+
 const app = express();
 
 // En producción esto corre detrás de Traefik (ver docker-compose.yml) --
@@ -65,7 +71,8 @@ app.use('/api', placesRoutes);
 
 app.post('/api/ai/generate-itinerary', async (req, res) => {
   try {
-    const { city, country, numDays, interests = [], budget = 'medium' } = req.body;
+    const { city, country, numDays, interests = [], budget = 'medium', language } = req.body;
+    const lang = resolveLang(language);
 
     if (!city || !country || !numDays) {
       return res.status(400).json({ error: 'city, country y numDays son requeridos' });
@@ -120,6 +127,8 @@ IMPORTANTE:
 - Tips deben ser únicos, no genéricos
 - Categorías deben ser una de las listadas
 - Colores en formato hexadecimal
+- El texto para el viajero (title, tip, time, address, título del día) debe estar en ${LANG_NAME[lang]}
+- El campo "category" es un código interno fijo: escríbelo SIEMPRE en español exactamente como aparece en la lista de arriba (Icono, Cultura, Restaurante...), sin traducir, aunque el resto de la respuesta esté en inglés
 - Responde SOLO con el JSON, sin texto adicional`;
 
     const completion = await openai.chat.completions.create({
@@ -127,7 +136,7 @@ IMPORTANTE:
       messages: [
         {
           role: 'system',
-          content: 'Eres un asistente experto en planificación de viajes que genera itinerarios detallados en formato JSON.',
+          content: `Eres un asistente experto en planificación de viajes que genera itinerarios detallados en formato JSON. Responde en ${LANG_NAME[lang]}.`,
         },
         { role: 'user', content: prompt },
       ],
@@ -174,7 +183,8 @@ IMPORTANTE:
 
 app.post('/api/ai/suggestions', async (req, res) => {
   try {
-    const { query, city } = req.body;
+    const { query, city, language } = req.body;
+    const lang = resolveLang(language);
     if (!query || !city) {
       return res.status(400).json({ error: 'query y city son requeridos' });
     }
@@ -184,7 +194,7 @@ app.post('/api/ai/suggestions', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `Eres un asistente de viajes experto en ${city}. Responde con lugares específicos en formato JSON.`,
+          content: `Eres un asistente de viajes experto en ${city}. Responde con lugares específicos en formato JSON. Responde en ${LANG_NAME[lang]}. El campo "category" es un código interno fijo en español, no lo traduzcas.`,
         },
         {
           role: 'user',
