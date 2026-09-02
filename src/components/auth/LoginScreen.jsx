@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 
 const RESEND_COOLDOWN_S = 45;
+const LANGUAGES = ['es', 'en'];
 
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
 
 const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience = 'traveler' }) => {
-  const { t } = useTranslation(['auth', 'common']);
+  const { t, i18n } = useTranslation(['auth', 'common']);
   const [mode, setMode] = useState(initialMode === 'signup' ? 'signup' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,10 +23,20 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resending, setResending] = useState(false);
 
-  const { signIn, signUp, resetPassword, resendConfirmation } = useAuth();
+  const { signIn, signUp, resetPassword, resendConfirmation, changeLanguage } = useAuth();
   const isLogin = mode === 'login';
   const isForgot = mode === 'forgot';
   const isCheckEmail = mode === 'check-email';
+
+  // Este modal tapa (z-[2000]) el botón de menú de WelcomeScreen (z-50), que
+  // es donde vive el selector de idioma normalmente -- sin esto, un
+  // invitado que ya llegó hasta acá no tiene forma de corregir el idioma
+  // justo antes del paso donde más importa (el correo de confirmación sale
+  // en el idioma que quede fijado en este momento).
+  const handleChangeLanguage = async (lang) => {
+    if (lang === i18n.language) return;
+    await changeLanguage(lang);
+  };
 
   // Cuenta regresiva del botón "Reenviar" -- evita que el usuario lo
   // martille y choque con el rate limit de envío de GoTrue.
@@ -141,6 +152,24 @@ const LoginScreen = ({ onClose, onLoginSuccess, initialMode = 'login', audience 
         >
           <i className="fas fa-times text-xl"></i>
         </button>
+
+        {/* Selector de idioma -- mismo patrón de pastillas que SideMenu */}
+        <div className="absolute top-4 left-4 z-10 flex gap-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang}
+              type="button"
+              onClick={() => handleChangeLanguage(lang)}
+              className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase transition-colors ${
+                i18n.language === lang
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              {lang}
+            </button>
+          ))}
+        </div>
 
         <div className="p-8">
           {/* Header */}
