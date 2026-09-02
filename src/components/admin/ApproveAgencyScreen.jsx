@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { agencyRequestService } from '../../services/agencyRequestService';
 
 const Field = ({ label, value }) => {
@@ -12,6 +13,7 @@ const Field = ({ label, value }) => {
 };
 
 const ApproveAgencyScreen = () => {
+  const { t } = useTranslation('agency');
   const token = new URLSearchParams(window.location.search).get('token');
 
   const [request, setRequest] = useState(null);
@@ -22,15 +24,16 @@ const ApproveAgencyScreen = () => {
 
   useEffect(() => {
     if (!token) {
-      setError('Falta el token en el link.');
+      setError(t('agency:approve.missingToken'));
       setLoading(false);
       return;
     }
     agencyRequestService
       .getByToken(token)
       .then(setRequest)
-      .catch((err) => setError(err.message || 'No se pudo cargar la solicitud'))
+      .catch((err) => setError(err.message || t('agency:approve.loadError')))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleApprove = async () => {
@@ -39,7 +42,7 @@ const ApproveAgencyScreen = () => {
       const data = await agencyRequestService.approve(token);
       setResult({ type: 'approved', ...data });
     } catch (err) {
-      setError(err.message || 'Error al aprobar');
+      setError(err.message || t('agency:approve.approveError'));
     } finally {
       setActing(false);
     }
@@ -51,7 +54,7 @@ const ApproveAgencyScreen = () => {
       await agencyRequestService.reject(token);
       setResult({ type: 'rejected' });
     } catch (err) {
-      setError(err.message || 'Error al rechazar');
+      setError(err.message || t('agency:approve.rejectError'));
     } finally {
       setActing(false);
     }
@@ -64,13 +67,13 @@ const ApproveAgencyScreen = () => {
           <div className="w-14 h-14 rounded-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30 overflow-hidden">
             <img src="/icons/icon-192x192.png" alt="TripPulse" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Solicitud de agencia</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t('agency:approve.title')}</h1>
         </div>
 
         {loading && (
           <div className="text-center py-8 text-slate-500 dark:text-slate-400">
             <i className="fas fa-circle-notch fa-spin text-2xl mb-3"></i>
-            <p>Cargando...</p>
+            <p>{t('agency:approve.loading')}</p>
           </div>
         )}
 
@@ -84,13 +87,13 @@ const ApproveAgencyScreen = () => {
         {!loading && request && !result && (
           <>
             <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 mb-6">
-              <Field label="Agencia" value={request.agencyName} />
-              <Field label="Contacto" value={request.contactName} />
-              <Field label="Email" value={request.contactEmail} />
-              <Field label="Teléfono" value={request.phone} />
-              <Field label="Ciudad" value={request.city} />
-              <Field label="Viajeros/mes" value={request.estimatedTravelers} />
-              <Field label="Mensaje" value={request.message} />
+              <Field label={t('agency:approve.fields.agency')} value={request.agencyName} />
+              <Field label={t('agency:approve.fields.contact')} value={request.contactName} />
+              <Field label={t('agency:approve.fields.email')} value={request.contactEmail} />
+              <Field label={t('agency:approve.fields.phone')} value={request.phone} />
+              <Field label={t('agency:approve.fields.city')} value={request.city} />
+              <Field label={t('agency:approve.fields.travelers')} value={request.estimatedTravelers} />
+              <Field label={t('agency:approve.fields.message')} value={request.message} />
             </div>
 
             <div className="flex gap-3">
@@ -99,7 +102,7 @@ const ApproveAgencyScreen = () => {
                 disabled={acting}
                 className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition disabled:opacity-50"
               >
-                Rechazar
+                {t('agency:approve.reject')}
               </button>
               <button
                 onClick={handleApprove}
@@ -108,10 +111,10 @@ const ApproveAgencyScreen = () => {
               >
                 {acting ? (
                   <span className="flex items-center justify-center gap-2">
-                    <i className="fas fa-circle-notch fa-spin"></i> Procesando...
+                    <i className="fas fa-circle-notch fa-spin"></i> {t('agency:approve.processing')}
                   </span>
                 ) : (
-                  'Aprobar y Activar'
+                  t('agency:approve.approve')
                 )}
               </button>
             </div>
@@ -121,11 +124,11 @@ const ApproveAgencyScreen = () => {
         {result?.type === 'approved' && (
           <div className="text-center py-6">
             <i className="fas fa-circle-check text-4xl text-green-500 mb-4"></i>
-            <p className="text-slate-900 dark:text-white font-bold mb-2">Agencia activada</p>
+            <p className="text-slate-900 dark:text-white font-bold mb-2">{t('agency:approve.activatedTitle')}</p>
             <p className="text-slate-500 dark:text-slate-400 text-sm">
               {result.accountCreated
-                ? 'Creamos su cuenta y le enviamos un correo con su acceso (correo + contraseña) e instrucciones para iniciar sesión.'
-                : 'El contacto ya tenía cuenta en TripPulse -- le avisamos por correo que ahora administra su agencia.'}
+                ? t('agency:approve.activatedWithAccount')
+                : t('agency:approve.activatedExistingAccount')}
             </p>
           </div>
         )}
@@ -133,7 +136,7 @@ const ApproveAgencyScreen = () => {
         {result?.type === 'rejected' && (
           <div className="text-center py-6">
             <i className="fas fa-circle-xmark text-4xl text-slate-400 mb-4"></i>
-            <p className="text-slate-900 dark:text-white font-bold">Solicitud rechazada</p>
+            <p className="text-slate-900 dark:text-white font-bold">{t('agency:approve.rejectedTitle')}</p>
           </div>
         )}
       </div>

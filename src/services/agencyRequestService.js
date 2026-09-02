@@ -1,4 +1,5 @@
 import { assertOnline } from '../lib/connectivity';
+import i18n from '../i18n';
 
 // Endpoints públicos: quien solicita o aprueba no necesariamente tiene una
 // sesión de Supabase (el prospecto no tiene cuenta; el admin entra por un
@@ -6,7 +7,8 @@ import { assertOnline } from '../lib/connectivity';
 // de los servicios.
 async function callAPI(path, options = {}) {
   assertOnline('completeAction');
-  const response = await fetch(`/api${path}`, {
+  const separator = path.includes('?') ? '&' : '?';
+  const response = await fetch(`/api${path}${separator}lang=${i18n.language}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -17,7 +19,7 @@ async function callAPI(path, options = {}) {
   const data = await response.json();
 
   if (!response.ok) {
-    const error = new Error(data.error || 'Error en la solicitud');
+    const error = new Error(data.error || i18n.t('agency:requestForm.requestError'));
     error.status = response.status;
     throw error;
   }

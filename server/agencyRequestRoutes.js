@@ -6,6 +6,7 @@ import { sendAgencyRequestEmail, sendAgencyWelcomeEmail } from './email.js';
 import { resolvePublicUrl } from './appUrl.js';
 import { verifyCaptcha } from './captcha.js';
 import { findOrCreateAccount } from './userProvisioning.js';
+import { resolveLang, tr } from './lib/serverI18n.js';
 
 const router = Router();
 
@@ -37,7 +38,9 @@ const requestLimiter = rateLimit({
   limit: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Demasiadas solicitudes. Intenta de nuevo más tarde.' },
+  // Función, no un objeto estático -- así se re-evalúa el idioma por
+  // request en vez de fijarlo una sola vez al crear el limiter.
+  message: (req) => ({ error: tr(resolveLang(req), 'Demasiadas solicitudes. Intenta de nuevo más tarde.') }),
 });
 
 // Límite más generoso para lectura/acciones sobre un token (defensa en
@@ -52,16 +55,17 @@ const tokenLimiter = rateLimit({
 router.post('/agency-requests', requestLimiter, async (req, res) => {
   try {
     const { agencyName, contactName, contactEmail, phone, city, estimatedTravelers, message, captchaToken } = req.body;
+    const lang = resolveLang(req);
 
     if (!(await verifyCaptcha(captchaToken))) {
-      return res.status(400).json({ error: 'Verificación de seguridad fallida. Intenta de nuevo.' });
+      return res.status(400).json({ error: tr(lang, 'Verificación de seguridad fallida. Intenta de nuevo.') });
     }
 
     if (!agencyName?.trim() || !contactName?.trim() || !contactEmail?.trim()) {
-      return res.status(400).json({ error: 'Agencia, contacto y email son requeridos' });
+      return res.status(400).json({ error: tr(lang, 'Agencia, contacto y email son requeridos') });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
-      return res.status(400).json({ error: 'Email inválido' });
+      return res.status(400).json({ error: tr(lang, 'Email inválido') });
     }
 
     const token = generateToken();
@@ -96,7 +100,7 @@ router.post('/agency-requests', requestLimiter, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Error creando solicitud de agencia:', error);
-    res.status(500).json({ error: 'Error al enviar la solicitud' });
+    res.status(500).json({ error: tr(resolveLang(req), 'Error al enviar la solicitud') });
   }
 });
 
@@ -116,13 +120,16 @@ async function findValidRequest(token) {
 
 router.get('/agency-requests/by-token/:token', tokenLimiter, async (req, res) => {
   try {
+    const lang = resolveLang(req);
     const { request, reason } = await findValidRequest(req.params.token);
-    if (!request) return res.status(404).json({ error: 'Solicitud no encontrada' });
+    if (!request) return res.status(404).json({ error: tr(lang, 'Solicitud no encontrada') });
     if (reason === 'already_handled') {
-      return res.status(410).json({ error: `Esta solicitud ya fue ${request.status === 'approved' ? 'aprobada' : 'rechazada'}`, status: request.status });
+      const verb = tr(lang, request.status === 'approved' ? 'aprobada' : 'rechazada');
+      const error = lang === 'en' ? `This request has already been ${verb}` : `Esta solicitud ya fue ${verb}`;
+      return res.status(410).json({ error, status: request.status });
     }
     if (reason === 'expired') {
-      return res.status(410).json({ error: 'Este link expiró' });
+      return res.status(410).json({ error: tr(lang, 'Este link expiró') });
     }
 
     res.json({
@@ -137,15 +144,16 @@ router.get('/agency-requests/by-token/:token', tokenLimiter, async (req, res) =>
     });
   } catch (error) {
     console.error('Error obteniendo solicitud:', error);
-    res.status(500).json({ error: 'Error al obtener la solicitud' });
+    res.status(500).json({ error: tr(resolveLang(req), 'Error al obtener la solicitud') });
   }
 });
 
 router.post('/agency-requests/by-token/:token/approve', tokenLimiter, async (req, res) => {
   try {
+    const lang = resolveLang(req);
     const { request, reason } = await findValidRequest(req.params.token);
-    if (!request) return res.status(404).json({ error: 'Solicitud no encontrada' });
-    if (reason) return res.status(410).json({ error: 'Este link ya no es válido' });
+    if (!request) return res.status(404).json({ error: tr(lang, 'Solicitud no encontrada') });
+    if (reason) return res.status(410).json({ error: tr(lang, 'Este link ya no es válido') });
 
     const { data: agency, error: agencyError } = await supabaseAdmin
       .from('trippulse_agencies')
@@ -198,15 +206,16 @@ router.post('/agency-requests/by-token/:token/approve', tokenLimiter, async (req
     res.json({ agency, accountCreated: account.created });
   } catch (error) {
     console.error('Error aprobando solicitud de agencia:', error);
-    res.status(500).json({ error: 'Error al aprobar la solicitud' });
+    res.status(500).json({ error: tr(resolveLang(req), 'Error al aprobar la solicitud') });
   }
 });
 
 router.post('/agency-requests/by-token/:token/reject', tokenLimiter, async (req, res) => {
   try {
+    const lang = resolveLang(req);
     const { request, reason } = await findValidRequest(req.params.token);
-    if (!request) return res.status(404).json({ error: 'Solicitud no encontrada' });
-    if (reason) return res.status(410).json({ error: 'Este link ya no es válido' });
+    if (!request) return res.status(404).json({ error: tr(lang, 'Solicitud no encontrada') });
+    if (reason) return res.status(410).json({ error: tr(lang, 'Este link ya no es válido') });
 
     const { error } = await supabaseAdmin
       .from('trippulse_agency_requests')
@@ -217,7 +226,7 @@ router.post('/agency-requests/by-token/:token/reject', tokenLimiter, async (req,
     res.json({ success: true });
   } catch (error) {
     console.error('Error rechazando solicitud de agencia:', error);
-    res.status(500).json({ error: 'Error al rechazar la solicitud' });
+    res.status(500).json({ error: tr(resolveLang(req), 'Error al rechazar la solicitud') });
   }
 });
 

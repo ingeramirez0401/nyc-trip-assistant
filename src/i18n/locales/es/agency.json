@@ -1,0 +1,192 @@
+{
+  "landing": {
+    "eyebrow": "Planificación de viajes con IA",
+    "title": "Deja que la IA arme tu itinerario perfecto",
+    "subtitle": "Dinos tu destino, tus días y tus intereses. TripPulse te devuelve un plan completo, con mapa y todo, listo para vivirse — no para seguir editando.",
+    "ctaTraveler": "Soy viajero",
+    "ctaAgency": "Soy una agencia de viajes",
+    "heroAlt": "Un viaje por carretera entre paisajes de piedra roja",
+    "itineraryReady": "Itinerario listo",
+    "itineraryReadySub": "en segundos, con IA",
+    "highlights": [
+      { "title": "IA que conoce el destino", "text": "Nada de \"lugares genéricos\". Coordenadas reales, tips locales y un itinerario armado en segundos, no en horas de pestañas abiertas." },
+      { "title": "Todo en un mapa, todo el viaje", "text": "Rutas por día, paradas guardadas, fotos y notas. Abres la app y sabes exactamente a dónde ir." },
+      { "title": "Hecho para tu agencia", "text": "Dale a cada cliente una experiencia con tu marca, no un link genérico. Ellos viven el viaje, tú te quedas en su radar." }
+    ]
+  },
+  "plans": {
+    "title": "Elige cómo empezar",
+    "subtitle": "Crea tu cuenta gratis, sin tarjeta de crédito",
+    "alreadyHaveAccount": "¿Ya tienes cuenta?",
+    "login": "Inicia sesión",
+    "free": {
+      "name": "Free",
+      "priceSuffix": "/ siempre",
+      "features": ["Hasta 3 viajes activos", "Mapa interactivo y rutas por día", "Guarda paradas, fotos y notas", "Marca lugares como visitados"],
+      "cta": "Comenzar Gratis"
+    },
+    "vip": {
+      "name": "VIP",
+      "badge": "Próximamente",
+      "subtitle": "Para viajeros frecuentes",
+      "features": ["Viajes ilimitados", "Generación de itinerarios con IA", "Todo lo del plan Free", "Soporte prioritario"],
+      "cta": "Contáctanos",
+      "mailSubject": "Interés en TripPulse VIP"
+    }
+  },
+  "pitch": {
+    "eyebrow": "Para agencias de viaje",
+    "title": "Regálale a tus clientes una app, no un PDF",
+    "subtitle": "Compra paquetes de licencias, repártelas a tus viajeros y deja que la IA les arme el itinerario en segundos — con tu agencia como la que lo hizo posible.",
+    "valueProps": [
+      { "title": "Tu marca, no la nuestra", "text": "Tu logo y color en la experiencia que vive tu cliente. TripPulse es la tecnología detrás, tú eres quien queda bien." },
+      { "title": "Licencias en lotes", "text": "Genera decenas de accesos de una vez, con el cupo que definas: viajes, generaciones con IA, o ambos por separado." },
+      { "title": "Se envían solas", "text": "Cada licencia sale por email directo a tu cliente, con su código listo para activar. Tú generas, nosotros entregamos." }
+    ],
+    "loginCta": "Acceso Agencias",
+    "requestCta": "¿Aún no eres partner? Solicita acceso"
+  },
+  "redeem": {
+    "label": "¿Vienes de una agencia de viajes?",
+    "placeholder": "Ingresa tu código",
+    "redeeming": "Canjeando...",
+    "redeem": "Canjear",
+    "success": "¡Código activado! Ya tienes acceso.",
+    "genericError": "No se pudo canjear el código"
+  },
+  "licenseService": {
+    "notAuthenticated": "Debes iniciar sesión.",
+    "genericError": "Error en el servicio de licencias"
+  },
+  "requestForm": {
+    "captchaRequired": "Por favor completa la verificación de seguridad.",
+    "genericError": "Ha ocurrido un error",
+    "requestError": "Error en la solicitud",
+    "sentTitle": "¡Solicitud enviada!",
+    "sentBody": "Revisaremos tu solicitud y te contactaremos pronto para activar tu cuenta de agencia.",
+    "close": "Cerrar",
+    "title": "Cuéntanos de tu agencia",
+    "subtitle": "Revisamos cada solicitud a mano y te activamos apenas encaje.",
+    "agencyNameLabel": "Nombre de la agencia *",
+    "contactNameLabel": "Tu nombre *",
+    "emailLabel": "Correo *",
+    "phoneLabel": "Teléfono",
+    "cityLabel": "Ciudad",
+    "travelersLabel": "Viajeros al mes (aprox.)",
+    "travelerRanges": ["1-10", "11-50", "51-200", "Más de 200"],
+    "messageLabel": "Cuéntanos un poco más (opcional)",
+    "sending": "Enviando...",
+    "submit": "Enviar solicitud"
+  },
+  "admin": {
+    "statusLabels": {
+      "unused": "Sin usar",
+      "sent": "Enviada",
+      "redeemed": "Canjeada",
+      "expired": "Expirada",
+      "revoked": "Revocada"
+    },
+    "accountMenu": "Mi cuenta",
+    "closePanel": "Cerrar panel",
+    "title": "Panel de Agencia",
+    "noAgency": "Esta cuenta no administra ninguna agencia.",
+    "back": "Volver",
+    "loading": "Cargando...",
+    "metrics": {
+      "generated": "Licencias generadas",
+      "redeemed": "Canjeadas",
+      "sentUnredeemed": "Enviadas, sin canjear",
+      "totalQuota": "Cupo total distribuido"
+    },
+    "brand": {
+      "title": "Marca de la agencia",
+      "nameLabel": "Nombre",
+      "logoLabel": "Logo",
+      "uploading": "Subiendo...",
+      "change": "Cambiar",
+      "upload": "Subir imagen",
+      "removeLogo": "Quitar logo",
+      "colorLabel": "Color principal",
+      "saving": "Guardando...",
+      "save": "Guardar marca",
+      "success": "Marca actualizada",
+      "logoUploaded": "Logo cargado — haz clic en \"Guardar marca\" para aplicarlo",
+      "logoRequirements": "Mínimo {{minDimension}}x{{minDimension}}px · Se recorta a cuadrado automáticamente · Máx. {{maxMb}}MB",
+      "errors": {
+        "load": "Error al cargar el panel de agencia",
+        "save": "Error al guardar",
+        "logo": "No se pudo procesar el logo",
+        "invalidImage": "No se pudo leer la imagen. ¿Es un archivo válido?",
+        "mustBeImage": "El archivo debe ser una imagen (PNG, JPG o WEBP).",
+        "tooLarge": "La imagen pesa más de {{maxMb}}MB. Sube un archivo más liviano.",
+        "tooSmall": "La imagen es muy pequeña ({{width}}x{{height}}px). Usa al menos {{minDimension}}x{{minDimension}}px para que se vea nítida.",
+        "processingFailed": "No se pudo procesar la imagen."
+      }
+    },
+    "generate": {
+      "title": "Generar licencias",
+      "quotaTypeLabel": "Tipo de cupo",
+      "quotaTypeTrips": "Viajes",
+      "quotaTypeAi": "Generaciones IA",
+      "quotaAmountLabel": "Cantidad de cupo",
+      "validDaysLabel": "Vigencia (días)",
+      "quantityLabel": "N.° de licencias",
+      "generating": "Generando...",
+      "submit": "Generar licencias",
+      "success": "{{count}} licencia(s) generada(s)",
+      "error": "Error al generar licencias"
+    },
+    "list": {
+      "title": "Licencias ({{count}})",
+      "empty": "Aún no has generado licencias.",
+      "copyCode": "Copiar código",
+      "codeCopied": "Código copiado",
+      "emailPlaceholder": "email@viajero.com",
+      "checking": "Verificando...",
+      "hasAccount": "Ya tiene cuenta",
+      "willCreateAccount": "Se creará cuenta nueva",
+      "emailRequired": "Ingresa el correo del viajero",
+      "sending": "Enviando...",
+      "send": "Enviar",
+      "resend": "Reenviar",
+      "resending": "Reenviando...",
+      "resendAccess": "Reenviar acceso",
+      "resendAccessTitle": "Reenviar el correo de acceso por si se perdió",
+      "revoke": "Revocar",
+      "confirmRevoke": "¿Revocar la licencia {{code}}? Ya no podrá canjearse.",
+      "accountCreatedAndActivated": "Cuenta creada y licencia activada para {{email}}",
+      "activated": "Licencia activada para {{email}}",
+      "revoked": "Licencia revocada",
+      "resent": "Correo reenviado a {{email}}",
+      "errors": {
+        "send": "Error al enviar",
+        "resend": "Error al reenviar",
+        "revoke": "Error al revocar"
+      }
+    }
+  },
+  "approve": {
+    "missingToken": "Falta el token en el link.",
+    "loadError": "No se pudo cargar la solicitud",
+    "approveError": "Error al aprobar",
+    "rejectError": "Error al rechazar",
+    "title": "Solicitud de agencia",
+    "loading": "Cargando...",
+    "fields": {
+      "agency": "Agencia",
+      "contact": "Contacto",
+      "email": "Email",
+      "phone": "Teléfono",
+      "city": "Ciudad",
+      "travelers": "Viajeros/mes",
+      "message": "Mensaje"
+    },
+    "reject": "Rechazar",
+    "approve": "Aprobar y Activar",
+    "processing": "Procesando...",
+    "activatedTitle": "Agencia activada",
+    "activatedWithAccount": "Creamos su cuenta y le enviamos un correo con su acceso (correo + contraseña) e instrucciones para iniciar sesión.",
+    "activatedExistingAccount": "El contacto ya tenía cuenta en TripPulse -- le avisamos por correo que ahora administra su agencia.",
+    "rejectedTitle": "Solicitud rechazada"
+  }
+}

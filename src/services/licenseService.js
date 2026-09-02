@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { assertOnline } from '../lib/connectivity';
+import i18n from '../i18n';
 
 // Único choke point de este servicio -- un solo assertOnline acá cubre
 // generate/list/send/revoke/resend/checkEmail/redeem/getMine/branding de
@@ -12,10 +13,15 @@ async function callAPI(path, options = {}) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    throw new Error('Debes iniciar sesión.');
+    throw new Error(i18n.t('agency:licenseService.notAuthenticated'));
   }
 
-  const response = await fetch(`/api${path}`, {
+  // lang como query param -- funciona tanto en GET como en POST (Express lo
+  // lee de req.query en cualquier caso), y así server/licenseRoutes.js
+  // sabe en qué idioma traducir sus mensajes de error sin que cada método
+  // de este servicio tenga que acordarse de mandarlo por separado.
+  const separator = path.includes('?') ? '&' : '?';
+  const response = await fetch(`/api${path}${separator}lang=${i18n.language}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -27,7 +33,7 @@ async function callAPI(path, options = {}) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Error en el servicio de licencias');
+    throw new Error(data.error || i18n.t('agency:licenseService.genericError'));
   }
 
   return data;

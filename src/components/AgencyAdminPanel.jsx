@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { agencyService } from '../services/agencyService';
 import { licenseService } from '../services/licenseService';
 import { storageService } from '../services/storageService';
-import { normalizeSquareLogo, LOGO_REQUIREMENTS_LABEL } from '../lib/imageProcessing';
+import { normalizeSquareLogo, getLogoRequirementsLabel } from '../lib/imageProcessing';
+import { quotaUnitLabel } from '../lib/licenseFormat';
 import SideMenu from './SideMenu';
-
-const STATUS_LABEL = {
-  unused: 'Sin usar',
-  sent: 'Enviada',
-  redeemed: 'Canjeada',
-  expired: 'Expirada',
-  revoked: 'Revocada',
-};
 
 const STATUS_COLOR = {
   unused: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
@@ -24,8 +18,10 @@ const STATUS_COLOR = {
 };
 
 const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
+  const { t } = useTranslation(['agency', 'common']);
   const { profile } = useAuth();
   const toast = useToast();
+  const STATUS_LABEL = t('agency:admin.statusLabels', { returnObjects: true });
 
   const [agency, setAgency] = useState(null);
   const [licenses, setLicenses] = useState([]);
@@ -77,7 +73,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       });
       setLicenses(licenseData);
     } catch (error) {
-      toast.error('Error al cargar el panel de agencia: ' + error.message);
+      toast.error(`${t('agency:admin.brand.errors.load')}: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -92,9 +88,9 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       const normalized = await normalizeSquareLogo(file);
       const publicUrl = await storageService.uploadImage(normalized, 'agency-logos');
       setBrandForm((prev) => ({ ...prev, logo_url: publicUrl }));
-      toast.success('Logo cargado — haz clic en "Guardar marca" para aplicarlo');
+      toast.success(t('agency:admin.brand.logoUploaded'));
     } catch (error) {
-      toast.error(error.message || 'No se pudo procesar el logo');
+      toast.error(error.message || t('agency:admin.brand.errors.logo'));
     } finally {
       setUploadingLogo(false);
     }
@@ -112,9 +108,9 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
         primary_color: brandForm.primary_color || null,
       });
       setAgency(updated);
-      toast.success('Marca actualizada');
+      toast.success(t('agency:admin.brand.success'));
     } catch (error) {
-      toast.error('Error al guardar: ' + error.message);
+      toast.error(`${t('agency:admin.brand.errors.save')}: ${error.message}`);
     } finally {
       setSavingBrand(false);
     }
@@ -154,11 +150,11 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     try {
       setGenerating(true);
       await licenseService.generate(normalized);
-      toast.success(`${normalized.quantity} licencia(s) generada(s)`);
+      toast.success(t('agency:admin.generate.success', { count: normalized.quantity }));
       const updated = await licenseService.list();
       setLicenses(updated);
     } catch (error) {
-      toast.error('Error al generar licencias: ' + error.message);
+      toast.error(`${t('agency:admin.generate.error')}: ${error.message}`);
     } finally {
       setGenerating(false);
     }
@@ -171,7 +167,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     // en realidad ya está ahí, visible en pantalla.
     const email = (emailDrafts[license.id] ?? license.traveler_email ?? '').trim();
     if (!email) {
-      toast.warning('Ingresa el correo del viajero');
+      toast.warning(t('agency:admin.list.emailRequired'));
       return;
     }
     try {
@@ -180,11 +176,11 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       setLicenses((prev) => prev.map((l) => (l.id === license.id ? updated : l)));
       toast.success(
         accountCreated
-          ? `Cuenta creada y licencia activada para ${email}`
-          : `Licencia activada para ${email}`
+          ? t('agency:admin.list.accountCreatedAndActivated', { email })
+          : t('agency:admin.list.activated', { email })
       );
     } catch (error) {
-      toast.error('Error al enviar: ' + error.message);
+      toast.error(`${t('agency:admin.list.errors.send')}: ${error.message}`);
     } finally {
       setSendingId(null);
     }
@@ -213,37 +209,37 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     try {
       setResendingId(license.id);
       await licenseService.resend(license.id);
-      toast.success(`Correo reenviado a ${license.traveler_email}`);
+      toast.success(t('agency:admin.list.resent', { email: license.traveler_email }));
     } catch (error) {
-      toast.error('Error al reenviar: ' + error.message);
+      toast.error(`${t('agency:admin.list.errors.resend')}: ${error.message}`);
     } finally {
       setResendingId(null);
     }
   };
 
   const handleRevoke = async (license) => {
-    if (!(await toast.confirm(`¿Revocar la licencia ${license.code}? Ya no podrá canjearse.`))) return;
+    if (!(await toast.confirm(t('agency:admin.list.confirmRevoke', { code: license.code })))) return;
     try {
       const updated = await licenseService.revoke(license.id);
       setLicenses((prev) => prev.map((l) => (l.id === license.id ? updated : l)));
-      toast.success('Licencia revocada');
+      toast.success(t('agency:admin.list.revoked'));
     } catch (error) {
-      toast.error('Error al revocar: ' + error.message);
+      toast.error(`${t('agency:admin.list.errors.revoke')}: ${error.message}`);
     }
   };
 
   const copyCode = (code) => {
     navigator.clipboard.writeText(code);
-    toast.success('Código copiado');
+    toast.success(t('agency:admin.list.codeCopied'));
   };
 
   if (!profile?.agency_id) {
     return (
       <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-6 z-[1500]">
         <div className="text-center max-w-md">
-          <p className="text-white mb-4">Esta cuenta no administra ninguna agencia.</p>
+          <p className="text-white mb-4">{t('agency:admin.noAgency')}</p>
           <button onClick={onClose} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">
-            Volver
+            {t('agency:admin.back')}
           </button>
         </div>
       </div>
@@ -256,10 +252,10 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
   const quotaDistributed = licenses.reduce((sum, l) => sum + (l.quota_amount || 0), 0);
 
   const METRICS = [
-    { label: 'Licencias generadas', value: totalLicenses, icon: 'fa-ticket', color: 'text-blue-600 dark:text-blue-400 bg-blue-500/10' },
-    { label: 'Canjeadas', value: redeemedCount, icon: 'fa-circle-check', color: 'text-green-600 dark:text-green-400 bg-green-500/10' },
-    { label: 'Enviadas, sin canjear', value: sentCount, icon: 'fa-paper-plane', color: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
-    { label: 'Cupo total distribuido', value: quotaDistributed, icon: 'fa-layer-group', color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
+    { label: t('agency:admin.metrics.generated'), value: totalLicenses, icon: 'fa-ticket', color: 'text-blue-600 dark:text-blue-400 bg-blue-500/10' },
+    { label: t('agency:admin.metrics.redeemed'), value: redeemedCount, icon: 'fa-circle-check', color: 'text-green-600 dark:text-green-400 bg-green-500/10' },
+    { label: t('agency:admin.metrics.sentUnredeemed'), value: sentCount, icon: 'fa-paper-plane', color: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
+    { label: t('agency:admin.metrics.totalQuota'), value: quotaDistributed, icon: 'fa-layer-group', color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
   ];
 
   return (
@@ -272,7 +268,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
               <i className="fas fa-building text-lg"></i>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Panel de Agencia</h1>
+              <h1 className="text-xl font-bold text-white">{t('agency:admin.title')}</h1>
               {agency?.name && (
                 <p className="text-sm text-blue-100">{agency.name}</p>
               )}
@@ -281,14 +277,16 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMenuOpen(true)}
-              title="Mi cuenta"
+              title={t('agency:admin.accountMenu')}
+              aria-label={t('agency:admin.accountMenu')}
               className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"
             >
               <i className="fas fa-bars"></i>
             </button>
             <button
               onClick={onClose}
-              title="Cerrar panel"
+              title={t('agency:admin.closePanel')}
+              aria-label={t('agency:admin.closePanel')}
               className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"
             >
               <i className="fas fa-times"></i>
@@ -317,16 +315,16 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
         )}
 
         {loading ? (
-          <div className="text-center py-20 text-slate-500 dark:text-slate-400">Cargando...</div>
+          <div className="text-center py-20 text-slate-500 dark:text-slate-400">{t('agency:admin.loading')}</div>
         ) : (
           <div className="space-y-8">
             {/* Marca */}
             <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Marca de la agencia</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('agency:admin.brand.title')}</h2>
               <form onSubmit={handleSaveBrand} className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Nombre
+                    {t('agency:admin.brand.nameLabel')}
                   </label>
                   <input
                     type="text"
@@ -338,7 +336,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Logo
+                    {t('agency:admin.brand.logoLabel')}
                   </label>
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden">
@@ -351,25 +349,26 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                       )}
                     </div>
                     <label className="flex-1 cursor-pointer px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-300 text-sm font-bold text-center hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                      {uploadingLogo ? 'Subiendo...' : brandForm.logo_url ? 'Cambiar' : 'Subir imagen'}
+                      {uploadingLogo ? t('agency:admin.brand.uploading') : brandForm.logo_url ? t('agency:admin.brand.change') : t('agency:admin.brand.upload')}
                       <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoSelect} disabled={uploadingLogo} className="hidden" />
                     </label>
                     {brandForm.logo_url && !uploadingLogo && (
                       <button
                         type="button"
                         onClick={handleRemoveLogo}
-                        title="Quitar logo"
+                        title={t('agency:admin.brand.removeLogo')}
+                        aria-label={t('agency:admin.brand.removeLogo')}
                         className="shrink-0 w-9 h-9 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition flex items-center justify-center"
                       >
                         <i className="fas fa-trash-alt text-sm"></i>
                       </button>
                     )}
                   </div>
-                  <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">{LOGO_REQUIREMENTS_LABEL}</p>
+                  <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">{getLogoRequirementsLabel()}</p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Color principal
+                    {t('agency:admin.brand.colorLabel')}
                   </label>
                   <input
                     type="color"
@@ -384,7 +383,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                     disabled={savingBrand}
                     className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50"
                   >
-                    {savingBrand ? 'Guardando...' : 'Guardar marca'}
+                    {savingBrand ? t('agency:admin.brand.saving') : t('agency:admin.brand.save')}
                   </button>
                 </div>
               </form>
@@ -392,24 +391,24 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
 
             {/* Generar licencias */}
             <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Generar licencias</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('agency:admin.generate.title')}</h2>
               <form onSubmit={handleGenerate} className="grid sm:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Tipo de cupo
+                    {t('agency:admin.generate.quotaTypeLabel')}
                   </label>
                   <select
                     value={genForm.quotaType}
                     onChange={(e) => setGenForm({ ...genForm, quotaType: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="trips">Viajes</option>
-                    <option value="ai_generations">Generaciones IA</option>
+                    <option value="trips">{t('agency:admin.generate.quotaTypeTrips')}</option>
+                    <option value="ai_generations">{t('agency:admin.generate.quotaTypeAi')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Cantidad de cupo
+                    {t('agency:admin.generate.quotaAmountLabel')}
                   </label>
                   <input
                     {...numberField('quotaAmount', 1)}
@@ -418,7 +417,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Vigencia (días)
+                    {t('agency:admin.generate.validDaysLabel')}
                   </label>
                   <input
                     {...numberField('validDays', 365)}
@@ -427,7 +426,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    N.° de licencias
+                    {t('agency:admin.generate.quantityLabel')}
                   </label>
                   <input
                     {...numberField('quantity', 1, { max: 500 })}
@@ -439,7 +438,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                   disabled={generating}
                   className="sm:col-span-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-blue-900/40 active:scale-[0.98] transition-all disabled:opacity-50"
                 >
-                  {generating ? 'Generando...' : 'Generar licencias'}
+                  {generating ? t('agency:admin.generate.generating') : t('agency:admin.generate.submit')}
                 </button>
               </form>
             </section>
@@ -447,11 +446,11 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
             {/* Lista de licencias */}
             <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                Licencias ({licenses.length})
+                {t('agency:admin.list.title', { count: licenses.length })}
               </h2>
 
               {licenses.length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400 text-sm">Aún no has generado licencias.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">{t('agency:admin.list.empty')}</p>
               ) : (
                 <div className="space-y-3 overflow-x-auto">
                   {licenses.map((license) => (
@@ -462,7 +461,8 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                       <div className="flex items-center gap-3 min-w-[180px]">
                         <button
                           onClick={() => copyCode(license.code)}
-                          title="Copiar código"
+                          title={t('agency:admin.list.copyCode')}
+                          aria-label={t('agency:admin.list.copyCode')}
                           className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                         >
                           {license.code} <i className="fas fa-copy text-xs ml-1 opacity-50"></i>
@@ -475,7 +475,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
 
                       <div className="text-sm text-slate-500 dark:text-slate-400">
                         {license.quota_remaining}/{license.quota_amount}{' '}
-                        {license.quota_type === 'trips' ? 'viajes' : 'gen. IA'}
+                        {quotaUnitLabel(t, license.quota_type)}
                         {license.traveler_email && (
                           <span className="block truncate max-w-[220px]">{license.traveler_email}</span>
                         )}
@@ -487,22 +487,22 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                             <div className="flex flex-col gap-1">
                               <input
                                 type="email"
-                                placeholder="email@viajero.com"
+                                placeholder={t('agency:admin.list.emailPlaceholder')}
                                 value={emailDrafts[license.id] ?? license.traveler_email ?? ''}
                                 onChange={(e) => handleEmailChange(license, e.target.value)}
                                 className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-full sm:w-44"
                               />
                               {emailChecks[license.id] === 'checking' && (
-                                <span className="text-[11px] text-slate-400">Verificando...</span>
+                                <span className="text-[11px] text-slate-400">{t('agency:admin.list.checking')}</span>
                               )}
                               {emailChecks[license.id] === 'exists' && (
                                 <span className="text-[11px] text-blue-500 dark:text-blue-400 font-semibold">
-                                  <i className="fas fa-circle-check mr-1"></i>Ya tiene cuenta
+                                  <i className="fas fa-circle-check mr-1"></i>{t('agency:admin.list.hasAccount')}
                                 </span>
                               )}
                               {emailChecks[license.id] === 'new' && (
                                 <span className="text-[11px] text-slate-400">
-                                  <i className="fas fa-user-plus mr-1"></i>Se creará cuenta nueva
+                                  <i className="fas fa-user-plus mr-1"></i>{t('agency:admin.list.willCreateAccount')}
                                 </span>
                               )}
                             </div>
@@ -511,7 +511,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                               disabled={sendingId === license.id}
                               className="shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition disabled:opacity-50"
                             >
-                              {sendingId === license.id ? 'Enviando...' : license.status === 'sent' ? 'Reenviar' : 'Enviar'}
+                              {sendingId === license.id ? t('agency:admin.list.sending') : license.status === 'sent' ? t('agency:admin.list.resend') : t('agency:admin.list.send')}
                             </button>
                           </>
                         ) : null}
@@ -520,10 +520,10 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                           <button
                             onClick={() => handleResend(license)}
                             disabled={resendingId === license.id}
-                            title="Reenviar el correo de acceso por si se perdió"
+                            title={t('agency:admin.list.resendAccessTitle')}
                             className="shrink-0 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-white/20 transition disabled:opacity-50"
                           >
-                            {resendingId === license.id ? 'Reenviando...' : 'Reenviar acceso'}
+                            {resendingId === license.id ? t('agency:admin.list.resending') : t('agency:admin.list.resendAccess')}
                           </button>
                         )}
 
@@ -532,7 +532,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                             onClick={() => handleRevoke(license)}
                             className="shrink-0 text-red-500 hover:text-red-600 text-sm font-bold px-3 py-2"
                           >
-                            Revocar
+                            {t('agency:admin.list.revoke')}
                           </button>
                         )}
                       </div>

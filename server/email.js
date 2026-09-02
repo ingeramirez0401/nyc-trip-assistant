@@ -45,11 +45,24 @@ function safeUrl(value) {
 
 const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2563eb,#4f46e5)';
 
+// Whitelist explícita -- mismo criterio que el resto del backend
+// (placesRoutes.js, server/index.js): solo 'es'/'en' soportados hoy, 'es'
+// de default para cualquier otra cosa (incluido undefined, cuando el
+// caller no tiene ningún signal de idioma del destinatario).
+function resolveLang(lang) {
+  return lang === 'en' ? 'en' : 'es';
+}
+
+const FOOTER_TAGLINE = {
+  es: 'TripPulse · Planifica, explora y disfruta cada momento',
+  en: 'TripPulse · Plan, explore and enjoy every moment',
+};
+
 // Shell compartido con la identidad visual de la app: banda de color +
 // tarjeta blanca redondeada (mismo estilo que ApproveAgencyScreen). Si la
 // agencia tiene marca propia (logo/color), la banda y el CTA la usan en vez
 // del degradé azul→índigo por defecto de TripPulse.
-function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt }) {
+function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt, lang = 'es' }) {
   const safeColor = safeAccentColor(accentColor);
   const safeLogo = safeUrl(logoUrl);
   const headerBg = safeColor || DEFAULT_GRADIENT;
@@ -60,7 +73,7 @@ function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt }) {
         <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>`;
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="${lang}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -79,7 +92,7 @@ function emailShell({ badge, title, bodyHtml, accentColor, logoUrl, logoAlt }) {
         <h1 style="margin:0 0 16px;font-size:19px;color:#0f172a;">${title}</h1>
         ${bodyHtml}
       </div>
-      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">TripPulse · Planifica, explora y disfruta cada momento</p>
+      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">${FOOTER_TAGLINE[lang]}</p>
     </div>
   </body>
 </html>`;
@@ -103,19 +116,33 @@ function ctaButton(href, label, accentColor) {
   `;
 }
 
-const QUOTA_LABELS = { trips: 'viajes', ai_generations: 'generaciones con IA' };
+const QUOTA_LABELS = {
+  es: { trips: 'viajes', ai_generations: 'generaciones con IA' },
+  en: { trips: 'trips', ai_generations: 'AI generations' },
+};
 
-const LICENSE_FEATURES = [
-  ['🗺️', 'Arma tu itinerario', 'Día por día, con mapa y rutas listas.'],
-  ['🤖', 'Generación con IA', 'Cuéntale tus gustos y arma el plan en segundos.'],
-  ['📍', 'Guarda tus lugares', 'Fotos, notas y tips, todo en un solo sitio.'],
-];
+const LICENSE_FEATURES = {
+  es: [
+    ['🗺️', 'Arma tu itinerario', 'Día por día, con mapa y rutas listas.'],
+    ['🤖', 'Generación con IA', 'Cuéntale tus gustos y arma el plan en segundos.'],
+    ['📍', 'Guarda tus lugares', 'Fotos, notas y tips, todo en un solo sitio.'],
+  ],
+  en: [
+    ['🗺️', 'Build your itinerary', 'Day by day, with map and routes ready to go.'],
+    ['🤖', 'AI generation', 'Tell it your interests and get a plan in seconds.'],
+    ['📍', 'Save your places', 'Photos, notes, and tips, all in one place.'],
+  ],
+};
 
 export async function sendAgencyRequestEmail({ to, request, approveUrl }) {
   if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL) {
     throw new Error('SendGrid no está configurado en el servidor');
   }
 
+  // Notificación interna: siempre le llega a la bandeja de TripPulse (el
+  // equipo que aprueba solicitudes), no a la agencia ni a ningún viajero --
+  // no hay destinatario cuyo idioma preferido tenga sentido leer acá, así
+  // que este correo se queda en español a propósito, sin parámetro `lang`.
   const FIELD_ICONS = {
     Agencia: '🏢',
     Contacto: '🙋',
@@ -173,18 +200,45 @@ export async function sendAgencyRequestEmail({ to, request, approveUrl }) {
 // y activada del lado del servidor (ver agencyRequestRoutes.js). Si es
 // cuenta nueva, actionLink es un link tipo "recovery" para que elija su
 // propia contraseña (nunca se genera ni se envía una clave en texto plano).
-export async function sendAgencyWelcomeEmail({ to, agencyName, actionLink, loginUrl }) {
+// `lang`: sin un campo de idioma en AgencyRequestForm todavía, este correo
+// no tiene de dónde leer una preferencia real del contacto -- default 'es',
+// pero ya queda listo para pasar 'en' en cuanto exista esa señal.
+export async function sendAgencyWelcomeEmail({ to, agencyName, actionLink, loginUrl, lang }) {
   if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL) {
     throw new Error('SendGrid no está configurado en el servidor');
   }
+  const l = resolveLang(lang);
 
   const safeAgencyName = escapeHtml(agencyName);
 
   // Si el contacto ya tenía cuenta en TripPulse (ej. como viajero), no hay
   // actionLink -- se reutiliza la contraseña que ya tiene, solo se avisa
   // que ahora es admin de su agencia.
-  const bodyHtml = actionLink
-    ? `
+  const bodyHtml =
+    l === 'en'
+      ? actionLink
+        ? `
+      <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+        Welcome, <strong>${safeAgencyName}</strong>! We approved your request and your agency admin
+        account is ready. Just pick your password to finish.
+      </p>
+      ${ctaButton(actionLink, '🔑 Create my password')}
+      <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px;">
+        From your panel you can generate licenses, send them to your travelers, and customize your brand (logo and color).
+      </p>
+    `
+        : `
+      <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+        Welcome, <strong>${safeAgencyName}</strong>! We approved your request. We used the account you
+        already had on TripPulse (<strong>${escapeHtml(to)}</strong>) -- sign in with your usual password.
+      </p>
+      ${ctaButton(loginUrl, '🚀 Sign in')}
+      <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px;">
+        From your panel you can generate licenses, send them to your travelers, and customize your brand (logo and color).
+      </p>
+    `
+      : actionLink
+        ? `
       <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
         ¡Bienvenida, <strong>${safeAgencyName}</strong>! Aprobamos tu solicitud y tu cuenta de
         administrador de agencia ya está lista. Solo falta que elijas tu contraseña.
@@ -194,7 +248,7 @@ export async function sendAgencyWelcomeEmail({ to, agencyName, actionLink, login
         Desde tu panel puedes generar licencias, enviarlas a tus viajeros y personalizar tu marca (logo y color).
       </p>
     `
-    : `
+        : `
       <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
         ¡Bienvenida, <strong>${safeAgencyName}</strong>! Aprobamos tu solicitud. Usamos la cuenta
         que ya tenías en TripPulse (<strong>${escapeHtml(to)}</strong>) -- inicia sesión con tu
@@ -206,14 +260,20 @@ export async function sendAgencyWelcomeEmail({ to, agencyName, actionLink, login
       </p>
     `;
 
+  const subject =
+    l === 'en'
+      ? `Welcome to TripPulse, ${agencyName}! Your account is active 🎉`
+      : `¡Bienvenida a TripPulse, ${agencyName}! Tu cuenta ya está activa 🎉`;
+
   await sgMail.send({
     to,
     from: SENDGRID_FROM_EMAIL,
-    subject: `¡Bienvenida a TripPulse, ${agencyName}! Tu cuenta ya está activa 🎉`,
+    subject,
     html: emailShell({
-      badge: 'Cuenta de agencia activada',
-      title: '¡Ya eres parte de TripPulse! 🏢',
+      badge: l === 'en' ? 'Agency account activated' : 'Cuenta de agencia activada',
+      title: l === 'en' ? "You're part of TripPulse now! 🏢" : '¡Ya eres parte de TripPulse! 🏢',
       bodyHtml,
+      lang: l,
     }),
   });
 }
@@ -221,15 +281,19 @@ export async function sendAgencyWelcomeEmail({ to, agencyName, actionLink, login
 // Envío de licencia a un email que NO tenía cuenta: se creó de una vez
 // (ver server/licenseRoutes.js) y la licencia ya quedó canjeada -- este
 // correo entrega un link para crear contraseña, no un código para canjear.
-export async function sendTravelerWelcomeEmail({ to, agencyName, actionLink, quotaType, quotaAmount, logoUrl, primaryColor }) {
+// `lang`: el destinatario es un email nuevo sin perfil todavía, así que no
+// hay preferencia real que leer -- default 'es' (ver caller en
+// licenseRoutes.js para el caso donde sí existe perfil, sendLicenseActivatedEmail).
+export async function sendTravelerWelcomeEmail({ to, agencyName, actionLink, quotaType, quotaAmount, logoUrl, primaryColor, lang }) {
   if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL) {
     throw new Error('SendGrid no está configurado en el servidor');
   }
+  const l = resolveLang(lang);
 
   const safeAgencyName = escapeHtml(agencyName);
-  const quotaLabel = QUOTA_LABELS[quotaType] || quotaType;
+  const quotaLabel = QUOTA_LABELS[l][quotaType] || quotaType;
 
-  const featureRows = LICENSE_FEATURES.map(([icon, title, text]) => `
+  const featureRows = LICENSE_FEATURES[l].map(([icon, title, text]) => `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
       <tr>
         <td style="width:32px;vertical-align:top;font-size:20px;padding-top:1px;">${icon}</td>
@@ -241,7 +305,21 @@ export async function sendTravelerWelcomeEmail({ to, agencyName, actionLink, quo
     </table>
   `).join('');
 
-  const bodyHtml = `
+  const bodyHtml =
+    l === 'en'
+      ? `
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;text-align:center;">
+      <strong>${safeAgencyName}</strong> gave you access to TripPulse, the AI planner that builds
+      your full itinerary in seconds. We already created your account and activated your license
+      of <strong>${escapeHtml(String(quotaAmount))} ${quotaLabel}</strong> -- just pick your
+      password to get started.
+    </p>
+    ${ctaButton(actionLink, '🔑 Create my password and start', primaryColor)}
+    <div style="border-top:1px solid #f1f5f9;padding-top:20px;">
+      ${featureRows}
+    </div>
+  `
+      : `
     <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;text-align:center;">
       <strong>${safeAgencyName}</strong> te regaló acceso a TripPulse, el planificador con IA
       que arma tu itinerario completo en segundos. Ya creamos tu cuenta y activamos tu licencia
@@ -254,32 +332,53 @@ export async function sendTravelerWelcomeEmail({ to, agencyName, actionLink, quo
     </div>
   `;
 
+  const subject =
+    l === 'en' ? `${agencyName} gave you your next adventure ✈️` : `${agencyName} te regaló tu próxima aventura ✈️`;
+
   await sgMail.send({
     to,
     from: SENDGRID_FROM_EMAIL,
-    subject: `${agencyName} te regaló tu próxima aventura ✈️`,
+    subject,
     html: emailShell({
       badge: safeAgencyName,
-      title: '¡Tu cuenta ya está lista! 🎒',
+      title: l === 'en' ? 'Your account is ready! 🎒' : '¡Tu cuenta ya está lista! 🎒',
       bodyHtml,
       accentColor: primaryColor,
       logoUrl,
       logoAlt: agencyName,
+      lang: l,
     }),
   });
 }
 
 // Envío de licencia a un email que YA tenía cuenta: no hay credenciales
 // nuevas que dar, solo avisar que la licencia quedó activa y cómo entrar.
-export async function sendLicenseActivatedEmail({ to, agencyName, loginUrl, quotaType, quotaAmount, logoUrl, primaryColor }) {
+// `lang`: a diferencia de sendTravelerWelcomeEmail, acá SÍ existe un perfil
+// (trippulse_profiles) para el destinatario -- el caller (licenseRoutes.js)
+// pasa profile.language, con 'es' de default si esa columna viniera vacía.
+export async function sendLicenseActivatedEmail({ to, agencyName, loginUrl, quotaType, quotaAmount, logoUrl, primaryColor, lang }) {
   if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL) {
     throw new Error('SendGrid no está configurado en el servidor');
   }
+  const l = resolveLang(lang);
 
   const safeAgencyName = escapeHtml(agencyName);
-  const quotaLabel = QUOTA_LABELS[quotaType] || quotaType;
+  const quotaLabel = QUOTA_LABELS[l][quotaType] || quotaType;
 
-  const bodyHtml = `
+  const bodyHtml =
+    l === 'en'
+      ? `
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+      <strong>${safeAgencyName}</strong> activated a license of
+      <strong>${escapeHtml(String(quotaAmount))} ${quotaLabel}</strong> on your TripPulse account
+      (${escapeHtml(to)}). You can use it right away, no code to redeem.
+    </p>
+    ${ctaButton(loginUrl, '🔑 Sign in', primaryColor)}
+    <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:20px;">
+      Forgot your password? Use "Forgot your password?" on the sign-in screen.
+    </p>
+  `
+      : `
     <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
       <strong>${safeAgencyName}</strong> activó una licencia de
       <strong>${escapeHtml(String(quotaAmount))} ${quotaLabel}</strong> en tu cuenta de TripPulse
@@ -291,17 +390,23 @@ export async function sendLicenseActivatedEmail({ to, agencyName, loginUrl, quot
     </p>
   `;
 
+  const subject =
+    l === 'en'
+      ? `${agencyName} activated a new license on your TripPulse account 🎉`
+      : `${agencyName} activó una nueva licencia en tu cuenta TripPulse 🎉`;
+
   await sgMail.send({
     to,
     from: SENDGRID_FROM_EMAIL,
-    subject: `${agencyName} activó una nueva licencia en tu cuenta TripPulse 🎉`,
+    subject,
     html: emailShell({
       badge: safeAgencyName,
-      title: '¡Tienes una licencia nueva activa! ✨',
+      title: l === 'en' ? 'You have a new active license! ✨' : '¡Tienes una licencia nueva activa! ✨',
       bodyHtml,
       accentColor: primaryColor,
       logoUrl,
       logoAlt: agencyName,
+      lang: l,
     }),
   });
 }

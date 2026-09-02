@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ if eq .Data.language "en" }}en{{ else }}es{{ end }}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,6 +15,32 @@
         <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>
       </div>
       <div style="background:#ffffff;border-radius:0 0 20px 20px;padding:32px 24px;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+        {{ if eq .Data.language "en" }}
+        <h1 style="margin:0 0 16px;font-size:19px;color:#0f172a;">Reset your password 🔐</h1>
+        <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+          Someone (hopefully you) asked to reset the password for your account on
+          <strong>TripPulse</strong>. Create a new password with the button below.
+        </p>
+        <div style="text-align:center;margin:28px 0 8px;">
+          <a href="{{ .ConfirmationURL }}" style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+            🔑 Create new password
+          </a>
+        </div>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin:6px 0 28px;">
+          This link expires soon for your security -- if it already expired, request a new one from the app.
+        </p>
+        <div style="border-top:1px solid #f1f5f9;padding-top:20px;">
+          <p style="margin:0;color:#64748b;font-size:13px;line-height:1.6;">
+            <strong style="color:#0f172a;">Didn't request this change?</strong><br />
+            You can safely ignore this email -- your current password is still valid and
+            no one can change it without access to this link.
+          </p>
+        </div>
+        <p style="color:#94a3b8;font-size:11px;margin-top:20px;text-align:center;">
+          Button not working? Copy and paste this link into your browser:<br />
+          <span style="color:#475569;word-break:break-all;">{{ .ConfirmationURL }}</span>
+        </p>
+        {{ else }}
         <h1 style="margin:0 0 16px;font-size:19px;color:#0f172a;">Restablece tu contraseña 🔐</h1>
         <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
           Alguien (esperamos que hayas sido tú) pidió restablecer la contraseña de tu cuenta en
@@ -39,8 +65,11 @@
           ¿El botón no funciona? Copia y pega este link en tu navegador:<br />
           <span style="color:#475569;word-break:break-all;">{{ .ConfirmationURL }}</span>
         </p>
+        {{ end }}
       </div>
-      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">TripPulse · Planifica, explora y disfruta cada momento</p>
+      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">
+        {{ if eq .Data.language "en" }}TripPulse · Plan, explore and enjoy every moment{{ else }}TripPulse · Planifica, explora y disfruta cada momento{{ end }}
+      </p>
     </div>
   </body>
 </html>

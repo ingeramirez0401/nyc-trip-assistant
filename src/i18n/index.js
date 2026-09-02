@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 import esCommon from './locales/es/common.json';
+import esAgency from './locales/es/agency.json';
 import esAuth from './locales/es/auth.json';
 import esWelcome from './locales/es/welcome.json';
 import esSideMenu from './locales/es/sideMenu.json';
@@ -14,6 +15,7 @@ import esTripSetup from './locales/es/tripSetup.json';
 import esConnectivity from './locales/es/connectivity.json';
 
 import enCommon from './locales/en/common.json';
+import enAgency from './locales/en/agency.json';
 import enAuth from './locales/en/auth.json';
 import enWelcome from './locales/en/welcome.json';
 import enSideMenu from './locales/en/sideMenu.json';
@@ -32,6 +34,7 @@ import enConnectivity from './locales/en/connectivity.json';
 const resources = {
   es: {
     common: esCommon,
+    agency: esAgency,
     auth: esAuth,
     welcome: esWelcome,
     sideMenu: esSideMenu,
@@ -44,6 +47,7 @@ const resources = {
   },
   en: {
     common: enCommon,
+    agency: enAgency,
     auth: enAuth,
     welcome: enWelcome,
     sideMenu: enSideMenu,

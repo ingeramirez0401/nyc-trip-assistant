@@ -7,6 +7,7 @@ import { requireAuth } from './supabaseAuth.js';
 import licenseRoutes from './licenseRoutes.js';
 import placesRoutes, { verifyPlaceLocation } from './placesRoutes.js';
 import agencyRequestRoutes from './agencyRequestRoutes.js';
+import { resolveLang as resolveReqLang, tr } from './lib/serverI18n.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -50,7 +51,7 @@ const aiLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Demasiadas solicitudes de IA. Intenta de nuevo más tarde.' },
+  message: (req) => ({ error: tr(resolveReqLang(req), 'Demasiadas solicitudes de IA. Intenta de nuevo más tarde.') }),
 });
 
 app.use('/api/ai', aiLimiter, requireAuth);
@@ -63,19 +64,22 @@ const placesLimiter = rateLimit({
   limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Demasiadas búsquedas de lugares. Espera un momento.' },
+  message: (req) => ({ error: tr(resolveReqLang(req), 'Demasiadas búsquedas de lugares. Espera un momento.') }),
 });
 
 app.use('/api/places', placesLimiter);
 app.use('/api', placesRoutes);
 
 app.post('/api/ai/generate-itinerary', async (req, res) => {
+  // Declarado fuera del try -- el catch también lo necesita (para traducir
+  // su propio mensaje de error) y una const dentro de try no es visible
+  // desde el catch, son bloques de scope distintos.
+  const lang = resolveLang(req.body?.language);
   try {
-    const { city, country, numDays, interests = [], budget = 'medium', language } = req.body;
-    const lang = resolveLang(language);
+    const { city, country, numDays, interests = [], budget = 'medium' } = req.body;
 
     if (!city || !country || !numDays) {
-      return res.status(400).json({ error: 'city, country y numDays son requeridos' });
+      return res.status(400).json({ error: tr(lang, 'city, country y numDays son requeridos') });
     }
 
     const interestsText = interests.length > 0
@@ -177,7 +181,8 @@ IMPORTANTE:
     res.json(itinerary);
   } catch (error) {
     console.error('❌ Error generando itinerario:', error);
-    res.status(500).json({ error: `Error al generar itinerario: ${error.message}` });
+    const errorPrefix = tr(lang, 'Error al generar itinerario');
+    res.status(500).json({ error: `${errorPrefix}: ${error.message}` });
   }
 });
 
@@ -186,7 +191,7 @@ app.post('/api/ai/suggestions', async (req, res) => {
     const { query, city, language } = req.body;
     const lang = resolveLang(language);
     if (!query || !city) {
-      return res.status(400).json({ error: 'query y city son requeridos' });
+      return res.status(400).json({ error: tr(lang, 'query y city son requeridos') });
     }
 
     const completion = await openai.chat.completions.create({
@@ -214,10 +219,11 @@ app.post('/api/ai/suggestions', async (req, res) => {
 });
 
 app.post('/api/ai/optimize-route', async (req, res) => {
-  const { stops } = req.body;
+  const { stops, language } = req.body;
+  const lang = resolveLang(language);
   try {
     if (!Array.isArray(stops) || stops.length === 0) {
-      return res.status(400).json({ error: 'stops es requerido' });
+      return res.status(400).json({ error: tr(lang, 'stops es requerido') });
     }
 
     const stopsData = stops.map((s) => ({ title: s.title, lat: s.lat, lng: s.lng }));

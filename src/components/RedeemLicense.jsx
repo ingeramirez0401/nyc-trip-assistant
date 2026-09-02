@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { licenseService } from '../services/licenseService';
@@ -11,6 +12,7 @@ import LoginScreen from './auth/LoginScreen';
 const PENDING_CODE_KEY = 'tp_pending_redeem_code';
 
 const RedeemLicense = ({ onRedeemed }) => {
+  const { t } = useTranslation('agency');
   const { user, refreshLicenses } = useAuth();
   const toast = useToast();
   const [code, setCode] = useState('');
@@ -55,7 +57,7 @@ const RedeemLicense = ({ onRedeemed }) => {
       await licenseService.redeem(codeToRedeem);
       await refreshLicenses();
       localStorage.removeItem(PENDING_CODE_KEY);
-      toast.success('¡Código activado! Ya tienes acceso.');
+      toast.success(t('agency:redeem.success'));
       setCode('');
 
       const url = new URL(window.location.href);
@@ -64,7 +66,7 @@ const RedeemLicense = ({ onRedeemed }) => {
 
       if (onRedeemed) onRedeemed();
     } catch (error) {
-      toast.error(error.message || 'No se pudo canjear el código');
+      toast.error(error.message || t('agency:redeem.genericError'));
     } finally {
       setLoading(false);
     }
@@ -91,13 +93,13 @@ const RedeemLicense = ({ onRedeemed }) => {
       >
         <div className="flex-1">
           <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-            ¿Vienes de una agencia de viajes?
+            {t('agency:redeem.label')}
           </label>
           <input
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="Ingresa tu código"
+            placeholder={t('agency:redeem.placeholder')}
             className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none uppercase tracking-wider font-mono"
             maxLength={12}
           />
@@ -107,7 +109,7 @@ const RedeemLicense = ({ onRedeemed }) => {
           disabled={loading || !code.trim()}
           className="self-end sm:self-auto shrink-0 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-xl font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Canjeando...' : 'Canjear'}
+          {loading ? t('agency:redeem.redeeming') : t('agency:redeem.redeem')}
         </button>
       </form>
 

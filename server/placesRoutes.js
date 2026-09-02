@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { requireAuth } from './supabaseAuth.js';
+import { resolveLang, tr } from './lib/serverI18n.js';
 
 const router = Router();
 
@@ -29,12 +30,13 @@ if (!GOOGLE_PLACES_API_KEY) {
 // global sin sesgo.
 router.get('/places/autocomplete', requireAuth, async (req, res) => {
   try {
-    const { query, city, restrict, lang } = req.query;
+    const { query, city, restrict } = req.query;
+    const lang = resolveLang(req);
     if (!query || query.trim().length < 2) {
       return res.json({ predictions: [] });
     }
     if (!GOOGLE_PLACES_API_KEY) {
-      return res.status(503).json({ error: 'Buscador de lugares no configurado' });
+      return res.status(503).json({ error: tr(lang, 'Buscador de lugares no configurado') });
     }
 
     const restrictToCity = restrict !== 'false';
@@ -46,7 +48,7 @@ router.get('/places/autocomplete', requireAuth, async (req, res) => {
 
     // Whitelist explícita -- solo 'es'/'en' soportados hoy (ver
     // src/i18n/index.js supportedLngs), cualquier otra cosa cae a 'es'.
-    const languageCode = lang === 'en' ? 'en' : 'es';
+    const languageCode = lang;
     const body = {
       input: query,
       languageCode,
@@ -65,7 +67,7 @@ router.get('/places/autocomplete', requireAuth, async (req, res) => {
     const data = await response.json();
     if (!response.ok) {
       console.error('Google Places autocomplete error:', data);
-      return res.status(502).json({ error: 'Error consultando el buscador de lugares' });
+      return res.status(502).json({ error: tr(lang, 'Error consultando el buscador de lugares') });
     }
 
     const predictions = (data.suggestions || [])
@@ -83,7 +85,7 @@ router.get('/places/autocomplete', requireAuth, async (req, res) => {
     res.json({ predictions });
   } catch (error) {
     console.error('Error en autocomplete de lugares:', error);
-    res.status(500).json({ error: 'Error consultando el buscador de lugares' });
+    res.status(500).json({ error: tr(resolveLang(req), 'Error consultando el buscador de lugares') });
   }
 });
 
@@ -91,12 +93,12 @@ router.get('/places/autocomplete', requireAuth, async (req, res) => {
 // devolvió /autocomplete.
 router.get('/places/details/:placeId', requireAuth, async (req, res) => {
   try {
+    const lang = resolveLang(req);
     if (!GOOGLE_PLACES_API_KEY) {
-      return res.status(503).json({ error: 'Buscador de lugares no configurado' });
+      return res.status(503).json({ error: tr(lang, 'Buscador de lugares no configurado') });
     }
 
-    const languageCode = req.query.lang === 'en' ? 'en' : 'es';
-    const response = await fetch(`https://places.googleapis.com/v1/places/${req.params.placeId}?languageCode=${languageCode}`, {
+    const response = await fetch(`https://places.googleapis.com/v1/places/${req.params.placeId}?languageCode=${lang}`, {
       headers: {
         'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
         'X-Goog-FieldMask':
@@ -108,7 +110,7 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
     const data = await response.json();
     if (!response.ok) {
       console.error('Google Places details error:', data);
-      return res.status(502).json({ error: 'Error obteniendo el detalle del lugar' });
+      return res.status(502).json({ error: tr(lang, 'Error obteniendo el detalle del lugar') });
     }
 
     const cityComponent = (data.addressComponents || []).find((c) =>
@@ -132,7 +134,7 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error obteniendo detalle de lugar:', error);
-    res.status(500).json({ error: 'Error obteniendo el detalle del lugar' });
+    res.status(500).json({ error: tr(resolveLang(req), 'Error obteniendo el detalle del lugar') });
   }
 });
 
@@ -142,12 +144,13 @@ router.get('/places/details/:placeId', requireAuth, async (req, res) => {
 // wildcard porque trae slashes.
 router.get('/places/photo/*', photoLimiter, async (req, res) => {
   try {
+    const lang = resolveLang(req);
     const photoName = req.params[0];
     if (!photoName || !photoName.startsWith('places/')) {
-      return res.status(400).json({ error: 'photoName inválido' });
+      return res.status(400).json({ error: tr(lang, 'photoName inválido') });
     }
     if (!GOOGLE_PLACES_API_KEY) {
-      return res.status(503).json({ error: 'Buscador de lugares no configurado' });
+      return res.status(503).json({ error: tr(lang, 'Buscador de lugares no configurado') });
     }
 
     const response = await fetch(
@@ -156,7 +159,7 @@ router.get('/places/photo/*', photoLimiter, async (req, res) => {
 
     if (!response.ok) {
       console.error('Google Places photo error:', response.status);
-      return res.status(502).json({ error: 'Error obteniendo la foto del lugar' });
+      return res.status(502).json({ error: tr(lang, 'Error obteniendo la foto del lugar') });
     }
 
     res.set('Content-Type', response.headers.get('content-type') || 'image/jpeg');
@@ -164,7 +167,7 @@ router.get('/places/photo/*', photoLimiter, async (req, res) => {
     res.send(Buffer.from(await response.arrayBuffer()));
   } catch (error) {
     console.error('Error obteniendo foto de lugar:', error);
-    res.status(500).json({ error: 'Error obteniendo la foto del lugar' });
+    res.status(500).json({ error: tr(resolveLang(req), 'Error obteniendo la foto del lugar') });
   }
 });
 

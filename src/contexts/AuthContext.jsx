@@ -95,6 +95,11 @@ export const AuthProvider = ({ children }) => {
       try {
         const updated = await profileService.updateProfile(user.id, { language: lang });
         setProfile(updated);
+        // También al user_metadata de GoTrue (raw_user_meta_data), no solo
+        // al perfil -- las plantillas de recovery/confirmation.html
+        // (server/email-templates/) leen `.Data.language` de ahí, no de
+        // trippulse_profiles, para decidir en qué idioma renderizarse.
+        await supabase.auth.updateUser({ data: { language: lang } });
         return { error: null };
       } catch (error) {
         return { error };
@@ -142,7 +147,12 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
       options: {
-        data: metadata, // full_name, etc.
+        // language viaja en el metadata de signup para que el trigger
+        // trippulse_handle_new_user() (ver supabase/LANGUAGE_PREFERENCE_SETUP.sql)
+        // lo copie al perfil desde el arranque, y para que la plantilla
+        // confirmation.html de GoTrue (que solo tiene acceso a
+        // raw_user_meta_data, no a la tabla de perfiles) también lo lea.
+        data: { ...metadata, language: i18n.language }, // full_name, etc.
         emailRedirectTo: `${window.location.origin}/`,
         ...(captchaToken && { captchaToken }),
       },

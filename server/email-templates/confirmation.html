@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ if eq .Data.language "en" }}en{{ else }}es{{ end }}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,6 +15,48 @@
         <div style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.3px;">TripPulse</div>
       </div>
       <div style="background:#ffffff;border-radius:0 0 20px 20px;padding:32px 24px;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+        {{ if eq .Data.language "en" }}
+        <h1 style="margin:0 0 16px;font-size:19px;color:#0f172a;">Almost there! Confirm your email 📬</h1>
+        <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+          {{ if .Data.full_name }}Hi {{ .Data.full_name }}, you created{{ else }}You created{{ end }}
+          an account on <strong>TripPulse</strong>. Confirm your email to start planning your trip.
+        </p>
+        <div style="text-align:center;margin:28px 0 8px;">
+          <a href="{{ .ConfirmationURL }}" style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+            ✨ Confirm my email
+          </a>
+        </div>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin:6px 0 28px;">
+          One click and you're done -- nothing else needed.
+        </p>
+        <div style="border-top:1px solid #f1f5f9;padding-top:20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+            <tr>
+              <td style="width:32px;vertical-align:top;font-size:20px;padding-top:1px;">🗺️</td>
+              <td style="vertical-align:top;">
+                <p style="margin:0;font-weight:700;color:#0f172a;font-size:14px;">Build your itinerary</p>
+                <p style="margin:2px 0 0;color:#64748b;font-size:13px;">Day by day, with map and routes ready to go.</p>
+              </td>
+            </tr>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+            <tr>
+              <td style="width:32px;vertical-align:top;font-size:20px;padding-top:1px;">🤖</td>
+              <td style="vertical-align:top;">
+                <p style="margin:0;font-weight:700;color:#0f172a;font-size:14px;">AI generation</p>
+                <p style="margin:2px 0 0;color:#64748b;font-size:13px;">Tell it your interests and get a plan in seconds.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p style="color:#94a3b8;font-size:11px;margin-top:20px;text-align:center;">
+          Button not working? Copy and paste this link into your browser:<br />
+          <span style="color:#475569;word-break:break-all;">{{ .ConfirmationURL }}</span>
+        </p>
+        <p style="color:#cbd5e1;font-size:10px;margin-top:16px;text-align:center;">
+          If you didn't create this account, you can ignore this email.
+        </p>
+        {{ else }}
         <h1 style="margin:0 0 16px;font-size:19px;color:#0f172a;">¡Ya casi! Confirma tu correo 📬</h1>
         <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
           {{ if .Data.full_name }}Hola {{ .Data.full_name }}, creaste{{ else }}Creaste{{ end }}
@@ -55,8 +97,11 @@
         <p style="color:#cbd5e1;font-size:10px;margin-top:16px;text-align:center;">
           Si no creaste esta cuenta, puedes ignorar este correo.
         </p>
+        {{ end }}
       </div>
-      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">TripPulse · Planifica, explora y disfruta cada momento</p>
+      <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">
+        {{ if eq .Data.language "en" }}TripPulse · Plan, explore and enjoy every moment{{ else }}TripPulse · Planifica, explora y disfruta cada momento{{ end }}
+      </p>
     </div>
   </body>
 </html>

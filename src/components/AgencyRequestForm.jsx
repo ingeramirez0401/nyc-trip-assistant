@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { useTranslation } from 'react-i18next';
 import { agencyRequestService } from '../services/agencyRequestService';
 
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
 
-const TRAVELER_RANGES = ['1-10', '11-50', '51-200', 'Más de 200'];
-
 const AgencyRequestForm = ({ onClose }) => {
+  const { t } = useTranslation(['agency', 'common']);
+  const travelerRanges = t('agency:requestForm.travelerRanges', { returnObjects: true });
   const [form, setForm] = useState({
     agencyName: '',
     contactName: '',
     contactEmail: '',
     phone: '',
     city: '',
-    estimatedTravelers: TRAVELER_RANGES[0],
+    estimatedTravelers: travelerRanges[0],
     message: '',
   });
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ const AgencyRequestForm = ({ onClose }) => {
     setError(null);
 
     if (HCAPTCHA_SITE_KEY && !captchaToken) {
-      setError('Por favor completa la verificación de seguridad.');
+      setError(t('agency:requestForm.captchaRequired'));
       return;
     }
 
@@ -37,7 +38,7 @@ const AgencyRequestForm = ({ onClose }) => {
       await agencyRequestService.submit({ ...form, captchaToken });
       setSent(true);
     } catch (err) {
-      setError(err.message || 'Ha ocurrido un error');
+      setError(err.message || t('agency:requestForm.genericError'));
     } finally {
       setLoading(false);
     }
@@ -48,6 +49,7 @@ const AgencyRequestForm = ({ onClose }) => {
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden max-h-[90dvh] overflow-y-auto">
         <button
           onClick={onClose}
+          aria-label={t('common:actions.close')}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-2 z-10"
         >
           <i className="fas fa-times text-xl"></i>
@@ -59,15 +61,15 @@ const AgencyRequestForm = ({ onClose }) => {
               <div className="w-16 h-16 bg-green-500/10 dark:bg-green-500/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                 <i className="fas fa-check text-3xl text-green-600 dark:text-green-400"></i>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¡Solicitud enviada!</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('agency:requestForm.sentTitle')}</h2>
               <p className="text-slate-500 dark:text-slate-400 mb-6">
-                Revisaremos tu solicitud y te contactaremos pronto para activar tu cuenta de agencia.
+                {t('agency:requestForm.sentBody')}
               </p>
               <button
                 onClick={onClose}
                 className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition"
               >
-                Cerrar
+                {t('agency:requestForm.close')}
               </button>
             </div>
           ) : (
@@ -76,16 +78,16 @@ const AgencyRequestForm = ({ onClose }) => {
                 <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-blue-500/30">
                   <i className="fas fa-building text-2xl text-white"></i>
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Cuéntanos de tu agencia</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('agency:requestForm.title')}</h2>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Revisamos cada solicitud a mano y te activamos apenas encaje.
+                  {t('agency:requestForm.subtitle')}
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Nombre de la agencia *</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('agency:requestForm.agencyNameLabel')}</label>
                     <input
                       type="text"
                       value={form.agencyName}
@@ -95,7 +97,7 @@ const AgencyRequestForm = ({ onClose }) => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Tu nombre *</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('agency:requestForm.contactNameLabel')}</label>
                     <input
                       type="text"
                       value={form.contactName}
@@ -108,7 +110,7 @@ const AgencyRequestForm = ({ onClose }) => {
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Correo *</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('agency:requestForm.emailLabel')}</label>
                     <input
                       type="email"
                       value={form.contactEmail}
@@ -118,7 +120,7 @@ const AgencyRequestForm = ({ onClose }) => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Teléfono</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('agency:requestForm.phoneLabel')}</label>
                     <input
                       type="tel"
                       value={form.phone}
@@ -130,7 +132,7 @@ const AgencyRequestForm = ({ onClose }) => {
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Ciudad</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('agency:requestForm.cityLabel')}</label>
                     <input
                       type="text"
                       value={form.city}
@@ -139,13 +141,13 @@ const AgencyRequestForm = ({ onClose }) => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Viajeros al mes (aprox.)</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('agency:requestForm.travelersLabel')}</label>
                     <select
                       value={form.estimatedTravelers}
                       onChange={update('estimatedTravelers')}
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                     >
-                      {TRAVELER_RANGES.map((range) => (
+                      {travelerRanges.map((range) => (
                         <option key={range} value={range}>{range}</option>
                       ))}
                     </select>
@@ -153,7 +155,7 @@ const AgencyRequestForm = ({ onClose }) => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Cuéntanos un poco más (opcional)</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('agency:requestForm.messageLabel')}</label>
                   <textarea
                     value={form.message}
                     onChange={update('message')}
@@ -187,10 +189,10 @@ const AgencyRequestForm = ({ onClose }) => {
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <i className="fas fa-circle-notch fa-spin"></i>
-                      Enviando...
+                      {t('agency:requestForm.sending')}
                     </span>
                   ) : (
-                    'Enviar solicitud'
+                    t('agency:requestForm.submit')
                   )}
                 </button>
               </form>

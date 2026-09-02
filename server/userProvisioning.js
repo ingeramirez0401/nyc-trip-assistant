@@ -34,14 +34,18 @@ export async function findOrCreateAccount(email, { fullName, redirectTo } = {}) 
 
   const { data: existingProfile, error: profileError } = await supabaseAdmin
     .from('trippulse_profiles')
-    .select('id, email')
+    .select('id, email, language')
     .ilike('email', normalizedEmail)
     .maybeSingle();
 
   if (profileError) throw profileError;
 
   if (existingProfile) {
-    return { userId: existingProfile.id, created: false, actionLink: null };
+    // language viaja acá para que el caller (licenseRoutes.js) pueda
+    // mandar sendLicenseActivatedEmail en el idioma real del destinatario
+    // -- a diferencia de una cuenta recién creada (más abajo), esta persona
+    // ya tiene un perfil con esa preferencia guardada.
+    return { userId: existingProfile.id, created: false, actionLink: null, language: existingProfile.language };
   }
 
   const { data, error } = await supabaseAdmin.auth.admin.createUser({

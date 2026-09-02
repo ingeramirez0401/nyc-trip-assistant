@@ -4,6 +4,7 @@ import { requireAuth, requireAgencyAdmin, supabaseAdmin } from './supabaseAuth.j
 import { sendTravelerWelcomeEmail, sendLicenseActivatedEmail } from './email.js';
 import { resolvePublicUrl } from './appUrl.js';
 import { findOrCreateAccount, accountExists } from './userProvisioning.js';
+import { resolveLang, tr } from './lib/serverI18n.js';
 
 const router = Router();
 
@@ -18,7 +19,7 @@ function generateCode() {
 // Devuelve { ok:false, status, error } en vez de lanzar para los casos
 // esperados (cupo duplicado, carrera de canje) y deja que el caller decida
 // cómo responder.
-async function redeemLicenseAtomic({ license, userId, userEmail, extraFields = {}, selfService = false }) {
+async function redeemLicenseAtomic({ license, userId, userEmail, extraFields = {}, selfService = false, lang = 'es' }) {
   // Solo una licencia activa por tipo de cupo a la vez -- evita dejar cupo
   // huérfano (invisible) y evita que el RPC de consumo, que no limita a una
   // fila, descuente de dos licencias del mismo tipo a la vez.
@@ -37,10 +38,15 @@ async function redeemLicenseAtomic({ license, userId, userEmail, extraFields = {
     (l) => !l.expires_at || new Date(l.expires_at) > now
   );
   if (hasActiveSameType) {
-    const label = license.quota_type === 'trips' ? 'viajes' : 'generaciones con IA';
-    const error = selfService
-      ? `Ya tienes una licencia activa de ${label}. Espera a que se agote o venza antes de canjear otra del mismo tipo.`
-      : `Este usuario ya tiene una licencia activa de ${label}. Debe agotarse o vencer antes de activar otra del mismo tipo.`;
+    const label = tr(lang, license.quota_type === 'trips' ? 'viajes' : 'generaciones con IA');
+    const error =
+      lang === 'en'
+        ? selfService
+          ? `You already have an active ${label} license. Wait for it to run out or expire before redeeming another of the same type.`
+          : `This user already has an active ${label} license. It must run out or expire before activating another of the same type.`
+        : selfService
+          ? `Ya tienes una licencia activa de ${label}. Espera a que se agote o venza antes de canjear otra del mismo tipo.`
+          : `Este usuario ya tiene una licencia activa de ${label}. Debe agotarse o vencer antes de activar otra del mismo tipo.`;
     return { ok: false, status: 409, error };
   }
 
@@ -65,7 +71,7 @@ async function redeemLicenseAtomic({ license, userId, userEmail, extraFields = {
     .single();
 
   if (updateError || !updatedLicense) {
-    return { ok: false, status: 409, error: 'Esta licencia acaba de cambiar de estado, intenta de nuevo' };
+    return { ok: false, status: 409, error: tr(lang, 'Esta licencia acaba de cambiar de estado, intenta de nuevo') };
   }
 
   const { error: profileError } = await supabaseAdmin
@@ -102,12 +108,13 @@ function withEffectiveStatus(license) {
 router.post('/agency/licenses', requireAuth, requireAgencyAdmin, async (req, res) => {
   try {
     const { quotaType, quotaAmount, validDays = 365, quantity = 1 } = req.body;
+    const lang = resolveLang(req);
 
     if (!['trips', 'ai_generations'].includes(quotaType) || !quotaAmount || quotaAmount < 1) {
-      return res.status(400).json({ error: 'quotaType y quotaAmount son requeridos' });
+      return res.status(400).json({ error: tr(lang, 'quotaType y quotaAmount son requeridos') });
     }
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 500) {
-      return res.status(400).json({ error: 'quantity debe ser un entero entre 1 y 500' });
+      return res.status(400).json({ error: tr(lang, 'quantity debe ser un entero entre 1 y 500') });
     }
 
     const rows = Array.from({ length: quantity }, () => ({
@@ -151,9 +158,10 @@ router.get('/agency/licenses', requireAuth, requireAgencyAdmin, async (req, res)
 router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ error: 'email es requerido' });
+    const lang = resolveLang(req);
+    if (!email) return res.status(400).json({ error: tr(lang, 'email es requerido') });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Email inválido' });
+      return res.status(400).json({ error: tr(lang, 'Email inválido') });
     }
 
     const { data: license, error: fetchError } = await supabaseAdmin
@@ -163,9 +171,9 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
       .eq('agency_id', req.agencyId)
       .single();
 
-    if (fetchError || !license) return res.status(404).json({ error: 'Licencia no encontrada' });
-    if (license.status === 'redeemed') return res.status(400).json({ error: 'Esta licencia ya fue canjeada' });
-    if (license.status === 'revoked') return res.status(400).json({ error: 'Esta licencia fue revocada' });
+    if (fetchError || !license) return res.status(404).json({ error: tr(lang, 'Licencia no encontrada') });
+    if (license.status === 'redeemed') return res.status(400).json({ error: tr(lang, 'Esta licencia ya fue canjeada') });
+    if (license.status === 'revoked') return res.status(400).json({ error: tr(lang, 'Esta licencia fue revocada') });
 
     const agencyName = license.trippulse_agencies?.name || 'Tu agencia de viajes';
     const logoUrl = license.trippulse_agencies?.logo_url || null;
@@ -184,6 +192,7 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
       userId: account.userId,
       userEmail: email,
       extraFields: { sent_at: new Date().toISOString() },
+      lang,
     });
 
     if (!result.ok) {
@@ -209,6 +218,7 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
         quotaAmount: license.quota_amount,
         logoUrl,
         primaryColor,
+        lang: account.language,
       });
     }
 
@@ -225,8 +235,9 @@ router.post('/agency/licenses/:id/send', requireAuth, requireAgencyAdmin, async 
 router.get('/agency/check-email', requireAuth, requireAgencyAdmin, async (req, res) => {
   try {
     const email = (req.query.email || '').trim();
+    const lang = resolveLang(req);
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Email inválido' });
+      return res.status(400).json({ error: tr(lang, 'Email inválido') });
     }
     const exists = await accountExists(email);
     res.json({ exists });
@@ -242,6 +253,7 @@ router.get('/agency/check-email', requireAuth, requireAgencyAdmin, async (req, r
 // contraseña temporal, el mismo correo lo dirige a "olvidé mi contraseña".
 router.post('/agency/licenses/:id/resend', requireAuth, requireAgencyAdmin, async (req, res) => {
   try {
+    const lang = resolveLang(req);
     const { data: license, error: fetchError } = await supabaseAdmin
       .from('trippulse_licenses')
       .select('*, trippulse_agencies(name, logo_url, primary_color)')
@@ -249,13 +261,22 @@ router.post('/agency/licenses/:id/resend', requireAuth, requireAgencyAdmin, asyn
       .eq('agency_id', req.agencyId)
       .single();
 
-    if (fetchError || !license) return res.status(404).json({ error: 'Licencia no encontrada' });
+    if (fetchError || !license) return res.status(404).json({ error: tr(lang, 'Licencia no encontrada') });
     if (license.status !== 'redeemed') {
-      return res.status(400).json({ error: 'Esta licencia todavía no está canjeada' });
+      return res.status(400).json({ error: tr(lang, 'Esta licencia todavía no está canjeada') });
     }
     if (!license.traveler_email) {
-      return res.status(400).json({ error: 'Esta licencia no tiene un correo asociado' });
+      return res.status(400).json({ error: tr(lang, 'Esta licencia no tiene un correo asociado') });
     }
+
+    // Reenvío: a diferencia del envío inicial, acá no hay un `account`
+    // recién resuelto con el idioma a mano -- se busca el perfil por email
+    // para mandar el correo en la preferencia real del destinatario.
+    const { data: travelerProfile } = await supabaseAdmin
+      .from('trippulse_profiles')
+      .select('language')
+      .ilike('email', license.traveler_email)
+      .maybeSingle();
 
     await sendLicenseActivatedEmail({
       to: license.traveler_email,
@@ -265,6 +286,7 @@ router.post('/agency/licenses/:id/resend', requireAuth, requireAgencyAdmin, asyn
       quotaAmount: license.quota_amount,
       logoUrl: license.trippulse_agencies?.logo_url || null,
       primaryColor: license.trippulse_agencies?.primary_color || null,
+      lang: travelerProfile?.language,
     });
 
     res.json({ success: true });
@@ -276,6 +298,7 @@ router.post('/agency/licenses/:id/resend', requireAuth, requireAgencyAdmin, asyn
 
 router.post('/agency/licenses/:id/revoke', requireAuth, requireAgencyAdmin, async (req, res) => {
   try {
+    const lang = resolveLang(req);
     const { data, error } = await supabaseAdmin
       .from('trippulse_licenses')
       .update({ status: 'revoked' })
@@ -285,7 +308,7 @@ router.post('/agency/licenses/:id/revoke', requireAuth, requireAgencyAdmin, asyn
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'Licencia no encontrada' });
+    if (!data) return res.status(404).json({ error: tr(lang, 'Licencia no encontrada') });
     res.json({ license: data });
   } catch (error) {
     console.error('Error revocando licencia:', error);
@@ -330,7 +353,8 @@ router.get('/agency/branding', requireAuth, async (req, res) => {
 router.post('/licenses/redeem', requireAuth, async (req, res) => {
   try {
     const { code } = req.body;
-    if (!code) return res.status(400).json({ error: 'code es requerido' });
+    const lang = resolveLang(req);
+    if (!code) return res.status(400).json({ error: tr(lang, 'code es requerido') });
 
     const normalizedCode = code.toUpperCase().trim();
 
@@ -341,13 +365,13 @@ router.post('/licenses/redeem', requireAuth, async (req, res) => {
       .single();
 
     if (fetchError || !license) {
-      return res.status(404).json({ error: 'Código inválido' });
+      return res.status(404).json({ error: tr(lang, 'Código inválido') });
     }
     if (['redeemed', 'revoked', 'expired'].includes(license.status)) {
-      return res.status(400).json({ error: 'Este código ya no está disponible' });
+      return res.status(400).json({ error: tr(lang, 'Este código ya no está disponible') });
     }
     if (license.traveler_email && license.traveler_email.toLowerCase() !== req.user.email.toLowerCase()) {
-      return res.status(403).json({ error: 'Este código fue enviado a otro correo' });
+      return res.status(403).json({ error: tr(lang, 'Este código fue enviado a otro correo') });
     }
 
     const result = await redeemLicenseAtomic({
@@ -355,6 +379,7 @@ router.post('/licenses/redeem', requireAuth, async (req, res) => {
       userId: req.user.id,
       userEmail: req.user.email,
       selfService: true,
+      lang,
     });
     if (!result.ok) {
       return res.status(result.status).json({ error: result.error });

@@ -1,0 +1,192 @@
+{
+  "landing": {
+    "eyebrow": "AI-powered trip planning",
+    "title": "Let AI build your perfect itinerary",
+    "subtitle": "Tell us your destination, days, and interests. TripPulse hands you a complete plan, map included, ready to live — not to keep editing.",
+    "ctaTraveler": "I'm a traveler",
+    "ctaAgency": "I'm a travel agency",
+    "heroAlt": "A road trip through red rock landscapes",
+    "itineraryReady": "Itinerary ready",
+    "itineraryReadySub": "in seconds, with AI",
+    "highlights": [
+      { "title": "AI that knows the destination", "text": "No \"generic places\". Real coordinates, local tips, and a full itinerary built in seconds, not hours of open tabs." },
+      { "title": "Everything on one map, the whole trip", "text": "Daily routes, saved stops, photos, and notes. Open the app and know exactly where to go." },
+      { "title": "Built for your agency", "text": "Give every client an experience with your brand, not a generic link. They live the trip, you stay on their radar." }
+    ]
+  },
+  "plans": {
+    "title": "Choose how to start",
+    "subtitle": "Create your free account, no credit card needed",
+    "alreadyHaveAccount": "Already have an account?",
+    "login": "Sign in",
+    "free": {
+      "name": "Free",
+      "priceSuffix": "/ forever",
+      "features": ["Up to 3 active trips", "Interactive map and daily routes", "Save stops, photos, and notes", "Mark places as visited"],
+      "cta": "Start Free"
+    },
+    "vip": {
+      "name": "VIP",
+      "badge": "Coming Soon",
+      "subtitle": "For frequent travelers",
+      "features": ["Unlimited trips", "AI itinerary generation", "Everything in the Free plan", "Priority support"],
+      "cta": "Contact Us",
+      "mailSubject": "Interested in TripPulse VIP"
+    }
+  },
+  "pitch": {
+    "eyebrow": "For travel agencies",
+    "title": "Give your clients an app, not a PDF",
+    "subtitle": "Buy license packs, hand them out to your travelers, and let AI build their itinerary in seconds — with your agency as the one who made it possible.",
+    "valueProps": [
+      { "title": "Your brand, not ours", "text": "Your logo and color in the experience your client lives. TripPulse is the technology behind it, you're the one who looks good." },
+      { "title": "Bulk licenses", "text": "Generate dozens of access codes at once, with whatever quota you set: trips, AI generations, or both separately." },
+      { "title": "They send themselves", "text": "Each license goes out by email straight to your client, with their code ready to activate. You generate, we deliver." }
+    ],
+    "loginCta": "Agency Access",
+    "requestCta": "Not a partner yet? Request access"
+  },
+  "redeem": {
+    "label": "Coming from a travel agency?",
+    "placeholder": "Enter your code",
+    "redeeming": "Redeeming...",
+    "redeem": "Redeem",
+    "success": "Code activated! You now have access.",
+    "genericError": "Couldn't redeem the code"
+  },
+  "licenseService": {
+    "notAuthenticated": "You need to sign in.",
+    "genericError": "Error in the license service"
+  },
+  "requestForm": {
+    "captchaRequired": "Please complete the security verification.",
+    "genericError": "An error occurred",
+    "requestError": "Request error",
+    "sentTitle": "Request sent!",
+    "sentBody": "We'll review your request and reach out soon to activate your agency account.",
+    "close": "Close",
+    "title": "Tell us about your agency",
+    "subtitle": "We review every request by hand and activate you as soon as it's a fit.",
+    "agencyNameLabel": "Agency name *",
+    "contactNameLabel": "Your name *",
+    "emailLabel": "Email *",
+    "phoneLabel": "Phone",
+    "cityLabel": "City",
+    "travelersLabel": "Travelers per month (approx.)",
+    "travelerRanges": ["1-10", "11-50", "51-200", "200+"],
+    "messageLabel": "Tell us a bit more (optional)",
+    "sending": "Sending...",
+    "submit": "Send request"
+  },
+  "admin": {
+    "statusLabels": {
+      "unused": "Unused",
+      "sent": "Sent",
+      "redeemed": "Redeemed",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "accountMenu": "My account",
+    "closePanel": "Close panel",
+    "title": "Agency Panel",
+    "noAgency": "This account doesn't manage any agency.",
+    "back": "Back",
+    "loading": "Loading...",
+    "metrics": {
+      "generated": "Licenses generated",
+      "redeemed": "Redeemed",
+      "sentUnredeemed": "Sent, not redeemed",
+      "totalQuota": "Total quota distributed"
+    },
+    "brand": {
+      "title": "Agency brand",
+      "nameLabel": "Name",
+      "logoLabel": "Logo",
+      "uploading": "Uploading...",
+      "change": "Change",
+      "upload": "Upload image",
+      "removeLogo": "Remove logo",
+      "colorLabel": "Primary color",
+      "saving": "Saving...",
+      "save": "Save brand",
+      "success": "Brand updated",
+      "logoUploaded": "Logo uploaded — click \"Save brand\" to apply it",
+      "logoRequirements": "Minimum {{minDimension}}x{{minDimension}}px · Auto-cropped to a square · Max {{maxMb}}MB",
+      "errors": {
+        "load": "Error loading the agency panel",
+        "save": "Error saving",
+        "logo": "Couldn't process the logo",
+        "invalidImage": "Couldn't read the image. Is it a valid file?",
+        "mustBeImage": "The file must be an image (PNG, JPG, or WEBP).",
+        "tooLarge": "The image is over {{maxMb}}MB. Upload a smaller file.",
+        "tooSmall": "The image is too small ({{width}}x{{height}}px). Use at least {{minDimension}}x{{minDimension}}px so it looks sharp.",
+        "processingFailed": "Couldn't process the image."
+      }
+    },
+    "generate": {
+      "title": "Generate licenses",
+      "quotaTypeLabel": "Quota type",
+      "quotaTypeTrips": "Trips",
+      "quotaTypeAi": "AI Generations",
+      "quotaAmountLabel": "Quota amount",
+      "validDaysLabel": "Validity (days)",
+      "quantityLabel": "Number of licenses",
+      "generating": "Generating...",
+      "submit": "Generate licenses",
+      "success": "{{count}} license(s) generated",
+      "error": "Error generating licenses"
+    },
+    "list": {
+      "title": "Licenses ({{count}})",
+      "empty": "You haven't generated any licenses yet.",
+      "copyCode": "Copy code",
+      "codeCopied": "Code copied",
+      "emailPlaceholder": "email@traveler.com",
+      "checking": "Checking...",
+      "hasAccount": "Already has an account",
+      "willCreateAccount": "A new account will be created",
+      "emailRequired": "Enter the traveler's email",
+      "sending": "Sending...",
+      "send": "Send",
+      "resend": "Resend",
+      "resending": "Resending...",
+      "resendAccess": "Resend access",
+      "resendAccessTitle": "Resend the access email in case it got lost",
+      "revoke": "Revoke",
+      "confirmRevoke": "Revoke license {{code}}? It won't be redeemable anymore.",
+      "accountCreatedAndActivated": "Account created and license activated for {{email}}",
+      "activated": "License activated for {{email}}",
+      "revoked": "License revoked",
+      "resent": "Email resent to {{email}}",
+      "errors": {
+        "send": "Error sending",
+        "resend": "Error resending",
+        "revoke": "Error revoking"
+      }
+    }
+  },
+  "approve": {
+    "missingToken": "The link is missing the token.",
+    "loadError": "Couldn't load the request",
+    "approveError": "Error approving",
+    "rejectError": "Error rejecting",
+    "title": "Agency request",
+    "loading": "Loading...",
+    "fields": {
+      "agency": "Agency",
+      "contact": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "city": "City",
+      "travelers": "Travelers/month",
+      "message": "Message"
+    },
+    "reject": "Reject",
+    "approve": "Approve and Activate",
+    "processing": "Processing...",
+    "activatedTitle": "Agency activated",
+    "activatedWithAccount": "We created their account and emailed them their access (email + password) with sign-in instructions.",
+    "activatedExistingAccount": "The contact already had a TripPulse account -- we let them know by email that they now manage their agency.",
+    "rejectedTitle": "Request rejected"
+  }
+}

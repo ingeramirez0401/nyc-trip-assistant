@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 // Normaliza cualquier imagen subida por una agencia a un logo cuadrado
 // consistente -- para que todas las agencias encajen igual en el badge del
 // viajero y el avatar del menú, sin importar qué tamaño/proporción hayan
@@ -5,22 +7,23 @@
 const MIN_SOURCE_DIMENSION = 128;
 const OUTPUT_SIZE = 512;
 const MAX_SOURCE_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_SOURCE_FILE_MB = MAX_SOURCE_FILE_BYTES / (1024 * 1024);
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('No se pudo leer la imagen. ¿Es un archivo válido?'));
+    img.onerror = () => reject(new Error(i18n.t('agency:admin.brand.errors.invalidImage')));
     img.src = src;
   });
 }
 
 export async function normalizeSquareLogo(file) {
   if (!file.type.startsWith('image/')) {
-    throw new Error('El archivo debe ser una imagen (PNG, JPG o WEBP).');
+    throw new Error(i18n.t('agency:admin.brand.errors.mustBeImage'));
   }
   if (file.size > MAX_SOURCE_FILE_BYTES) {
-    throw new Error('La imagen pesa más de 5MB. Sube un archivo más liviano.');
+    throw new Error(i18n.t('agency:admin.brand.errors.tooLarge', { maxMb: MAX_SOURCE_FILE_MB }));
   }
 
   const objectUrl = URL.createObjectURL(file);
@@ -29,7 +32,11 @@ export async function normalizeSquareLogo(file) {
 
     if (img.width < MIN_SOURCE_DIMENSION || img.height < MIN_SOURCE_DIMENSION) {
       throw new Error(
-        `La imagen es muy pequeña (${img.width}x${img.height}px). Usa al menos ${MIN_SOURCE_DIMENSION}x${MIN_SOURCE_DIMENSION}px para que se vea nítida.`
+        i18n.t('agency:admin.brand.errors.tooSmall', {
+          width: img.width,
+          height: img.height,
+          minDimension: MIN_SOURCE_DIMENSION,
+        })
       );
     }
 
@@ -49,7 +56,7 @@ export async function normalizeSquareLogo(file) {
     ctx.drawImage(img, sx, sy, side, side, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
 
     const blob = await new Promise((resolve, reject) =>
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No se pudo procesar la imagen.'))), 'image/png')
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(i18n.t('agency:admin.brand.errors.processingFailed')))), 'image/png')
     );
 
     return new File([blob], 'agency-logo.png', { type: 'image/png' });
@@ -58,4 +65,5 @@ export async function normalizeSquareLogo(file) {
   }
 }
 
-export const LOGO_REQUIREMENTS_LABEL = `Mínimo ${MIN_SOURCE_DIMENSION}x${MIN_SOURCE_DIMENSION}px · Se recorta a cuadrado automáticamente · Máx. 5MB`;
+export const getLogoRequirementsLabel = () =>
+  i18n.t('agency:admin.brand.logoRequirements', { minDimension: MIN_SOURCE_DIMENSION, maxMb: MAX_SOURCE_FILE_MB });
