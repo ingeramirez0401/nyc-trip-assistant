@@ -119,7 +119,10 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
         <div className="flex-1 py-4 overflow-y-auto">
             {!user && (
               <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => {
+                      setShowLogin(true);
+                      onClose();
+                  }}
                   className="w-full text-left px-6 py-4 hover:bg-white/5 transition-colors flex items-center gap-4 text-white group mb-2"
               >
                   <div className="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center group-hover:scale-110 transition-transform">
