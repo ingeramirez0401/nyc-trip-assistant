@@ -58,6 +58,10 @@
     "notAuthenticated": "You need to sign in.",
     "genericError": "Error in the license service"
   },
+  "tiers": {
+    "explorer": { "name": "Explorer" },
+    "voyager": { "name": "Voyager" }
+  },
   "requestForm": {
     "captchaRequired": "Please complete the security verification.",
     "genericError": "An error occurred",
@@ -123,13 +127,13 @@
         "processingFailed": "Couldn't process the image."
       }
     },
+    "pool": {
+      "label": "Licenses used / credited by TripPulse"
+    },
     "generate": {
       "title": "Generate licenses",
-      "quotaTypeLabel": "Quota type",
-      "quotaTypeTrips": "Trips",
-      "quotaTypeAi": "AI Generations",
-      "quotaAmountLabel": "Quota amount",
-      "validDaysLabel": "Validity (days)",
+      "poolHint": "Credits available: {{remaining}}",
+      "tierSummary": "{{trips}} trip(s) · {{days}}-day validity",
       "quantityLabel": "Number of licenses",
       "generating": "Generating...",
       "submit": "Generate licenses",
@@ -188,5 +192,21 @@
     "activatedWithAccount": "We created their account and emailed them their access (email + password) with sign-in instructions.",
     "activatedExistingAccount": "The contact already had a TripPulse account -- we let them know by email that they now manage their agency.",
     "rejectedTitle": "Request rejected"
+  },
+  "superAdmin": {
+    "title": "Admin Panel",
+    "subtitle": "Agency and license credit management",
+    "agenciesTitle": "Agencies ({{count}})",
+    "empty": "No agencies registered yet.",
+    "licenses": "licenses",
+    "amountPlaceholder": "Amount",
+    "add": "Add",
+    "subtract": "Subtract",
+    "poolUpdated": "Credits updated",
+    "errors": {
+      "load": "Error loading agencies",
+      "invalidAmount": "Enter a valid amount",
+      "adjust": "Error adjusting credits"
+    }
   }
 }

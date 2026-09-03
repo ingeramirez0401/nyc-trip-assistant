@@ -41,10 +41,10 @@ async function callAPI(path, options = {}) {
 
 export const licenseService = {
   // ---- Agencia ----
-  async generate({ quotaType, quotaAmount, validDays = 365, quantity = 1 }) {
+  async generate({ tier, quantity = 1 }) {
     const { licenses } = await callAPI('/agency/licenses', {
       method: 'POST',
-      body: JSON.stringify({ quotaType, quotaAmount, validDays, quantity }),
+      body: JSON.stringify({ tier, quantity }),
     });
     return licenses;
   },

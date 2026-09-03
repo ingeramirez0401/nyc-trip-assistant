@@ -12,6 +12,15 @@ function generateCode() {
   return crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 8);
 }
 
+// Catálogo fijo de tiers -- el servidor es la única fuente de verdad para
+// cupo/vigencia, el cliente solo elige el tier (mismo espíritu que
+// PROFILE_COLUMN_SECURITY_FIX.sql: nunca confiar en cantidades que manda
+// el cliente). Cambiar estos números no requiere migración, solo redeploy.
+const LICENSE_TIERS = {
+  explorer: { quotaAmount: 1, validDays: 365 },
+  voyager: { quotaAmount: 3, validDays: 548 },
+};
+
 // Núcleo compartido de "canjear esta licencia para este usuario", usado
 // tanto por el canje manual (/licenses/redeem, el viajero pone un código)
 // como por el envío desde el panel de agencia (donde ahora el canje ya no
@@ -107,20 +116,36 @@ function withEffectiveStatus(license) {
 
 router.post('/agency/licenses', requireAuth, requireAgencyAdmin, async (req, res) => {
   try {
-    const { quotaType, quotaAmount, validDays = 365, quantity = 1 } = req.body;
+    const { tier, quantity = 1 } = req.body;
     const lang = resolveLang(req);
 
-    if (!['trips', 'ai_generations'].includes(quotaType) || !quotaAmount || quotaAmount < 1) {
-      return res.status(400).json({ error: tr(lang, 'quotaType y quotaAmount son requeridos') });
+    const tierConfig = LICENSE_TIERS[tier];
+    if (!tierConfig) {
+      return res.status(400).json({ error: tr(lang, 'tier inválido') });
     }
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 500) {
       return res.status(400).json({ error: tr(lang, 'quantity debe ser un entero entre 1 y 500') });
     }
 
+    // Reserva el cupo del pool ANTES de insertar -- si no alcanza, ni
+    // siquiera se intenta el insert. Atómico vía RPC (mismo patrón que
+    // trippulse_consume_license_quota) para no pisarse con otra generación
+    // concurrente de la misma agencia.
+    const { data: reserved, error: reserveError } = await supabaseAdmin.rpc(
+      'trippulse_reserve_agency_license_credits',
+      { p_agency_id: req.agencyId, p_quantity: quantity }
+    );
+    if (reserveError) throw reserveError;
+    if (!reserved) {
+      return res.status(403).json({ error: tr(lang, 'No tienes suficiente cupo de licencias disponible. Contacta a TripPulse para recargar.') });
+    }
+
+    const { quotaAmount, validDays } = tierConfig;
     const rows = Array.from({ length: quantity }, () => ({
       agency_id: req.agencyId,
       code: generateCode(),
-      quota_type: quotaType,
+      tier,
+      quota_type: 'trips',
       quota_amount: quotaAmount,
       quota_remaining: quotaAmount,
       valid_days: validDays,

@@ -20,6 +20,8 @@
     "switchTripHint": "Volver al selector",
     "agencyPanelLabel": "Panel de Agencia",
     "agencyPanelHint": "Generar y gestionar licencias",
+    "adminPanelLabel": "Panel de Administración",
+    "adminPanelHint": "Gestionar agencias y cupos",
     "settingsSection": "Configuración",
     "darkModeOn": "Modo Claro",
     "darkModeOff": "Modo Oscuro",

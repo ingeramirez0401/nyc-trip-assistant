@@ -58,6 +58,10 @@
     "notAuthenticated": "Debes iniciar sesión.",
     "genericError": "Error en el servicio de licencias"
   },
+  "tiers": {
+    "explorer": { "name": "Explorer" },
+    "voyager": { "name": "Voyager" }
+  },
   "requestForm": {
     "captchaRequired": "Por favor completa la verificación de seguridad.",
     "genericError": "Ha ocurrido un error",
@@ -123,13 +127,13 @@
         "processingFailed": "No se pudo procesar la imagen."
       }
     },
+    "pool": {
+      "label": "Licencias usadas / cargadas por TripPulse"
+    },
     "generate": {
       "title": "Generar licencias",
-      "quotaTypeLabel": "Tipo de cupo",
-      "quotaTypeTrips": "Viajes",
-      "quotaTypeAi": "Generaciones IA",
-      "quotaAmountLabel": "Cantidad de cupo",
-      "validDaysLabel": "Vigencia (días)",
+      "poolHint": "Cupo disponible: {{remaining}}",
+      "tierSummary": "{{trips}} viaje(s) · {{days}} días de vigencia",
       "quantityLabel": "N.° de licencias",
       "generating": "Generando...",
       "submit": "Generar licencias",
@@ -188,5 +192,21 @@
     "activatedWithAccount": "Creamos su cuenta y le enviamos un correo con su acceso (correo + contraseña) e instrucciones para iniciar sesión.",
     "activatedExistingAccount": "El contacto ya tenía cuenta en TripPulse -- le avisamos por correo que ahora administra su agencia.",
     "rejectedTitle": "Solicitud rechazada"
+  },
+  "superAdmin": {
+    "title": "Panel de Administración",
+    "subtitle": "Gestión de agencias y cupos de licencias",
+    "agenciesTitle": "Agencias ({{count}})",
+    "empty": "Todavía no hay agencias registradas.",
+    "licenses": "licencias",
+    "amountPlaceholder": "Cantidad",
+    "add": "Agregar",
+    "subtract": "Restar",
+    "poolUpdated": "Cupo actualizado",
+    "errors": {
+      "load": "Error al cargar las agencias",
+      "invalidAmount": "Ingresa una cantidad válida",
+      "adjust": "Error al ajustar el cupo"
+    }
   }
 }

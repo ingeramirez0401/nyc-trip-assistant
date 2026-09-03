@@ -20,6 +20,8 @@
     "switchTripHint": "Back to trip list",
     "agencyPanelLabel": "Agency Panel",
     "agencyPanelHint": "Generate and manage licenses",
+    "adminPanelLabel": "Admin Panel",
+    "adminPanelHint": "Manage agencies and credits",
     "settingsSection": "Settings",
     "darkModeOn": "Light Mode",
     "darkModeOff": "Dark Mode",

@@ -4,11 +4,12 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import { quotaUnitLabel } from '../lib/licenseFormat';
 import { LOCALE_MAP } from '../i18n';
+import { isSuperAdmin } from '../lib/superAdmin';
 import LoginScreen from './auth/LoginScreen';
 
 const LANGUAGES = ['es', 'en'];
 
-const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip, onOpenAgencyPanel, hasActiveTrip = true }) => {
+const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExitTrip, onOpenAgencyPanel, onOpenAdminPanel, hasActiveTrip = true }) => {
   const { t, i18n } = useTranslation(['sideMenu', 'common']);
   const { user, profile, licenses, signOut, agencyBranding, changeLanguage } = useAuth();
   const toast = useToast();
@@ -190,6 +191,25 @@ const SideMenu = ({ isOpen, onClose, isDarkMode, toggleTheme, onOpenList, onExit
                   <div>
                       <span className="font-bold block">{t('sideMenu:menu.agencyPanelLabel')}</span>
                       <span className="text-xs text-slate-400">{t('sideMenu:menu.agencyPanelHint')}</span>
+                  </div>
+                  <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
+              </button>
+            )}
+
+            {isSuperAdmin(user) && (
+              <button
+                  onClick={() => {
+                      onOpenAdminPanel();
+                      onClose();
+                  }}
+                  className="w-full text-left px-6 py-4 hover:bg-white/5 transition-colors flex items-center gap-4 text-white group"
+              >
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <i className="fas fa-user-shield"></i>
+                  </div>
+                  <div>
+                      <span className="font-bold block">{t('sideMenu:menu.adminPanelLabel')}</span>
+                      <span className="text-xs text-slate-400">{t('sideMenu:menu.adminPanelHint')}</span>
                   </div>
                   <i className="fas fa-chevron-right ml-auto text-slate-600 text-xs"></i>
               </button>

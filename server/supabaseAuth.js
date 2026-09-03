@@ -11,6 +11,11 @@ if (!SERVICE_ROLE_KEY) {
   console.error('⚠️  TRIPPULSE_SUPABASE_SERVICE_ROLE_KEY no configurada. Las rutas de licencias fallarán.');
 }
 
+// Fijo a propósito (decisión de negocio) en vez de un rol nuevo en
+// trippulse_profiles -- un solo dueño de plataforma hoy, no una lista que
+// gestionar. Overrideable por env por si el email cambia sin tocar código.
+const SUPER_ADMIN_EMAIL = (process.env.SUPER_ADMIN_EMAIL || 'ingeramirez0401@gmail.com').toLowerCase();
+
 // Cliente con privilegios elevados (bypassa RLS) — SOLO se usa aquí, en el
 // servidor. Nunca se expone al navegador ni se referencia con prefijo VITE_.
 // Necesario porque el canje de licencia vincula una licencia a un usuario
@@ -70,4 +75,15 @@ export async function requireAgencyAdmin(req, res, next) {
     console.error('Error verificando rol de agencia:', err);
     res.status(500).json({ error: tr(lang, 'Error verificando permisos') });
   }
+}
+
+// Requiere que el usuario autenticado sea el dueño de la plataforma. A
+// diferencia de requireAgencyAdmin, no hay tabla que consultar -- es una
+// comparación de email fija (ver SUPER_ADMIN_EMAIL arriba).
+export function requireSuperAdmin(req, res, next) {
+  const lang = resolveLang(req);
+  if (req.user?.email?.toLowerCase() !== SUPER_ADMIN_EMAIL) {
+    return res.status(403).json({ error: tr(lang, 'Requiere permisos de administrador') });
+  }
+  next();
 }

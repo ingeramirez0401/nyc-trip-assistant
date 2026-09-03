@@ -21,7 +21,7 @@ import { notifyActionError } from '../lib/connectivity';
 import { quotaUnitLabel } from '../lib/licenseFormat';
 import { LOCALE_MAP } from '../i18n';
 
-const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel }) => {
+const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, onOpenAgencyPanel, onOpenAdminPanel }) => {
   const { t, i18n } = useTranslation(['welcome', 'common']);
   const { user, profile, licenses, refreshLicenses, agencyBranding } = useAuth();
   const toast = useToast();
@@ -185,8 +185,10 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
       setShowLogin(true);
       return;
     }
-    // VIP o licencia de agencia con cupo de generaciones IA
-    if (profile?.tier !== 'vip' && !hasLicenseQuota('ai_generations')) {
+    // VIP o licencia de agencia con cupo de viajes -- generar con IA y
+    // crear manual comparten el mismo contador (una licencia = N viajes,
+    // sin importar el método de creación).
+    if (profile?.tier !== 'vip' && !hasLicenseQuota('trips')) {
       toast.info(t('welcome:errors.aiVipOnly'));
       return;
     }
@@ -258,8 +260,10 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
       // Track AI usage
       await profileService.incrementAIUsage(user.id);
-      if (hasLicenseQuota('ai_generations')) {
-        await licenseService.consumeQuota('ai_generations');
+      // Mismo contador que un viaje manual -- ver comentario en
+      // handleOpenAIGenerator.
+      if (hasLicenseQuota('trips')) {
+        await licenseService.consumeQuota('trips');
         await refreshLicenses();
       }
 
@@ -703,6 +707,7 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
         onOpenList={() => {}}
         onExitTrip={() => {}}
         onOpenAgencyPanel={onOpenAgencyPanel}
+        onOpenAdminPanel={onOpenAdminPanel}
       />
     </div>
   );

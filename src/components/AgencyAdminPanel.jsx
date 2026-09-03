@@ -7,6 +7,7 @@ import { licenseService } from '../services/licenseService';
 import { storageService } from '../services/storageService';
 import { normalizeSquareLogo, getLogoRequirementsLabel } from '../lib/imageProcessing';
 import { quotaUnitLabel } from '../lib/licenseFormat';
+import { LICENSE_TIERS, LICENSE_TIER_KEYS } from '../data/licenseTiers';
 import SideMenu from './SideMenu';
 
 const STATUS_COLOR = {
@@ -41,7 +42,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [brandForm, setBrandForm] = useState({ name: '', logo_url: '', primary_color: '' });
-  const [genForm, setGenForm] = useState({ quotaType: 'trips', quotaAmount: 3, validDays: 365, quantity: 5 });
+  const [genForm, setGenForm] = useState({ tier: 'explorer', quantity: 5 });
 
   useEffect(() => {
     loadAll();
@@ -142,8 +143,6 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     e.preventDefault();
     const normalized = {
       ...genForm,
-      quotaAmount: clampValue(genForm.quotaAmount, 1),
-      validDays: clampValue(genForm.validDays, 365),
       quantity: clampValue(genForm.quantity, 1, { max: 500 }),
     };
     setGenForm(normalized);
@@ -151,8 +150,12 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       setGenerating(true);
       await licenseService.generate(normalized);
       toast.success(t('agency:admin.generate.success', { count: normalized.quantity }));
-      const updated = await licenseService.list();
-      setLicenses(updated);
+      const [updatedLicenses, updatedAgency] = await Promise.all([
+        licenseService.list(),
+        agencyService.getById(profile.agency_id),
+      ]);
+      setLicenses(updatedLicenses);
+      setAgency(updatedAgency);
     } catch (error) {
       toast.error(`${t('agency:admin.generate.error')}: ${error.message}`);
     } finally {
@@ -258,6 +261,10 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     { label: t('agency:admin.metrics.totalQuota'), value: quotaDistributed, icon: 'fa-layer-group', color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
   ];
 
+  const poolAllocated = agency?.license_credits_allocated ?? 0;
+  const poolUsed = agency?.license_credits_used ?? 0;
+  const poolRemaining = Math.max(poolAllocated - poolUsed, 0);
+
   return (
     <div className="fixed inset-0 z-[1500] bg-slate-50 dark:bg-slate-900 overflow-y-auto">
       {/* Header band */}
@@ -296,6 +303,22 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       </div>
 
       <div className="max-w-4xl mx-auto p-6 pb-24 -mt-10">
+        {/* Pool de licencias -- cupo cargado por TripPulse, distinto de las
+            métricas de abajo (que cuentan licencias YA generadas). */}
+        {!loading && (
+          <div className="mb-6 flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <i className="fas fa-box-archive"></i>
+            </div>
+            <div>
+              <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
+                {poolUsed}/{poolAllocated}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t('agency:admin.pool.label')}</p>
+            </div>
+          </div>
+        )}
+
         {/* Metrics */}
         {!loading && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
@@ -391,55 +414,54 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
 
             {/* Generar licencias */}
             <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('agency:admin.generate.title')}</h2>
-              <form onSubmit={handleGenerate} className="grid sm:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('agency:admin.generate.quotaTypeLabel')}
-                  </label>
-                  <select
-                    value={genForm.quotaType}
-                    onChange={(e) => setGenForm({ ...genForm, quotaType: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{t('agency:admin.generate.title')}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                {t('agency:admin.generate.poolHint', { remaining: poolRemaining })}
+              </p>
+              <form onSubmit={handleGenerate} className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {LICENSE_TIER_KEYS.map((tierKey) => {
+                    const cfg = LICENSE_TIERS[tierKey];
+                    const selected = genForm.tier === tierKey;
+                    return (
+                      <button
+                        key={tierKey}
+                        type="button"
+                        onClick={() => setGenForm({ ...genForm, tier: tierKey })}
+                        className={`text-left p-4 rounded-xl border-2 transition-all ${
+                          selected
+                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-500/10'
+                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                        }`}
+                      >
+                        <span className="font-bold text-slate-900 dark:text-white block mb-1">
+                          {t(`agency:tiers.${tierKey}.name`)}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {t('agency:admin.generate.tierSummary', { trips: cfg.quotaAmount, days: cfg.validDays })}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="grid sm:grid-cols-3 gap-4 items-end">
+                  <div className="sm:col-span-1">
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      {t('agency:admin.generate.quantityLabel')}
+                    </label>
+                    <input
+                      {...numberField('quantity', 1, { max: 500 })}
+                      className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={generating}
+                    className="sm:col-span-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-blue-900/40 active:scale-[0.98] transition-all disabled:opacity-50"
                   >
-                    <option value="trips">{t('agency:admin.generate.quotaTypeTrips')}</option>
-                    <option value="ai_generations">{t('agency:admin.generate.quotaTypeAi')}</option>
-                  </select>
+                    {generating ? t('agency:admin.generate.generating') : t('agency:admin.generate.submit')}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('agency:admin.generate.quotaAmountLabel')}
-                  </label>
-                  <input
-                    {...numberField('quotaAmount', 1)}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('agency:admin.generate.validDaysLabel')}
-                  </label>
-                  <input
-                    {...numberField('validDays', 365)}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('agency:admin.generate.quantityLabel')}
-                  </label>
-                  <input
-                    {...numberField('quantity', 1, { max: 500 })}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={generating}
-                  className="sm:col-span-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-blue-900/40 active:scale-[0.98] transition-all disabled:opacity-50"
-                >
-                  {generating ? t('agency:admin.generate.generating') : t('agency:admin.generate.submit')}
-                </button>
               </form>
             </section>
 
@@ -474,6 +496,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                       </span>
 
                       <div className="text-sm text-slate-500 dark:text-slate-400">
+                        {license.tier ? t(`agency:tiers.${license.tier}.name`) : null}{' '}
                         {license.quota_remaining}/{license.quota_amount}{' '}
                         {quotaUnitLabel(t, license.quota_type)}
                         {license.traveler_email && (

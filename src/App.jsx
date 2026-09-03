@@ -10,6 +10,7 @@ import ItineraryList from './components/ItineraryList';
 import WelcomeScreen from './components/WelcomeScreen';
 import TripSetup from './components/TripSetup';
 import AgencyAdminPanel from './components/AgencyAdminPanel';
+import SuperAdminPanel from './components/admin/SuperAdminPanel';
 import ResetPasswordScreen from './components/auth/ResetPasswordScreen';
 import LocationPermissionHelp from './components/LocationPermissionHelp';
 import { useSupabaseItinerary } from './hooks/useSupabaseItinerary';
@@ -368,6 +369,12 @@ function App() {
     );
   }
 
+  // Panel del dueño de la plataforma -- mismo patrón de ruta real que
+  // 'agency', mismo "volver a donde estaba" al cerrar.
+  if (route.screen === 'admin') {
+    return <SuperAdminPanel onClose={closeAgencyPanel} />;
+  }
+
   // Show Welcome Screen if no trip selected
   if (route.screen === 'home') {
     return (
@@ -377,6 +384,7 @@ function App() {
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
         onOpenAgencyPanel={() => navigate({ screen: 'agency' })}
+        onOpenAdminPanel={() => navigate({ screen: 'admin' })}
       />
     );
   }
@@ -517,6 +525,7 @@ function App() {
         onOpenList={() => setIsListOpen(true)}
         onExitTrip={handleExitTrip}
         onOpenAgencyPanel={() => navigate({ screen: 'agency' })}
+        onOpenAdminPanel={() => navigate({ screen: 'admin' })}
       />
 
       {/* ITINERARY LIST OVERLAY */}

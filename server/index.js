@@ -7,6 +7,7 @@ import { requireAuth } from './supabaseAuth.js';
 import licenseRoutes from './licenseRoutes.js';
 import placesRoutes, { verifyPlaceLocation } from './placesRoutes.js';
 import agencyRequestRoutes from './agencyRequestRoutes.js';
+import adminRoutes from './adminRoutes.js';
 import { resolveLang as resolveReqLang, tr } from './lib/serverI18n.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -44,6 +45,7 @@ app.use(express.json());
 
 app.use('/api', licenseRoutes);
 app.use('/api', agencyRequestRoutes);
+app.use('/api', adminRoutes);
 
 // Límite defensivo de costos: 20 generaciones de IA por hora por IP.
 const aiLimiter = rateLimit({
