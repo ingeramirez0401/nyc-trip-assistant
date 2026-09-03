@@ -143,6 +143,9 @@
     "list": {
       "title": "Licencias ({{count}})",
       "empty": "Aún no has generado licencias.",
+      "noResults": "Ninguna licencia coincide con el filtro.",
+      "searchPlaceholder": "Buscar por código o correo...",
+      "allStatuses": "Todos los estados",
       "copyCode": "Copiar código",
       "codeCopied": "Código copiado",
       "emailPlaceholder": "email@viajero.com",
@@ -198,6 +201,8 @@
     "subtitle": "Gestión de agencias y cupos de licencias",
     "agenciesTitle": "Agencias ({{count}})",
     "empty": "Todavía no hay agencias registradas.",
+    "noResults": "Ninguna agencia coincide con la búsqueda.",
+    "searchPlaceholder": "Buscar por nombre o correo...",
     "licenses": "licencias",
     "amountPlaceholder": "Cantidad",
     "add": "Agregar",

@@ -47,5 +47,10 @@
     "historia": "Historia",
     "entretenimiento": "Entretenimiento",
     "interes": "Interés"
+  },
+  "pagination": {
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "pageOf": "Página {{page}} de {{totalPages}}"
   }
 }

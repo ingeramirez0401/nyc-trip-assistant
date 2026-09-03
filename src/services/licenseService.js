@@ -39,6 +39,17 @@ async function callAPI(path, options = {}) {
   return data;
 }
 
+// Arma el query string solo con los params presentes -- evita mandar
+// page=1&pageSize=20&search=&status= vacío en cada request.
+function toQueryString(params) {
+  const usp = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') usp.set(key, value);
+  });
+  const qs = usp.toString();
+  return qs ? `?${qs}` : '';
+}
+
 export const licenseService = {
   // ---- Agencia ----
   async generate({ tier, quantity = 1 }) {
@@ -49,9 +60,9 @@ export const licenseService = {
     return licenses;
   },
 
-  async list() {
-    const { licenses } = await callAPI('/agency/licenses');
-    return licenses;
+  async list({ page, pageSize, search, status } = {}) {
+    const { licenses, total, metrics } = await callAPI(`/agency/licenses${toQueryString({ page, pageSize, search, status })}`);
+    return { items: licenses, total, metrics };
   },
 
   async send(licenseId, email) {

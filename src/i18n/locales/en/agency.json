@@ -143,6 +143,9 @@
     "list": {
       "title": "Licenses ({{count}})",
       "empty": "You haven't generated any licenses yet.",
+      "noResults": "No licenses match the filter.",
+      "searchPlaceholder": "Search by code or email...",
+      "allStatuses": "All statuses",
       "copyCode": "Copy code",
       "codeCopied": "Code copied",
       "emailPlaceholder": "email@traveler.com",
@@ -198,6 +201,8 @@
     "subtitle": "Agency and license credit management",
     "agenciesTitle": "Agencies ({{count}})",
     "empty": "No agencies registered yet.",
+    "noResults": "No agencies match your search.",
+    "searchPlaceholder": "Search by name or email...",
     "licenses": "licenses",
     "amountPlaceholder": "Amount",
     "add": "Add",

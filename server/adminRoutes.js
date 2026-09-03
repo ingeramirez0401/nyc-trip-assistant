@@ -10,13 +10,26 @@ const router = Router();
 // req.agencyId, se opera sobre cualquier agencia por :id.
 router.get('/admin/agencies', requireAuth, requireSuperAdmin, async (req, res) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('trippulse_agencies')
-      .select('id, name, slug, contact_email, license_credits_allocated, license_credits_used, created_at')
-      .order('created_at', { ascending: false });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+    const search = (req.query.search || '').trim();
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
 
+    let query = supabaseAdmin
+      .from('trippulse_agencies')
+      .select('id, name, slug, contact_email, license_credits_allocated, license_credits_used, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (search) {
+      const term = search.replace(/[%_]/g, '\\$&');
+      query = query.or(`name.ilike.%${term}%,contact_email.ilike.%${term}%`);
+    }
+
+    const { data, count, error } = await query;
     if (error) throw error;
-    res.json({ agencies: data });
+    res.json({ agencies: data, total: count ?? 0, page, pageSize });
   } catch (error) {
     console.error('Error listando agencias:', error);
     res.status(500).json({ error: error.message });

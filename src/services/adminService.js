@@ -33,10 +33,21 @@ async function callAPI(path, options = {}) {
   return data;
 }
 
+// Arma el query string solo con los params presentes -- evita mandar
+// page=1&pageSize=20&search= vacío en cada request.
+function toQueryString(params) {
+  const usp = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') usp.set(key, value);
+  });
+  const qs = usp.toString();
+  return qs ? `?${qs}` : '';
+}
+
 export const adminService = {
-  async listAgencies() {
-    const { agencies } = await callAPI('/admin/agencies');
-    return agencies;
+  async listAgencies({ page, pageSize, search } = {}) {
+    const { agencies, total } = await callAPI(`/admin/agencies${toQueryString({ page, pageSize, search })}`);
+    return { items: agencies, total };
   },
 
   async adjustAgencyPool(agencyId, delta) {

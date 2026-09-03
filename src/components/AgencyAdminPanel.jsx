@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
@@ -8,7 +8,11 @@ import { storageService } from '../services/storageService';
 import { normalizeSquareLogo, getLogoRequirementsLabel } from '../lib/imageProcessing';
 import { quotaUnitLabel } from '../lib/licenseFormat';
 import { LICENSE_TIERS, LICENSE_TIER_KEYS } from '../data/licenseTiers';
+import { usePaginatedList } from '../hooks/usePaginatedList';
+import Pagination from './Pagination';
 import SideMenu from './SideMenu';
+
+const STATUS_FILTER_VALUES = ['unused', 'sent', 'redeemed', 'expired', 'revoked'];
 
 const STATUS_COLOR = {
   unused: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
@@ -25,7 +29,6 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
   const STATUS_LABEL = t('agency:admin.statusLabels', { returnObjects: true });
 
   const [agency, setAgency] = useState(null);
-  const [licenses, setLicenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingBrand, setSavingBrand] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -43,9 +46,29 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
 
   const [brandForm, setBrandForm] = useState({ name: '', logo_url: '', primary_color: '' });
   const [genForm, setGenForm] = useState({ tier: 'explorer', quantity: 5 });
+  const [statusFilter, setStatusFilter] = useState('');
+
+  // Lista de licencias -- paginada/filtrada server-side, mismo hook que
+  // usa SuperAdminPanel para agencias. La agencia (un solo registro) se
+  // carga aparte, no participa de la paginación.
+  const fetchLicenses = useCallback((params) => licenseService.list(params), []);
+  const {
+    items: licenses,
+    setItems: setLicenses,
+    total: licensesTotal,
+    totalPages,
+    page,
+    setPage,
+    search: licenseSearch,
+    setSearch: setLicenseSearch,
+    setFilters: setLicenseFilters,
+    loading: licensesLoading,
+    reload: reloadLicenses,
+    extra: licensesExtra,
+  } = usePaginatedList(fetchLicenses, { pageSize: 20 });
 
   useEffect(() => {
-    loadAll();
+    loadAgency();
   }, []);
 
   useEffect(() => {
@@ -55,29 +78,30 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     return () => Object.values(timers).forEach(clearTimeout);
   }, []);
 
-  const loadAll = async () => {
+  const loadAgency = async () => {
     if (!profile?.agency_id) {
       setLoading(false);
       return;
     }
     try {
       setLoading(true);
-      const [agencyData, licenseData] = await Promise.all([
-        agencyService.getById(profile.agency_id),
-        licenseService.list(),
-      ]);
+      const agencyData = await agencyService.getById(profile.agency_id);
       setAgency(agencyData);
       setBrandForm({
         name: agencyData.name || '',
         logo_url: agencyData.logo_url || '',
         primary_color: agencyData.primary_color || '#2563eb',
       });
-      setLicenses(licenseData);
     } catch (error) {
       toast.error(`${t('agency:admin.brand.errors.load')}: ${error.message}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleStatusFilterChange = (value) => {
+    setStatusFilter(value);
+    setLicenseFilters(value ? { status: value } : {});
   };
 
   const handleLogoSelect = async (e) => {
@@ -150,12 +174,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
       setGenerating(true);
       await licenseService.generate(normalized);
       toast.success(t('agency:admin.generate.success', { count: normalized.quantity }));
-      const [updatedLicenses, updatedAgency] = await Promise.all([
-        licenseService.list(),
-        agencyService.getById(profile.agency_id),
-      ]);
-      setLicenses(updatedLicenses);
-      setAgency(updatedAgency);
+      await Promise.all([reloadLicenses(), loadAgency()]);
     } catch (error) {
       toast.error(`${t('agency:admin.generate.error')}: ${error.message}`);
     } finally {
@@ -249,10 +268,14 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
     );
   }
 
-  const totalLicenses = licenses.length;
-  const redeemedCount = licenses.filter((l) => l.status === 'redeemed').length;
-  const sentCount = licenses.filter((l) => l.status === 'sent').length;
-  const quotaDistributed = licenses.reduce((sum, l) => sum + (l.quota_amount || 0), 0);
+  // Del servidor, siempre sobre el total de la agencia -- nunca sobre la
+  // página/filtro que se esté viendo (ver server/licenseRoutes.js).
+  const {
+    totalLicenses = 0,
+    redeemedCount = 0,
+    sentCount = 0,
+    quotaDistributed = 0,
+  } = licensesExtra.metrics || {};
 
   const METRICS = [
     { label: t('agency:admin.metrics.generated'), value: totalLicenses, icon: 'fa-ticket', color: 'text-blue-600 dark:text-blue-400 bg-blue-500/10' },
@@ -467,12 +490,40 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
 
             {/* Lista de licencias */}
             <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                {t('agency:admin.list.title', { count: licenses.length })}
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  {t('agency:admin.list.title', { count: licensesTotal })}
+                </h2>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative sm:w-56">
+                    <i className="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input
+                      type="text"
+                      value={licenseSearch}
+                      onChange={(e) => setLicenseSearch(e.target.value)}
+                      placeholder={t('agency:admin.list.searchPlaceholder')}
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => handleStatusFilterChange(e.target.value)}
+                    className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="">{t('agency:admin.list.allStatuses')}</option>
+                    {STATUS_FILTER_VALUES.map((value) => (
+                      <option key={value} value={value}>{STATUS_LABEL[value] || value}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-              {licenses.length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400 text-sm">{t('agency:admin.list.empty')}</p>
+              {licensesLoading ? (
+                <div className="text-center py-12 text-slate-500 dark:text-slate-400">{t('agency:admin.loading')}</div>
+              ) : licenses.length === 0 ? (
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  {licenseSearch || statusFilter ? t('agency:admin.list.noResults') : t('agency:admin.list.empty')}
+                </p>
               ) : (
                 <div className="space-y-3 overflow-x-auto">
                   {licenses.map((license) => (
@@ -563,6 +614,7 @@ const AgencyAdminPanel = ({ onClose, isDarkMode, toggleTheme }) => {
                   ))}
                 </div>
               )}
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </section>
           </div>
         )}

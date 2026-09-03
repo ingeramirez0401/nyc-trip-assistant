@@ -166,14 +166,72 @@ router.post('/agency/licenses', requireAuth, requireAgencyAdmin, async (req, res
 
 router.get('/agency/licenses', requireAuth, requireAgencyAdmin, async (req, res) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('trippulse_licenses')
-      .select('*')
-      .eq('agency_id', req.agencyId)
-      .order('created_at', { ascending: false });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+    const search = (req.query.search || '').trim();
+    const status = (req.query.status || '').trim();
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
 
+    let query = supabaseAdmin
+      .from('trippulse_licenses')
+      .select('*', { count: 'exact' })
+      .eq('agency_id', req.agencyId)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (search) {
+      const term = search.replace(/[%_]/g, '\\$&');
+      query = query.or(`code.ilike.%${term}%,traveler_email.ilike.%${term}%`);
+    }
+
+    // 'expired' no es un status real en la fila -- se deriva de
+    // redeemed + vencida (ver withEffectiveStatus). El filtro replica esa
+    // misma regla para que "Expiradas" en el selector coincida con lo que
+    // withEffectiveStatus le muestra al admin en la lista.
+    const nowIso = new Date().toISOString();
+    if (status === 'expired') {
+      query = query.eq('status', 'redeemed').lt('expires_at', nowIso);
+    } else if (status === 'redeemed') {
+      query = query.eq('status', 'redeemed').or(`expires_at.is.null,expires_at.gt.${nowIso}`);
+    } else if (['unused', 'sent', 'revoked'].includes(status)) {
+      query = query.eq('status', status);
+    }
+
+    const { data, count, error } = await query;
     if (error) throw error;
-    res.json({ licenses: (data || []).map(withEffectiveStatus) });
+
+    // Métricas -- SIEMPRE sobre el total de la agencia, nunca sobre la
+    // página/filtro que se esté viendo (si no, el grid de arriba mentiría
+    // apenas se busque o se pase de página). Solo las columnas que hacen
+    // falta, no select('*'), para que sea barato con muchas licencias.
+    const { data: metricRows, error: metricsError } = await supabaseAdmin
+      .from('trippulse_licenses')
+      .select('status, quota_amount, expires_at')
+      .eq('agency_id', req.agencyId);
+    if (metricsError) throw metricsError;
+
+    const now = new Date();
+    const metrics = (metricRows || []).reduce(
+      (acc, l) => {
+        acc.totalLicenses += 1;
+        acc.quotaDistributed += l.quota_amount || 0;
+        const effectiveStatus =
+          l.status === 'redeemed' && l.expires_at && new Date(l.expires_at) <= now ? 'expired' : l.status;
+        if (effectiveStatus === 'redeemed') acc.redeemedCount += 1;
+        if (effectiveStatus === 'sent') acc.sentCount += 1;
+        return acc;
+      },
+      { totalLicenses: 0, redeemedCount: 0, sentCount: 0, quotaDistributed: 0 }
+    );
+
+    res.json({
+      licenses: (data || []).map(withEffectiveStatus),
+      total: count ?? 0,
+      page,
+      pageSize,
+      metrics,
+    });
   } catch (error) {
     console.error('Error listando licencias:', error);
     res.status(500).json({ error: error.message });
