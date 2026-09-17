@@ -11,6 +11,7 @@ import PlansSection from './PlansSection';
 import RedeemLicense from './RedeemLicense';
 import LandingIntro from './LandingIntro';
 import AgencyPitch from './AgencyPitch';
+import AgencyPricing from './AgencyPricing';
 import OnboardingTour from './OnboardingTour';
 import SideMenu from './SideMenu';
 import { useAuth } from '../hooks/useAuth';
@@ -502,6 +503,10 @@ const WelcomeScreen = ({ onSelectTrip, onCreateTrip, isDarkMode, toggleTheme, on
 
         {/* Sección agencias: propuesta de valor + acceso, solo para visitantes sin cuenta */}
         {!user && !showCreateForm && <AgencyPitch onAgencyLogin={handleAgencyLogin} />}
+
+        {/* Precios para agencias -- separada de AgencyPitch a propósito:
+            esa es el "por qué", esta es el "cuánto". */}
+        {!user && !showCreateForm && <AgencyPricing />}
 
         {/* Trips List or Empty State (solo con sesión activa) */}
         {user && trips.length === 0 && !showCreateForm ? (

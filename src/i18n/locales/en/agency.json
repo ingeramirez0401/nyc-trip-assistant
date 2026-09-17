@@ -40,11 +40,28 @@
     "subtitle": "Buy license packs, hand them out to your travelers, and let AI build their itinerary in seconds — with your agency as the one who made it possible.",
     "valueProps": [
       { "title": "Your brand, not ours", "text": "Your logo and color in the experience your client lives. TripPulse is the technology behind it, you're the one who looks good." },
-      { "title": "Bulk licenses", "text": "Generate dozens of access codes at once, with whatever quota you set: trips, AI generations, or both separately." },
+      { "title": "Bulk licenses", "text": "Generate dozens of access codes at once, choosing which plan each client gets: Explorer or Voyager." },
       { "title": "They send themselves", "text": "Each license goes out by email straight to your client, with their code ready to activate. You generate, we deliver." }
     ],
     "loginCta": "Agency Access",
     "requestCta": "Not a partner yet? Request access"
+  },
+  "pricing": {
+    "eyebrow": "Pricing for agencies",
+    "title": "Buy in bulk. Hand out licenses to your clients.",
+    "subtitle": "Each license is an AI-built trip for your client, with your brand on it -- you decide when to give it and which plan.",
+    "tierExplainer": {
+      "explorer": "1 trip · 365-day validity",
+      "voyager": "Up to 3 trips · 18-month validity"
+    },
+    "tierNote": "Same app, same features on both plans -- the only difference is how many trips and for how long. You choose which one to give each client when you activate the license.",
+    "packs": [
+      { "name": "Starter", "range": "1-10 licenses", "price": "$20", "priceSuffix": "USD/license", "example": "10 licenses = $200", "discount": null },
+      { "name": "Growth", "range": "11-50 licenses", "price": "$18", "priceSuffix": "USD/license", "example": "50 licenses = $900", "discount": "-10%" },
+      { "name": "Scale", "range": "51-200 licenses", "price": "$16", "priceSuffix": "USD/license", "example": "200 licenses = $3,200", "discount": "-20%" },
+      { "name": "Enterprise", "range": "200+ licenses", "price": "Custom", "priceSuffix": "", "example": "Annual contract, branding included", "discount": null }
+    ],
+    "cta": "I want this for my agency"
   },
   "redeem": {
     "label": "Coming from a travel agency?",

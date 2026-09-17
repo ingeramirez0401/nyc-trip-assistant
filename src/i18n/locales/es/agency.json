@@ -40,11 +40,28 @@
     "subtitle": "Compra paquetes de licencias, repártelas a tus viajeros y deja que la IA les arme el itinerario en segundos — con tu agencia como la que lo hizo posible.",
     "valueProps": [
       { "title": "Tu marca, no la nuestra", "text": "Tu logo y color en la experiencia que vive tu cliente. TripPulse es la tecnología detrás, tú eres quien queda bien." },
-      { "title": "Licencias en lotes", "text": "Genera decenas de accesos de una vez, con el cupo que definas: viajes, generaciones con IA, o ambos por separado." },
+      { "title": "Licencias en lotes", "text": "Genera decenas de accesos de una vez, eligiendo el plan que le das a cada cliente: Explorer o Voyager." },
       { "title": "Se envían solas", "text": "Cada licencia sale por email directo a tu cliente, con su código listo para activar. Tú generas, nosotros entregamos." }
     ],
     "loginCta": "Acceso Agencias",
     "requestCta": "¿Aún no eres partner? Solicita acceso"
+  },
+  "pricing": {
+    "eyebrow": "Precios para agencias",
+    "title": "Comprás en lotes. Repartís licencias a tus clientes.",
+    "subtitle": "Cada licencia es un viaje armado con IA para tu cliente, con tu marca puesta -- vos decidís cuándo dársela y qué plan le das.",
+    "tierExplainer": {
+      "explorer": "1 viaje · 365 días de vigencia",
+      "voyager": "Hasta 3 viajes · 18 meses de vigencia"
+    },
+    "tierNote": "Misma app, mismas funciones en los dos planes -- la única diferencia es cuántos viajes y por cuánto tiempo. Elegís cuál le das a cada cliente al activar la licencia.",
+    "packs": [
+      { "name": "Starter", "range": "1-10 licencias", "price": "$20", "priceSuffix": "USD/licencia", "example": "10 licencias = $200", "discount": null },
+      { "name": "Growth", "range": "11-50 licencias", "price": "$18", "priceSuffix": "USD/licencia", "example": "50 licencias = $900", "discount": "-10%" },
+      { "name": "Scale", "range": "51-200 licencias", "price": "$16", "priceSuffix": "USD/licencia", "example": "200 licencias = $3.200", "discount": "-20%" },
+      { "name": "Enterprise", "range": "200+ licencias", "price": "A medida", "priceSuffix": "", "example": "Contrato anual, branding incluido", "discount": null }
+    ],
+    "cta": "Quiero esto para mi agencia"
   },
   "redeem": {
     "label": "¿Vienes de una agencia de viajes?",
