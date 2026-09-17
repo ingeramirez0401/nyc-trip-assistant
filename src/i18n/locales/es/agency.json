@@ -48,13 +48,13 @@
   },
   "pricing": {
     "eyebrow": "Precios para agencias",
-    "title": "Comprás en lotes. Repartís licencias a tus clientes.",
-    "subtitle": "Cada licencia es un viaje armado con IA para tu cliente, con tu marca puesta -- vos decidís cuándo dársela y qué plan le das.",
+    "title": "Compra en lotes. Reparte licencias a tus clientes.",
+    "subtitle": "Cada licencia es un viaje armado con IA para tu cliente, con tu marca puesta -- tú decides cuándo dársela y qué plan le das.",
     "tierExplainer": {
       "explorer": "1 viaje · 365 días de vigencia",
       "voyager": "Hasta 3 viajes · 18 meses de vigencia"
     },
-    "tierNote": "Misma app, mismas funciones en los dos planes -- la única diferencia es cuántos viajes y por cuánto tiempo. Elegís cuál le das a cada cliente al activar la licencia.",
+    "tierNote": "Misma app, mismas funciones en los dos planes -- la única diferencia es cuántos viajes y por cuánto tiempo. Eliges cuál le das a cada cliente al activar la licencia.",
     "packs": [
       { "name": "Starter", "range": "1-10 licencias", "price": "$20", "priceSuffix": "USD/licencia", "example": "10 licencias = $200", "discount": null },
       { "name": "Growth", "range": "11-50 licencias", "price": "$18", "priceSuffix": "USD/licencia", "example": "50 licencias = $900", "discount": "-10%" },
